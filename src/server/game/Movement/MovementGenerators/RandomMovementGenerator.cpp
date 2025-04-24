@@ -192,8 +192,11 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
             return;
         }
 
-        // Cache successful consecutive paths
-        _paths[_pathIndex] = _pathGenerator->GetPath();
+        if (!sWorld->getBoolConfig(CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS))
+        {
+            // Cache successful consecutive paths
+            _paths[_pathIndex] = _pathGenerator->GetPath();
+        }
     }
 
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);

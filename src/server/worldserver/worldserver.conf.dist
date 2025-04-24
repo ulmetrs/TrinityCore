@@ -4491,6 +4491,14 @@ Metric.OverallStatusInterval = 1
 NameReservation = 0
 
 #
+#     DontCacheRandomMovementPaths
+#       Description: Prevents caching of random movement paths.
+#       Default:    0 - (cache paths, uses more memory)
+#                   1 - (don't cache, uses more cpu)
+
+DontCacheRandomMovementPaths = 0
+
+#
 ###################################################################################################
 
 ###################################################################################################
