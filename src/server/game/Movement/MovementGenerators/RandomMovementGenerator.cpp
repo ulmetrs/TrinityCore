@@ -23,9 +23,10 @@
 #include "MoveSplineInit.h"
 #include "PathGenerator.h"
 #include "Random.h"
+#include <algorithm>
 
 template<class T>
-RandomMovementGenerator<T>::RandomMovementGenerator(float distance) : _timer(0), _reference(), _wanderDistance(distance), _wanderSteps(0)
+RandomMovementGenerator<T>::RandomMovementGenerator(float distance) : _timer(0), _reference(owner->GetPosition()), _wanderDistance(distance), _wanderSteps(0), _angleIndex(0), _pathIndex(0)
 {
     this->Mode = MOTION_MODE_DEFAULT;
     this->Priority = MOTION_PRIORITY_NORMAL;
@@ -80,17 +81,34 @@ void RandomMovementGenerator<Creature>::DoInitialize(Creature* owner)
     if (!owner || !owner->IsAlive())
         return;
 
-    _reference = owner->GetPosition();
     owner->StopMoving();
+    _pathIndex = 0;
+    _paths.clear();
+    _pathGenerator = nullptr;
+
+    _timer.Reset(0);
 
     if (_wanderDistance == 0.f)
         _wanderDistance = owner->GetWanderDistance();
 
     // Retail seems to let a creature walk 2 up to 10 splines before triggering a pause
     _wanderSteps = urand(1, ((_wanderDistance <= 1.0f) ? 2 : 8));
-
-    _timer.Reset(0);
-    _path = nullptr;
+    
+    // Precalculate a spread of angles to use for our wander points, this gives us a more even distribution of 'random' points
+    // Only need to do this on first initialize
+    if (_angles.empty())
+    {
+        float initAngle = frand(0.f, M_PI * 2.0f);
+        std::vector<float> tempAngles;
+        for (uint8 i = 0; i < NUM_WANDER_POINTS; ++i)
+        {
+            tempAngles.push_back(initAngle + (M_PI * 2.0f / (float)NUM_WANDER_POINTS) * i);
+        }
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(tempAngles.begin(), tempAngles.end(), g);
+        _angles.insert(_angles.end(), tempAngles.begin(), tempAngles.end());
+    }
 }
 
 template<class T>
@@ -117,37 +135,65 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
     {
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
-        _path = nullptr;
+        _pathIndex = 0;
+        _paths.clear();
+        _pathGenerator = nullptr;
         return;
     }
 
-    Position position(_reference);
-    float distance = frand(0.f, _wanderDistance);
-    float angle = frand(0.f, float(M_PI * 2));
-    owner->MovePositionToFirstCollision(position, distance, angle);
-
-    // Check if the destination is in LOS
-    if (!owner->IsWithinLOS(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ()))
+    //Movement::PointsArray& path = _paths[_pathIndex];
+    // No cached paths so create a new one
+    if (_paths.size() <= NUM_WANDER_POINTS)
     {
-        // Retry later on
-        _timer.Reset(200);
-        return;
-    }
+        Position position;
+        if (_paths.size() == NUM_WANDER_POINTS)
+        {
+            // Last path needs to connect to the first point
+            position = _paths[0][0];
+        }
+        else
+        {
+            position(_reference);
+            float distance = frand(MIN_WANDER_DISTANCE, _wanderDistance);
+            float angle = _angles[_angleIndex];
+            _angleIndex = (_angleIndex + 1) % NUM_WANDER_POINTS;
+            // Project destination position to the first collision
+            owner->MovePositionToFirstCollision(position, distance, angle);
+        }
 
-    if (!_path)
-    {
-        _path = std::make_unique<PathGenerator>(owner);
-        _path->SetPathLengthLimit(30.0f);
-    }
+        // Check if the destination is in LOS
+        if (!owner->IsWithinLOS(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ()))
+        {
+            // Retry later on
+            _timer.Reset(200);
+            // Always clear the cache if we fail to complete the loop at any step
+            _pathIndex = 0;
+            _paths.clear();
+            return;
+        }
 
-    bool result = _path->CalculatePath(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
-    // PATHFIND_FARFROMPOLY shouldn't be checked as creatures in water are most likely far from poly
-    if (!result || (_path->GetPathType() & PATHFIND_NOPATH)
-                || (_path->GetPathType() & PATHFIND_SHORTCUT)
-                /*|| (_path->GetPathType() & PATHFIND_FARFROMPOLY)*/)
-    {
-        _timer.Reset(100);
-        return;
+        // Lazy load path generator
+        if (!_pathGenerator)
+        {
+            _pathGenerator = std::make_unique<PathGenerator>(owner);
+            _pathGenerator->SetPathLengthLimit(30.0f);
+        }
+
+        bool result = _pathGenerator->CalculatePath(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
+        // PATHFIND_FARFROMPOLY shouldn't be checked as creatures in water are most likely far from poly
+        if (!result || (_pathGenerator->GetPathType() & PATHFIND_NOPATH)
+                    || (_pathGenerator->GetPathType() & PATHFIND_SHORTCUT)
+                    /*|| (_pathGenerator->GetPathType() & PATHFIND_FARFROMPOLY)*/)
+        {
+            _timer.Reset(100);
+            // Always clear the cache if we fail to complete the loop at any step
+            _pathIndex = 0;
+            _paths.clear();
+            return;
+        }
+
+        // Cache successful consecutive paths
+        _paths[_pathIndex] = _pathGenerator->GetPath();
     }
 
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
@@ -168,9 +214,11 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
     }
 
     Movement::MoveSplineInit init(owner);
-    init.MovebyPath(_path->GetPath());
+    init.MovebyPath(_paths[_pathIndex]);
     init.SetWalk(walk);
     int32 splineDuration = init.Launch();
+
+    _pathIndex = (_pathIndex + 1) % (NUM_WANDER_POINTS + 1);
 
     --_wanderSteps;
     if (_wanderSteps) // Creature has yet to do steps before pausing
@@ -205,7 +253,9 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
     {
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
-        _path = nullptr;
+        _pathIndex = 0;
+        _paths.clear();
+        _pathGenerator = nullptr;
         return true;
     }
     else
