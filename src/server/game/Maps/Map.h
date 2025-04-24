@@ -481,6 +481,29 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         // must called with RemoveFromWorld
         void RemoveFromActive(WorldObject* obj);
 
+        // Unlike ActiveObjects we do not need to lock the respawn position grid, as this option is only available when Grid Unloading is disabled
+        // must called with AddToWorld
+        void AddToWaypointCreatures(Creature* creature)
+        {
+            m_waypointCreatures.insert(creature);
+        }
+
+        // must called with RemoveFromWorld
+        void RemoveFromWaypointCreatures(Creature* creature)
+        {
+            if (m_waypointCreaturesIter != m_waypointCreatures.end())
+            {
+                WaypointCreatures::iterator itr = m_waypointCreatures.find(creature);
+                if (itr == m_waypointCreatures.end())
+                    return;
+                if (itr == m_waypointCreaturesIter)
+                    ++m_waypointCreaturesIter;
+                m_waypointCreatures.erase(itr);
+            }
+            else
+                m_waypointCreatures.erase(creature);
+        }
+
         template<class T> void SwitchGridContainers(T* obj, bool on);
         std::unordered_map<ObjectGuid::LowType /*leaderSpawnId*/, CreatureGroup*> CreatureGroupHolder;
 
@@ -644,6 +667,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             return m_activeNonPlayers.size();
         }
 
+        size_t GetWaypointCreaturesCount() const
+        {
+            return m_waypointCreatures.size();
+        }
+
         virtual std::string GetDebugInfo() const;
 
     private:
@@ -719,6 +747,10 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         typedef std::set<WorldObject*> ActiveNonPlayers;
         ActiveNonPlayers m_activeNonPlayers;
         ActiveNonPlayers::iterator m_activeNonPlayersIter;
+
+        typedef std::set<Creature*> WaypointCreatures;
+        WaypointCreatures m_waypointCreatures;
+        WaypointCreatures::iterator m_waypointCreaturesIter;
 
         // Objects that must update even in inactive grids without activating them
         typedef std::set<Transport*> TransportsContainer;

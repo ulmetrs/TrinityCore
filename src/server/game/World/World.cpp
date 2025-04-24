@@ -826,6 +826,12 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_EMOTE]    = sConfigMgr->GetBoolDefault("AllowTwoSide.Interaction.Emote", false);
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND]    = sConfigMgr->GetBoolDefault("AllowTwoSide.AddFriend", false);
     m_bool_configs[CONFIG_NAME_RESERVATION] = sConfigMgr->GetBoolDefault("NameReservation", false);
+    m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = sConfigMgr->GetBoolDefault("AlwaysUpdateWaypointCreatures", false);
+    if (m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] && m_bool_configs[CONFIG_GRID_UNLOAD])
+    {
+        TC_LOG_ERROR("server.loading", "AlwaysUpdateWaypointCreatures enabled, but GridUnload also enabled. GridUnload must be disabled to enable AlwaysUpdateWaypointCreatures. AlwaysUpdateWaypointCreatures disabled");
+        m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = false;
+    }
     m_bool_configs[CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS] = sConfigMgr->GetBoolDefault("DontCacheRandomMovementPaths", false);
     /** @epoch-end */
 
