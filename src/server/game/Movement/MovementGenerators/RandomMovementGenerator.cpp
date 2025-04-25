@@ -155,8 +155,8 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         Position position;
         if (_paths.size() == NUM_WANDER_POINTS)
         {
-            TC_LOG_DEBUG("MAXED OUT PATHS", "Paths Size: {}", _paths.size());
-            TC_LOG_DEBUG("MAXED OUT PATHS", "First Path Size: {}", _paths[0].size());
+            TC_LOG_DEBUG("RandomMovementGenerator", "MAXED OUT PATHS Paths Size: {}", _paths.size());
+            TC_LOG_DEBUG("RandomMovementGenerator", "First Path Size: {}", _paths[0].size());
             // Last path needs to connect to the first point
             G3D::Vector3& v = _paths[0][0];
             position.Relocate(v.x, v.y, v.z);
@@ -165,7 +165,7 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         {
             position = _reference;
             float distance = frand(MIN_WANDER_DISTANCE, _wanderDistance);
-            TC_LOG_DEBUG("Getting angle from index", "Angle Index: {} Angle Size: {}", _angleIndex, _angles.size());
+            TC_LOG_DEBUG("RandomMovementGenerator", "Getting angle from index Angle Index: {} Angle Size: {}", _angleIndex, _angles.size());
             float angle = _angles[_angleIndex];
             _angleIndex = (_angleIndex + 1) % NUM_WANDER_POINTS;
             // Project destination position to the first collision
@@ -265,7 +265,7 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting())
     {
-        TC_LOG_DEBUG("Update Interrupted");
+        TC_LOG_DEBUG("RandomMovementGenerator","Update Interrupted");
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
         _pathIndex = 0;
@@ -279,14 +279,14 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
     _timer.Update(diff);
     if (HasFlag(MOVEMENTGENERATOR_FLAG_SPEED_UPDATE_PENDING) && !owner->movespline->Finalized()) {
         // Not sure why we are breaking the current movement here, but since we are we need to clear the cache
-        TC_LOG_DEBUG("Update A");
+        TC_LOG_DEBUG("RandomMovementGenerator", "Update A");
         _pathIndex = 0;
         _paths.clear();
         SetRandomLocation(owner);
     }
     else if (_timer.Passed() && owner->movespline->Finalized()) {
         SetRandomLocation(owner);
-        TC_LOG_DEBUG("Update B");
+        TC_LOG_DEBUG("RandomMovementGenerator", "Update B");
     }
 
     return true;
