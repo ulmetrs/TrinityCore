@@ -133,11 +133,13 @@ void RandomMovementGenerator<T>::SetRandomLocation(T*) { }
 template<>
 void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
 {
+    TC_LOG_DEBUG("RandomMovementGenerator", "SetRandomLocation");
     if (!owner)
         return;
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE | UNIT_STATE_LOST_CONTROL) || owner->IsMovementPreventedByCasting())
     {
+        TC_LOG_DEBUG("RandomMovementGenerator", "SetRandomLocation Interrupted");
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
         _pathIndex = 0;
@@ -147,6 +149,7 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
     }
 
     // No cached paths so create a new one
+    TC_LOG_DEBUG("RandomMovementGenerator", "Checking Paths size");
     if (_paths.size() <= NUM_WANDER_POINTS)
     {
         Position position;
@@ -262,6 +265,7 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting())
     {
+        TC_LOG_DEBUG("Update Interrupted");
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
         _pathIndex = 0;
@@ -275,12 +279,15 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
     _timer.Update(diff);
     if (HasFlag(MOVEMENTGENERATOR_FLAG_SPEED_UPDATE_PENDING) && !owner->movespline->Finalized()) {
         // Not sure why we are breaking the current movement here, but since we are we need to clear the cache
+        TC_LOG_DEBUG("Update A");
         _pathIndex = 0;
         _paths.clear();
         SetRandomLocation(owner);
     }
-    else if (_timer.Passed() && owner->movespline->Finalized())
+    else if (_timer.Passed() && owner->movespline->Finalized()) {
         SetRandomLocation(owner);
+        TC_LOG_DEBUG("Update B");
+    }
 
     return true;
 }
