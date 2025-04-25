@@ -25,6 +25,7 @@
 #include "Random.h"
 #include <random>
 #include <algorithm>
+#include <G3D/Vector3.h>
 
 template<class T>
 RandomMovementGenerator<T>::RandomMovementGenerator(float distance) : _timer(0), _reference(), _wanderDistance(distance), _wanderSteps(0), _angleIndex(0), _pathIndex(0)
@@ -150,7 +151,7 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         if (_paths.size() == NUM_WANDER_POINTS)
         {
             // Last path needs to connect to the first point
-            Vector3& v = _paths[0][0];
+            G3D::Vector3& v = _paths[0][0];
             position.Relocate(v.x, v.y, v.z);
         }
         else
