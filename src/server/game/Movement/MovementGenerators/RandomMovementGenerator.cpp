@@ -112,6 +112,8 @@ void RandomMovementGenerator<Creature>::DoInitialize(Creature* owner)
         std::shuffle(tempAngles.begin(), tempAngles.end(), g);
         _angles.insert(_angles.end(), tempAngles.begin(), tempAngles.end());
     }
+
+    TC_LOG_DEBUG("RandomMovementGenerator", "Init Angles Size: {} , Paths Size: {}", _angles.size(), _paths.size());
 }
 
 template<class T>
@@ -150,6 +152,8 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         Position position;
         if (_paths.size() == NUM_WANDER_POINTS)
         {
+            TC_LOG_DEBUG("MAXED OUT PATHS", "Paths Size: {}", _paths.size());
+            TC_LOG_DEBUG("MAXED OUT PATHS", "First Path Size: {}", _paths[0].size());
             // Last path needs to connect to the first point
             G3D::Vector3& v = _paths[0][0];
             position.Relocate(v.x, v.y, v.z);
@@ -158,6 +162,7 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         {
             position = _reference;
             float distance = frand(MIN_WANDER_DISTANCE, _wanderDistance);
+            TC_LOG_DEBUG("Getting angle from index", "Angle Index: {} Angle Size: {}", _angleIndex, _angles.size());
             float angle = _angles[_angleIndex];
             _angleIndex = (_angleIndex + 1) % NUM_WANDER_POINTS;
             // Project destination position to the first collision
