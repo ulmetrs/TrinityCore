@@ -112,8 +112,6 @@ void RandomMovementGenerator<Creature>::DoInitialize(Creature* owner)
         std::shuffle(tempAngles.begin(), tempAngles.end(), g);
         _angles.insert(_angles.end(), tempAngles.begin(), tempAngles.end());
     }
-
-    TC_LOG_DEBUG("RandomMovementGenerator", "Init Angles Size: {} , Paths Size: {}", _angles.size(), _paths.size());
 }
 
 template<class T>
@@ -133,7 +131,6 @@ void RandomMovementGenerator<T>::SetRandomLocation(T*) { }
 template<>
 void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
 {
-    TC_LOG_DEBUG("RandomMovementGenerator", "SetRandomLocation");
     if (!owner)
         return;
 
@@ -149,7 +146,6 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
     }
 
     // No cached paths so create a new one
-    TC_LOG_DEBUG("RandomMovementGenerator", "Checking Paths size");
     if (_paths.size() <= NUM_WANDER_POINTS)
     {
         Position position;
@@ -164,12 +160,16 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         else
         {
             position = _reference;
+            TC_LOG_DEBUG("RandomMovementGenerator", "Position: {} {} {}", position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
             float distance = frand(MIN_WANDER_DISTANCE, _wanderDistance);
             TC_LOG_DEBUG("RandomMovementGenerator", "Getting angle from index Angle Index: {} Angle Size: {}", _angleIndex, _angles.size());
             float angle = _angles[_angleIndex];
+            TC_LOG_DEBUG("RandomMovementGenerator", "Got angle {}", angle);
             _angleIndex = (_angleIndex + 1) % NUM_WANDER_POINTS;
+            TC_LOG_DEBUG("RandomMovementGenerator", "New angle index {}", _angleIndex);
             // Project destination position to the first collision
             owner->MovePositionToFirstCollision(position, distance, angle);
+            TC_LOG_DEBUG("RandomMovementGenerator", "called MovePositionToFirstCollision");
         }
 
         // Check if the destination is in LOS
