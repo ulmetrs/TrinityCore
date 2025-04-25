@@ -143,7 +143,6 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         return;
     }
 
-    //Movement::PointsArray& path = _paths[_pathIndex];
     // No cached paths so create a new one
     if (_paths.size() <= NUM_WANDER_POINTS)
     {
@@ -151,7 +150,8 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         if (_paths.size() == NUM_WANDER_POINTS)
         {
             // Last path needs to connect to the first point
-            position = _paths[0][0];
+            Vector3& v = _paths[0][0];
+            position.Relocate(v.x, v.y, v.z);
         }
         else
         {
