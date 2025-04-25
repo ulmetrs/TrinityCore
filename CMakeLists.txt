@@ -10,10 +10,6 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-# Enforce C++20 for all targets
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # add this options before PROJECT keyword
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
