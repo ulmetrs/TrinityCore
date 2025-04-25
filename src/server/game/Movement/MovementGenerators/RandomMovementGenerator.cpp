@@ -136,7 +136,6 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE | UNIT_STATE_LOST_CONTROL) || owner->IsMovementPreventedByCasting())
     {
-        TC_LOG_DEBUG("RandomMovementGenerator", "SetRandomLocation Interrupted");
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
         _pathIndex = 0;
@@ -151,29 +150,22 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         Position position;
         if (_paths.size() == NUM_WANDER_POINTS)
         {
-            TC_LOG_DEBUG("RandomMovementGenerator", "MAXED OUT PATHS Paths Size: {}", _paths.size());
-            TC_LOG_DEBUG("RandomMovementGenerator", "First Path Size: {}", _paths[0].size());
             // Last path needs to connect to the first point
             G3D::Vector3& v = _paths[0][0];
             position.Relocate(v.x, v.y, v.z);
+            TC_LOG_DEBUG("RandomMovementGenerator", "Connected path loop Position: {} {} {}", position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
         }
         else
         {
             position = _reference;
-            TC_LOG_DEBUG("RandomMovementGenerator", "Position: {} {} {}", position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
             float distance = frand(MIN_WANDER_DISTANCE, _wanderDistance);
-            TC_LOG_DEBUG("RandomMovementGenerator", "Getting angle from index Angle Index: {} Angle Size: {}", _angleIndex, _angles.size());
             float angle = _angles[_angleIndex];
-            TC_LOG_DEBUG("RandomMovementGenerator", "Got angle {}", angle);
             _angleIndex = (_angleIndex + 1) % NUM_WANDER_POINTS;
-            TC_LOG_DEBUG("RandomMovementGenerator", "New angle index {}", _angleIndex);
             // Project destination position to the first collision
             owner->MovePositionToFirstCollision(position, distance, angle);
-            TC_LOG_DEBUG("RandomMovementGenerator", "called MovePositionToFirstCollision");
         }
 
         // Check if the destination is in LOS
-        TC_LOG_DEBUG("RandomMovementGenerator", "Checking LOS");
         if (!owner->IsWithinLOS(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ()))
         {
             // Retry later on
@@ -185,14 +177,12 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         }
 
         // Lazy load path generator
-        TC_LOG_DEBUG("RandomMovementGenerator", "Lazy loading path generator");
         if (!_pathGenerator)
         {
             _pathGenerator = std::make_unique<PathGenerator>(owner);
             _pathGenerator->SetPathLengthLimit(30.0f);
         }
 
-        TC_LOG_DEBUG("RandomMovementGenerator", "Calculating path");
         bool result = _pathGenerator->CalculatePath(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
         // PATHFIND_FARFROMPOLY shouldn't be checked as creatures in water are most likely far from poly
         if (!result || (_pathGenerator->GetPathType() & PATHFIND_NOPATH)
@@ -201,7 +191,6 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         {
             _timer.Reset(100);
             // Always clear the cache if we fail to complete the loop at any step
-            TC_LOG_DEBUG("RandomMovementGenerator", "Failed to calculate path, clearing cache");
             _pathIndex = 0;
             _paths.clear();
             TC_LOG_DEBUG("RandomMovementGenerator", "Failed to calculate path, cleared cache");
@@ -209,6 +198,8 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         }
 
         _paths.push_back(_pathGenerator->GetPath());
+    } else {
+        TC_LOG_DEBUG("RandomMovementGenerator", "Used path from cache");
     }
 
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
@@ -233,7 +224,6 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
     init.SetWalk(walk);
     int32 splineDuration = init.Launch();
 
-    TC_LOG_DEBUG("RandomMovementGenerator", "Path calculated, get bool config");
     if (sWorld->getBoolConfig(CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS))
         _paths.clear();
     else
@@ -282,17 +272,15 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
         RemoveFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
 
     _timer.Update(diff);
+
+    // Not sure why we are breaking the current movement here, but since we are we need to clear the cache
     if (HasFlag(MOVEMENTGENERATOR_FLAG_SPEED_UPDATE_PENDING) && !owner->movespline->Finalized()) {
-        // Not sure why we are breaking the current movement here, but since we are we need to clear the cache
-        TC_LOG_DEBUG("RandomMovementGenerator", "Update A");
         _pathIndex = 0;
         _paths.clear();
         SetRandomLocation(owner);
     }
-    else if (_timer.Passed() && owner->movespline->Finalized()) {
+    else if (_timer.Passed() && owner->movespline->Finalized())
         SetRandomLocation(owner);
-        TC_LOG_DEBUG("RandomMovementGenerator", "Update B");
-    }
 
     return true;
 }
