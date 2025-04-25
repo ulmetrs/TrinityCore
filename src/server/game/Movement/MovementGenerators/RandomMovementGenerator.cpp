@@ -153,7 +153,7 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         }
         else
         {
-            position(_reference);
+            position = _reference;
             float distance = frand(MIN_WANDER_DISTANCE, _wanderDistance);
             float angle = _angles[_angleIndex];
             _angleIndex = (_angleIndex + 1) % NUM_WANDER_POINTS;
