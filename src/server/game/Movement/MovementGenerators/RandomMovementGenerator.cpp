@@ -173,6 +173,7 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         }
 
         // Check if the destination is in LOS
+        TC_LOG_DEBUG("RandomMovementGenerator", "Checking LOS");
         if (!owner->IsWithinLOS(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ()))
         {
             // Retry later on
@@ -184,12 +185,14 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         }
 
         // Lazy load path generator
+        TC_LOG_DEBUG("RandomMovementGenerator", "Lazy loading path generator");
         if (!_pathGenerator)
         {
             _pathGenerator = std::make_unique<PathGenerator>(owner);
             _pathGenerator->SetPathLengthLimit(30.0f);
         }
 
+        TC_LOG_DEBUG("RandomMovementGenerator", "Calculating path");
         bool result = _pathGenerator->CalculatePath(position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
         // PATHFIND_FARFROMPOLY shouldn't be checked as creatures in water are most likely far from poly
         if (!result || (_pathGenerator->GetPathType() & PATHFIND_NOPATH)
@@ -198,16 +201,14 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
         {
             _timer.Reset(100);
             // Always clear the cache if we fail to complete the loop at any step
+            TC_LOG_DEBUG("RandomMovementGenerator", "Failed to calculate path, clearing cache");
             _pathIndex = 0;
             _paths.clear();
+            TC_LOG_DEBUG("RandomMovementGenerator", "Failed to calculate path, cleared cache");
             return;
         }
 
-        if (!sWorld->getBoolConfig(CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS))
-        {
-            // Cache successful consecutive paths
-            _paths[_pathIndex] = _pathGenerator->GetPath();
-        }
+        _paths.push_back(_pathGenerator->GetPath());
     }
 
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
@@ -232,7 +233,11 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
     init.SetWalk(walk);
     int32 splineDuration = init.Launch();
 
-    _pathIndex = (_pathIndex + 1) % (NUM_WANDER_POINTS + 1);
+    TC_LOG_DEBUG("RandomMovementGenerator", "Path calculated, get bool config");
+    if (sWorld->getBoolConfig(CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS))
+        _paths.clear();
+    else
+        _pathIndex = (_pathIndex + 1) % (NUM_WANDER_POINTS + 1);
 
     --_wanderSteps;
     if (_wanderSteps) // Creature has yet to do steps before pausing
