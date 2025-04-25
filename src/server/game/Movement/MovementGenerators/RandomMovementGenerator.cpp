@@ -23,10 +23,11 @@
 #include "MoveSplineInit.h"
 #include "PathGenerator.h"
 #include "Random.h"
+#include <random>
 #include <algorithm>
 
 template<class T>
-RandomMovementGenerator<T>::RandomMovementGenerator(float distance) : _timer(0), _reference(owner->GetPosition()), _wanderDistance(distance), _wanderSteps(0), _angleIndex(0), _pathIndex(0)
+RandomMovementGenerator<T>::RandomMovementGenerator(float distance) : _timer(0), _reference(), _wanderDistance(distance), _wanderSteps(0), _angleIndex(0), _pathIndex(0)
 {
     this->Mode = MOTION_MODE_DEFAULT;
     this->Priority = MOTION_PRIORITY_NORMAL;
@@ -93,11 +94,12 @@ void RandomMovementGenerator<Creature>::DoInitialize(Creature* owner)
 
     // Retail seems to let a creature walk 2 up to 10 splines before triggering a pause
     _wanderSteps = urand(1, ((_wanderDistance <= 1.0f) ? 2 : 8));
-    
-    // Precalculate a spread of angles to use for our wander points, this gives us a more even distribution of 'random' points
-    // Only need to do this on first initialize
+
+    // Only set these on first initialize
     if (_angles.empty())
     {
+        _reference = owner->GetPosition();
+        // Precalculate a spread of angles to use for our wander points, this gives us a more even distribution of 'random' points
         float initAngle = frand(0.f, M_PI * 2.0f);
         std::vector<float> tempAngles;
         for (uint8 i = 0; i < NUM_WANDER_POINTS; ++i)

@@ -21,6 +21,7 @@
 #include "MovementGenerator.h"
 #include "Position.h"
 #include "Timer.h"
+#include "Movement/Spline/MoveSplineInitArgs.h"
 
 #define MIN_WANDER_DISTANCE 1.0f
 #define NUM_WANDER_POINTS 12
