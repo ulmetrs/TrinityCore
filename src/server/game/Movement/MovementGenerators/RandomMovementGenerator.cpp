@@ -153,7 +153,6 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
             // Last path needs to connect to the first point
             G3D::Vector3& v = _paths[0][0];
             position.Relocate(v.x, v.y, v.z);
-            TC_LOG_DEBUG("RandomMovementGenerator", "Connected path loop Position: {} {} {}", position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
         }
         else
         {
@@ -193,13 +192,10 @@ void RandomMovementGenerator<Creature>::SetRandomLocation(Creature* owner)
             // Always clear the cache if we fail to complete the loop at any step
             _pathIndex = 0;
             _paths.clear();
-            TC_LOG_DEBUG("RandomMovementGenerator", "Failed to calculate path, cleared cache");
             return;
         }
 
         _paths.push_back(_pathGenerator->GetPath());
-    } else {
-        TC_LOG_DEBUG("RandomMovementGenerator", "Used path from cache");
     }
 
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
@@ -260,7 +256,6 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting())
     {
-        TC_LOG_DEBUG("RandomMovementGenerator","Update Interrupted");
         AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
         owner->StopMoving();
         _pathIndex = 0;
