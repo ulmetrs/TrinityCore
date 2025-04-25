@@ -265,17 +265,13 @@ bool RandomMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
         RemoveFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
 
     _timer.Update(diff);
-    if ((HasFlag(MOVEMENTGENERATOR_FLAG_SPEED_UPDATE_PENDING) && !owner->movespline->Finalized()) {
+    if (HasFlag(MOVEMENTGENERATOR_FLAG_SPEED_UPDATE_PENDING) && !owner->movespline->Finalized()) {
         // Not sure why we are breaking the current movement here, but since we are we need to clear the cache
         _pathIndex = 0;
         _paths.clear();
         SetRandomLocation(owner);
     }
-    else if (_timer.Passed() && owner->movespline->Finalized()))
-        SetRandomLocation(owner);
-
-    return true;
-}
+    else if (_timer.Passed() && owner->movespline->Finalized())
         SetRandomLocation(owner);
 
     return true;
