@@ -221,7 +221,7 @@ void AnticheatMgr::StartHackDetection(Player* player, MovementInfo movementInfo,
     ClimbHackDetection(player, movementInfo, opcode);
     IgnoreControlHackDetection(player, movementInfo, opcode);
     GravityHackDetection(player, movementInfo);
-    if (player->GetLiquidStatus() == LIQUID_MAP_WATER_WALK)
+    if (player->GetLiquidStatus() && player->GetLiquidStatus() == LIQUID_MAP_WATER_WALK)
     {
         WalkOnWaterHackDetection(player, movementInfo);
     }
@@ -229,7 +229,7 @@ void AnticheatMgr::StartHackDetection(Player* player, MovementInfo movementInfo,
     {
         ZAxisHackDetection(player, movementInfo);
     }
-    if (player->GetLiquidStatus() == LIQUID_MAP_UNDER_WATER)
+    if (player->GetLiquidStatus() && player->GetLiquidStatus() == LIQUID_MAP_UNDER_WATER)
     {
         AntiSwimHackDetection(player, movementInfo, opcode);
     }
