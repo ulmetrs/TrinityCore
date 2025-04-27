@@ -196,7 +196,7 @@ struct ListAuctionMessage : AuctionMessage
 struct ListOwnerAuctionMessage : AuctionMessage
 {
     ListOwnerAuctionMessage(AuctionHouseFaction _listFaction, ObjectGuid _ownerGuid)
-        : AuctionMessage(AuctionMessage::Type::OwnerList, _listFaction), ownerGuid(_ownerGuid) {}
+        : AuctionMessage(AuctionMessage::Type::ListOwner, _listFaction), ownerGuid(_ownerGuid) {}
 
     ObjectGuid ownerGuid;
 };
@@ -204,7 +204,7 @@ struct ListOwnerAuctionMessage : AuctionMessage
 struct ListBidderAuctionMessage : AuctionMessage
 {
     ListBidderAuctionMessage(AuctionHouseFaction _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
-        : AuctionMessage(AuctionMessage::Type::BidderList, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
+        : AuctionMessage(AuctionMessage::Type::ListBidder, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
 
     std::vector<uint32> outbiddedAuctionIds;
     ObjectGuid ownerGuid;

@@ -225,20 +225,20 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& s
     }
 }
 
-void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& searchBidderListRequest)
+void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& message)
 {
     TC_LOG_DEBUG("auctionHouse", "ListBidderAuctions Called {}", GameTime::GetGameTimeMS());
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchBidderListRequest.listFaction);
+    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(message.listFaction);
 
     auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
-    searchResponse->playerGuid = searchBidderListRequest.ownerGuid;
+    searchResponse->playerGuid = message.ownerGuid;
     searchResponse->packet.Initialize(SMSG_AUCTION_BIDDER_LIST_RESULT, (4 + 4 + 4));
     searchResponse->packet << (uint32)0;                                     //add 0 as count
 
     uint32 count = 0;
     uint32 totalcount = 0;
 
-    for (uint32 const auctionId : searchBidderListRequest.outbiddedAuctionIds)
+    for (uint32 const auctionId : message.outbiddedAuctionIds)
     {
         SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionId);
         if (itr == searchableAuctionMap.end())
@@ -252,7 +252,7 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
 
     for (auto const& pair : searchableAuctionMap)
     {
-        if (pair.second->bidderGuid != searchBidderListRequest.ownerGuid)
+        if (pair.second->bidderGuid != message.ownerGuid)
             continue;
 
         std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
@@ -269,13 +269,13 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
     responseQueue_->send(std::move(searchResponse));
 }
 
-void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& searchOwnerListRequest)
+void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
 {
     TC_LOG_DEBUG("auctionHouse", "ListOwnerAuctions Called {}", GameTime::GetGameTimeMS());
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchOwnerListRequest.listFaction);
+    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(message.listFaction);
 
     auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
-    searchResponse->playerGuid = searchOwnerListRequest.ownerGuid;
+    searchResponse->playerGuid = message.ownerGuid;
     searchResponse->packet.Initialize(SMSG_AUCTION_OWNER_LIST_RESULT, (4 + 4 + 4));
     searchResponse->packet << (uint32)0;
 
@@ -284,7 +284,7 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
 
     for (auto const& pair : searchableAuctionMap)
     {
-        if (pair.second->ownerGuid != searchOwnerListRequest.ownerGuid)
+        if (pair.second->ownerGuid != message.ownerGuid)
             continue;
 
         std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
