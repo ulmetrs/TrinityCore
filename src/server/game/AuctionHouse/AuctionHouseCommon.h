@@ -145,10 +145,10 @@ struct AuctionMessage
     {
         Add,
         Remove,
-        UpdateBid
+        UpdateBid,
         List,
         OwnerList,
-        BidderList,
+        BidderList
     };
 
     AuctionMessage(Type const _type, uint8 _listFaction) : type(_type), listFaction(_listFaction) {}
