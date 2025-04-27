@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <wstring>
 
 struct ItemTemplate;
 class WorldPacket;
