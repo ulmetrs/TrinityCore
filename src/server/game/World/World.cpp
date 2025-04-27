@@ -1567,6 +1567,7 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_ANTICHEAT_MAX_REPORTS_FOR_KICKS] = sConfigMgr->GetIntDefault("Anticheat.ReportsForKick", 70);
     m_int_configs[CONFIG_ANTICHEAT_MAX_REPORTS_FOR_JAILS] = sConfigMgr->GetIntDefault("Anticheat.ReportsForJail", 70);
     m_int_configs[CONFIG_ANTICHEAT_ALERT_FREQUENCY] = sConfigMgr->GetIntDefault("Anticheat.AlertFrequency", 5);
+    m_int_configs[CONFIG_AUCTIONHOUSE_WORKERTHREADS] = sConfigMgr->GetIntDefault("AuctionHouse.WorkerThreads", 1);
     // @epoch-end
 
     // Wintergrasp battlefield
