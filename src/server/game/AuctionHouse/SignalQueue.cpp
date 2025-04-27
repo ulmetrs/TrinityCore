@@ -16,6 +16,7 @@
  */
 
 #include "SignalQueue.h"
+#include "AuctionHouseCommon.h"
 
 template<typename T>
 void SignalQueue<T>::send(T value, std::stop_token stop) {
