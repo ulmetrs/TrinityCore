@@ -93,6 +93,34 @@ struct SearchableAuctionEntry
 typedef std::unordered_map<uint32, uint16> AuctionPlayerSkills;
 typedef std::unordered_set<uint32> AuctionPlayerSpells;
 
+struct AuctionHouseUsablePlayerInfo
+{
+    uint32 classMask;
+    uint32 raceMask;
+    uint8 level;
+    AuctionPlayerSkills skills;
+    AuctionPlayerSpells spells;
+
+    bool PlayerCanUseItem(ItemTemplate const* proto) const;
+    uint16 GetSkillValue(uint32 skill) const;
+    bool HasSpell(uint32 spell) const;
+};
+
+struct AuctionHousePlayerInfo
+{
+    ObjectGuid playerGuid;
+    uint32 faction;
+    int loc_idx;
+    int locdbc_idx;
+    std::optional<AuctionHouseUsablePlayerInfo> usablePlayerInfo;
+};
+
+struct AuctionSortInfo
+{
+    AuctionSortInfo() = default;
+    AuctionSortOrder sortOrder{ AUCTION_SORT_MAX };
+    bool isDesc{ true };
+};
 struct AuctionHouseSearchInfo
 {
     std::wstring wsearchedname;
@@ -108,36 +136,7 @@ struct AuctionHouseSearchInfo
     std::vector<AuctionSortInfo> sorting;
 };
 
-struct AuctionSortInfo
-{
-    AuctionSortInfo() = default;
-    AuctionSortOrder sortOrder{ AUCTION_SORT_MAX };
-    bool isDesc{ true };
-};
-
 typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
-
-struct AuctionHousePlayerInfo
-{
-    ObjectGuid playerGuid;
-    uint32 faction;
-    int loc_idx;
-    int locdbc_idx;
-    std::optional<AuctionHouseUsablePlayerInfo> usablePlayerInfo;
-};
-
-struct AuctionHouseUsablePlayerInfo
-{
-    uint32 classMask;
-    uint32 raceMask;
-    uint8 level;
-    AuctionPlayerSkills skills;
-    AuctionPlayerSpells spells;
-
-    bool PlayerCanUseItem(ItemTemplate const* proto) const;
-    uint16 GetSkillValue(uint32 skill) const;
-    bool HasSpell(uint32 spell) const;
-};
 
 struct AuctionSearcherRequest
 {
