@@ -697,13 +697,13 @@ void AuctionHouseSearcher::NotifyAllWorkers(std::unique_ptr<AuctionMessage> mess
 {
     for (auto const& worker : workerThreads_)
     {
-        worker->AddAuctionMessage(std::make_unique<AuctionMessage>(*message));
+        worker->AddAuctionMessageToQueue(std::make_unique<AuctionMessage>(*message));
     }
 }
 
 void AuctionHouseSearcher::NotifyOneWorker(std::unique_ptr<AuctionMessage> message)
 {
-    workerThreads_.front()->AddAuctionMessage(std::move(message));
+    workerThreads_.front()->AddAuctionMessageToQueue(std::move(message));
 }
 
 void AuctionHouseObject::AddAuction(AuctionEntry* auction)

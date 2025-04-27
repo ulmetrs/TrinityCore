@@ -37,7 +37,7 @@ AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
     }
 }
 
-void AuctionHouseWorkerThread::AddAuctionMessage(std::unique_ptr<AuctionMessage> message)
+void AuctionHouseWorkerThread::AddAuctionMessageToQueue(std::unique_ptr<AuctionMessage> message)
 {
     messageQueue_->send(std::move(message), workerThread_.get_stop_token());
 }

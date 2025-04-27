@@ -22,7 +22,6 @@
 #include "AuctionHouseCommon.h"
 #include <memory>
 #include <thread>
-#include <shared_mutex>
 #include <unordered_map>
 
 class AuctionHouseWorkerThread
@@ -31,7 +30,7 @@ public:
     AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
         SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue);
     ~AuctionHouseWorkerThread();
-    void AddAuctionMessage(std::unique_ptr<AuctionMessage> message);
+    void AddAuctionMessageToQueue(std::unique_ptr<AuctionMessage> message);
 
 private:
     void Run(std::stop_token stop);
@@ -44,9 +43,9 @@ private:
     void ListBidderAuctions(ListBidderAuctionMessage const& message);
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    SearchableAuctionEntriesMap& GetSearchableAuctionMap(AuctionHouseFaction faction) { return _searchableAuctionMap[static_cast<uint8>(faction)]; }
+    SearchableAuctionEntriesMap& GetSearchableAuctionMap(uint8 faction) { return searchableAuctionMap_[faction]; }
 
-    SearchableAuctionEntriesMap _searchableAuctionMap[AUCTION_FACTION_MAX];
+    SearchableAuctionEntriesMap searchableAuctionMap_[AUCTION_FACTION_MAX];
     std::jthread workerThread_;
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue_;
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue_;
