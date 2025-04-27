@@ -698,7 +698,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     if (!ahEntry)
         return;
 
-    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->houseId);
+    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     // Client sends this list, which I'm honestly not entirely sure why?
     std::vector<uint32> auctionIds;
@@ -741,7 +741,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
     if (!ahEntry)
         return;
 
-    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->houseId);
+    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     auto request = std::make_unique<AuctionSearchOwnerListRequest>(auctionHouseFaction, GetPlayer()->GetGUID());
     sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
@@ -812,7 +812,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     if (!ahEntry)
         return;
 
-    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->houseId);
+    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     AuctionHouseSearchInfo ahSearchInfo;
     ahSearchInfo.wsearchedname = wsearchedname;
