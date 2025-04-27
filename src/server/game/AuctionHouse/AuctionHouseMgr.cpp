@@ -628,7 +628,7 @@ void AuctionHouseMgr::ProcessSearchResponses()
     }
 }
 
-void AuctionHouseSearcher::QueueSearchRequest(std::unique_ptr<AuctionMessage> message)
+void AuctionHouseMgr::QueueSearchRequest(std::unique_ptr<AuctionMessage> message)
 {
     messageQueue_.send(std::move(message));
 }
@@ -693,7 +693,7 @@ void AuctionHouseMgr::UpdateBid(AuctionEntry const* auctionEntry)
     NotifyOneWorker(std::move(message));
 }
 
-void AuctionHouseSearcher::NotifyAllWorkers(std::unique_ptr<AuctionMessage> message)
+void AuctionHouseMgr::NotifyAllWorkers(std::unique_ptr<AuctionMessage> message)
 {
     for (auto const& worker : workerThreads_)
     {
@@ -701,7 +701,7 @@ void AuctionHouseSearcher::NotifyAllWorkers(std::unique_ptr<AuctionMessage> mess
     }
 }
 
-void AuctionHouseSearcher::NotifyOneWorker(std::unique_ptr<AuctionMessage> message)
+void AuctionHouseMgr::NotifyOneWorker(std::unique_ptr<AuctionMessage> message)
 {
     workerThreads_.front()->AddAuctionMessageToQueue(std::move(message));
 }
