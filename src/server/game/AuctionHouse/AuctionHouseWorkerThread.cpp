@@ -33,12 +33,25 @@ void AuctionHouseWorkerThread::AddAuctionSearchUpdateToQueue(std::shared_ptr<Auc
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop) {
+    TC_LOG_DEBUG("auctionHouse", "AuctionHouseWorkerThread Running");
     while (!stop.stop_requested()) {
-        while (auto update = updateQueue_.receive(stop)) {
+        bool processed = false;
+
+        // Check for an update
+        if (auto update = updateQueue_.try_receive()) {
             ProcessSearchUpdate(*update);
+            processed = true;
         }
-        while (auto request = requestQueue_->receive(stop)) {
+
+        // Check for a request
+        if (auto request = requestQueue_->try_receive()) {
             ProcessSearchRequest(std::move(*request));
+            processed = true;
+        }
+
+        // If no work was processed, sleep briefly to avoid busy-waiting
+        if (!processed) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 }
