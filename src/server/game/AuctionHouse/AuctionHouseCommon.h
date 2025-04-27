@@ -121,6 +121,7 @@ struct AuctionSortInfo
     AuctionSortOrder sortOrder{ AUCTION_SORT_MAX };
     bool isDesc{ true };
 };
+
 struct AuctionHouseSearchInfo
 {
     std::wstring wsearchedname;

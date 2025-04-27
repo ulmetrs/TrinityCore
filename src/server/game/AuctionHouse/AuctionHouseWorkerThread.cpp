@@ -23,8 +23,7 @@
 
 #define MAX_AUCTIONS_PER_PAGE 50
 
-AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
-    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue): messageQueue_(messageQueue), responseQueue_(responseQueue)
+AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue, SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue) : messageQueue_(messageQueue), responseQueue_(responseQueue)
 {
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
 }
@@ -43,16 +42,21 @@ void AuctionHouseWorkerThread::AddAuctionMessage(std::unique_ptr<AuctionMessage>
     messageQueue_->send(std::move(message), workerThread_.get_stop_token());
 }
 
-void AuctionHouseWorkerThread::Run(std::stop_token stop) {
-    while (!stop.stop_requested()) {
-        if (auto message = messageQueue_->receive(stop)) {
+void AuctionHouseWorkerThread::Run(std::stop_token stop)
+{
+    while (!stop.stop_requested())
+    {
+        if (auto message = messageQueue_->receive(stop))
+        {
             ProcessMessage(std::move(*message));
         }
     }
 }
 
-void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> message) {
-    switch (message->type) {
+void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> message)
+{
+    switch (message->type)
+    {
         case AuctionMessage::Type::Add:
             AddAuction(*static_cast<AddAuctionMessage*>(message));
             break;

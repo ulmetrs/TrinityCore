@@ -152,78 +152,76 @@ private:
 
 class TC_GAME_API AuctionHouseMgr
 {
-    private:
-        AuctionHouseMgr();
-        ~AuctionHouseMgr();
+private:
+    AuctionHouseMgr();
+    ~AuctionHouseMgr();
 
-    public:
-        static AuctionHouseMgr* instance();
+public:
+    static AuctionHouseMgr* instance();
 
-        typedef std::unordered_map<ObjectGuid::LowType, Item*> ItemMap;
-        typedef std::vector<AuctionEntry*> PlayerAuctions;
-        typedef std::pair<PlayerAuctions*, uint32> AuctionPair;
+    typedef std::unordered_map<ObjectGuid::LowType, Item*> ItemMap;
+    typedef std::vector<AuctionEntry*> PlayerAuctions;
+    typedef std::pair<PlayerAuctions*, uint32> AuctionPair;
 
-        AuctionHouseObject* GetAuctionsMap(uint32 factionTemplateId);
-        AuctionHouseObject* GetAuctionsMapByHouseId(uint8 auctionHouseId);
+    AuctionHouseObject* GetAuctionsMap(uint32 factionTemplateId);
+    AuctionHouseObject* GetAuctionsMapByHouseId(uint8 auctionHouseId);
 
-        Item* GetAItem(ObjectGuid::LowType id)
-        {
-            ItemMap::const_iterator itr = mAitems.find(id);
-            if (itr != mAitems.end())
-                return itr->second;
+    Item* GetAItem(ObjectGuid::LowType id)
+    {
+        ItemMap::const_iterator itr = mAitems.find(id);
+        if (itr != mAitems.end())
+            return itr->second;
 
-            return nullptr;
-        }
+        return nullptr;
+    }
 
-        //auction messages
-        void SendAuctionWonMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
-        void SendAuctionSalePendingMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
-        void SendAuctionSuccessfulMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
-        void SendAuctionExpiredMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
-        void SendAuctionOutbiddedMail(AuctionEntry* auction, uint32 newPrice, Player* newBidder, CharacterDatabaseTransaction trans);
-        void SendAuctionCancelledToBidderMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
+    //auction messages
+    void SendAuctionWonMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
+    void SendAuctionSalePendingMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
+    void SendAuctionSuccessfulMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
+    void SendAuctionExpiredMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
+    void SendAuctionOutbiddedMail(AuctionEntry* auction, uint32 newPrice, Player* newBidder, CharacterDatabaseTransaction trans);
+    void SendAuctionCancelledToBidderMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
 
-        static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
-        static uint8 GetAuctionHouseFactionFromHouseId(uint8 houseId);
-        static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
-        static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
+    static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
+    static uint8 GetAuctionHouseFactionFromHouseId(uint8 houseId);
+    static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
+    static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
 
-    public:
+public:
+    //load first auction items, because of check if item exists, when loading
+    void LoadAuctionItems();
+    void LoadAuctions();
 
-        //load first auction items, because of check if item exists, when loading
-        void LoadAuctionItems();
-        void LoadAuctions();
+    void AddAItem(Item* it);
+    bool RemoveAItem(ObjectGuid::LowType id, bool deleteItem = false, CharacterDatabaseTransaction* trans = nullptr);
+    bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
+    uint32 PendingAuctionCount(Player const* player) const;
+    void PendingAuctionProcess(Player* player);
+    void UpdatePendingAuctions();
+    void Update();
 
-        void AddAItem(Item* it);
-        bool RemoveAItem(ObjectGuid::LowType id, bool deleteItem = false, CharacterDatabaseTransaction* trans = nullptr);
-        bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
-        uint32 PendingAuctionCount(Player const* player) const;
-        void PendingAuctionProcess(Player* player);
-        void UpdatePendingAuctions();
-        void Update();
+    void ProcessSearchResponses();
+    void QueueSearchRequest(std::unique_ptr<AuctionMessage> message);
+    void AddAuction(AuctionEntry const* auctionEntry);
+    void RemoveAuction(AuctionEntry const* auctionEntry);
+    void UpdateBid(AuctionEntry const* auctionEntry);
 
-        void ProcessSearchResponses();
-        void QueueSearchRequest(std::unique_ptr<AuctionMessage> message);
-        void AddAuction(AuctionEntry const* auctionEntry);
-        void RemoveAuction(AuctionEntry const* auctionEntry);
-        void UpdateBid(AuctionEntry const* auctionEntry);
+    void NotifyAllWorkers(std::unique_ptr<AuctionMessage> message);
+    void NotifyOneWorker(std::unique_ptr<AuctionMessage> message);
 
-        void NotifyAllWorkers(std::unique_ptr<AuctionMessage> message);
-        void NotifyOneWorker(std::unique_ptr<AuctionMessage> message);
+private:
+    AuctionHouseObject mHordeAuctions;
+    AuctionHouseObject mAllianceAuctions;
+    AuctionHouseObject mNeutralAuctions;
 
-    private:
+    std::map<ObjectGuid, AuctionPair> pendingAuctionMap;
 
-        AuctionHouseObject mHordeAuctions;
-        AuctionHouseObject mAllianceAuctions;
-        AuctionHouseObject mNeutralAuctions;
+    ItemMap mAitems;
 
-        std::map<ObjectGuid, AuctionPair> pendingAuctionMap;
-
-        ItemMap mAitems;
-
-        SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
-        SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
-        std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
+    SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
+    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
+    std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()

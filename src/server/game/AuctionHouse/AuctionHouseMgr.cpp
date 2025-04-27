@@ -857,6 +857,7 @@ bool AuctionEntry::LoadFromDB(Field* fields)
 
     return true;
 }
+
 std::string AuctionEntry::BuildAuctionMailSubject(MailAuctionAnswers response) const
 {
     Item* item = sAuctionMgr->GetAItem(itemGUIDLow);
