@@ -21,7 +21,6 @@
 #include "World.h"
 
 #define MAX_AUCTIONS_PER_PAGE 50
-#define MAX_GETALL_RETURN 500
 
 AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionSearcherRequest>>* requestQueue,
                                                    SignalQueue<std::unique_ptr<AuctionSearcherResponse>>* responseQueue)
