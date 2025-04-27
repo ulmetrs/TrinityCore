@@ -22,9 +22,6 @@
 #include <vector>
 #include "AuctionHouseCommon.h"
 
-// Forward declaration
-class SearchableAuctionEntry;
-
 class AuctionSorter
 {
 public:
