@@ -33,7 +33,7 @@ void AuctionHouseWorkerThread::AddAuctionSearchUpdateToQueue(std::shared_ptr<Auc
     updateQueue_.send(update, workerThread_.get_stop_token());
 }
 
-void AuctionHouseWorkerThread::Run(std::stop_token stop = {}) {
+void AuctionHouseWorkerThread::Run(std::stop_token stop) {
     while (!stop.stop_requested()) {
         while (auto update = updateQueue_.receive(stop)) {
             ProcessSearchUpdate(*update);
