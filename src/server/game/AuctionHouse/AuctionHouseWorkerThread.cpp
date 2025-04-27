@@ -69,7 +69,7 @@ void AuctionHouseWorkerThread::ProcessSearchRequest(std::unique_ptr<AuctionSearc
             SearchOwnerListRequest(*static_cast<AuctionSearchOwnerListRequest*>(request.get()));
             break;
         case AuctionSearcherRequest::Type::BIDDER_LIST:
-            SearchBidderListRequest(*static_cast<AuctionSearchBidderListRequest>(request.get()));
+        SearchBidderListRequest(*static_cast<AuctionSearchBidderListRequest*>(request.get()));
             break;
         default:
             break;
