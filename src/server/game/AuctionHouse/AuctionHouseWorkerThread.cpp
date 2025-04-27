@@ -58,22 +58,22 @@ void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> me
     switch (message->type)
     {
         case AuctionMessage::Type::Add:
-            AddAuction(*static_cast<AddAuctionMessage*>(message));
+            AddAuction(*static_cast<AddAuctionMessage*>(message.get()));
             break;
         case AuctionMessage::Type::Remove:
-            RemoveAuction(*static_cast<RemoveAuctionMessage*>(message));
+            RemoveAuction(*static_cast<RemoveAuctionMessage*>(message.get()));
             break;
         case AuctionMessage::Type::UpdateBid:
-            UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(message));
+            UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(message.get()));
             break;
         case AuctionMessage::Type::List:
-            ListAuctions(*static_cast<ListAuctionMessage*>(message));
+            ListAuctions(*static_cast<ListAuctionMessage*>(message.get()));
             break;
         case AuctionMessage::Type::ListOwner:
-            ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(message));
+            ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(message.get()));
             break;
         case AuctionMessage::Type::ListBidder:
-            ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(message));
+            ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(message.get()));
             break;
         default:
             break;
