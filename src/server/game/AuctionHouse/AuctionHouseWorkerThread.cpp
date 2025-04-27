@@ -23,90 +23,77 @@
 
 #define MAX_AUCTIONS_PER_PAGE 50
 
-AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionSearcherRequest>>* requestQueue,
-                                                   SignalQueue<std::unique_ptr<AuctionSearcherResponse>>* responseQueue)
-    : requestQueue_(requestQueue), responseQueue_(responseQueue) {
+AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
+    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue): messageQueue_(messageQueue), responseQueue_(responseQueue)
+{
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
 }
 
-void AuctionHouseWorkerThread::AddAuctionSearchUpdateToQueue(std::shared_ptr<AuctionSearcherUpdate> const update) {
-    updateQueue_.send(update, workerThread_.get_stop_token());
+AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
+{
+    messageQueue_->close();
+    responseQueue_->close();
+    if (workerThread_.joinable()) {
+        workerThread_.join();
+    }
+}
+
+void AuctionHouseWorkerThread::AddAuctionMessage(std::unique_ptr<AuctionMessage> message)
+{
+    messageQueue_->send(std::move(message), workerThread_.get_stop_token());
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop) {
-    TC_LOG_DEBUG("auctionHouse", "AuctionHouseWorkerThread Running");
     while (!stop.stop_requested()) {
-        bool processed = false;
-
-        // Check for an update
-        if (auto update = updateQueue_.try_receive()) {
-            ProcessSearchUpdate(*update);
-            processed = true;
-        }
-
-        // Check for a request
-        if (auto request = requestQueue_->try_receive()) {
-            ProcessSearchRequest(std::move(*request));
-            processed = true;
-        }
-
-        // If no work was processed, sleep briefly to avoid busy-waiting
-        if (!processed) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if (auto message = messageQueue_->receive(stop)) {
+            ProcessMessage(std::move(*message));
         }
     }
 }
 
-void AuctionHouseWorkerThread::ProcessSearchUpdate(std::shared_ptr<AuctionSearcherUpdate> const& update) {
-    switch (update->updateType) {
-        case AuctionSearcherUpdate::Type::ADD:
-            SearchUpdateAdd(*std::static_pointer_cast<AuctionSearchAdd>(update).get());
+void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> message) {
+    switch (message->type) {
+        case AuctionMessage::Type::Add:
+            AddAuction(*static_cast<AddAuctionMessage*>(message));
             break;
-        case AuctionSearcherUpdate::Type::REMOVE:
-            SearchUpdateRemove(*std::static_pointer_cast<AuctionSearchRemove>(update).get());
+        case AuctionMessage::Type::Remove:
+            RemoveAuction(*static_cast<RemoveAuctionMessage*>(message));
             break;
-        case AuctionSearcherUpdate::Type::UPDATE_BID:
-            SearchUpdateBid(*std::static_pointer_cast<AuctionSearchUpdateBid>(update).get());
+        case AuctionMessage::Type::UpdateBid:
+            UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(message));
+            break;
+        case AuctionMessage::Type::List:
+            ListAuctions(*static_cast<ListAuctionMessage*>(message));
+            break;
+        case AuctionMessage::Type::ListOwner:
+            ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(message));
+            break;
+        case AuctionMessage::Type::ListBidder:
+            ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(message));
             break;
         default:
             break;
     }
 }
 
-void AuctionHouseWorkerThread::ProcessSearchRequest(std::unique_ptr<AuctionSearcherRequest> request) {
-    switch (request->requestType) {
-        case AuctionSearcherRequest::Type::LIST:
-            SearchListRequest(*static_cast<AuctionSearchListRequest*>(request.get()));
-            break;
-        case AuctionSearcherRequest::Type::OWNER_LIST:
-            SearchOwnerListRequest(*static_cast<AuctionSearchOwnerListRequest*>(request.get()));
-            break;
-        case AuctionSearcherRequest::Type::BIDDER_LIST:
-            SearchBidderListRequest(*static_cast<AuctionSearchBidderListRequest*>(request.get()));
-            break;
-        default:
-            break;
-    }
-}
-
-void AuctionHouseWorkerThread::SearchUpdateAdd(AuctionSearchAdd const& auctionAdd)
+void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& auctionAdd)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchUpdateAdd Called");
+    TC_LOG_DEBUG("auctionHouse", "AddAuction {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionAdd.listFaction);
     searchableAuctionMap.insert(std::make_pair(auctionAdd.searchableAuctionEntry->Id, auctionAdd.searchableAuctionEntry));
 }
 
-void AuctionHouseWorkerThread::SearchUpdateRemove(AuctionSearchRemove const& auctionRemove)
+void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& auctionRemove)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchUpdateRemove Called");
+    TC_LOG_DEBUG("auctionHouse", "RemoveAuction {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionRemove.listFaction);
     searchableAuctionMap.erase(auctionRemove.auctionId);
 }
 
-void AuctionHouseWorkerThread::SearchUpdateBid(AuctionSearchUpdateBid const& auctionUpdateBid)
+void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& auctionUpdateBid)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchUpdateBid Called");
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(auctionUpdateBid.listFaction);
+    TC_LOG_DEBUG("auctionHouse", "UpdateAuctionBid {}", GameTime::GetGameTimeMS());
+    SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionUpdateBid.listFaction);
     SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionUpdateBid.auctionId);
     if (itr != searchableAuctionMap.end())
     {
@@ -115,13 +102,13 @@ void AuctionHouseWorkerThread::SearchUpdateBid(AuctionSearchUpdateBid const& auc
     }
 }
 
-void AuctionHouseWorkerThread::SearchListRequest(AuctionSearchListRequest const& searchListRequest)
+void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& searchListRequest)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchListRequest Called {}", GameTime::GetGameTimeMS());
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchListRequest.listFaction);
+    TC_LOG_DEBUG("auctionHouse", "ListAuctions Called {}", GameTime::GetGameTimeMS());
+    SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(searchListRequest.listFaction);
     uint32 count = 0, totalCount = 0;
 
-    auto searchResponse = std::make_unique<AuctionSearcherResponse>();
+    auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
     searchResponse->playerGuid = searchListRequest.playerInfo.playerGuid;
     searchResponse->packet.Initialize(SMSG_AUCTION_LIST_RESULT, (4 + 4 + 4));
     searchResponse->packet << (uint32)0;
@@ -175,83 +162,7 @@ void AuctionHouseWorkerThread::SearchListRequest(AuctionSearchListRequest const&
     responseQueue_->send(std::move(searchResponse));
 }
 
-void AuctionHouseWorkerThread::SearchOwnerListRequest(AuctionSearchOwnerListRequest const& searchOwnerListRequest)
-{
-    TC_LOG_DEBUG("auctionHouse", "SearchOwnerListRequest Called {}", GameTime::GetGameTimeMS());
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchOwnerListRequest.listFaction);
-
-    auto searchResponse = std::make_unique<AuctionSearcherResponse>();
-    searchResponse->playerGuid = searchOwnerListRequest.ownerGuid;
-    searchResponse->packet.Initialize(SMSG_AUCTION_OWNER_LIST_RESULT, (4 + 4 + 4));
-    searchResponse->packet << (uint32)0;
-
-    uint32 count = 0;
-    uint32 totalcount = 0;
-
-    for (auto const& pair : searchableAuctionMap)
-    {
-        if (pair.second->ownerGuid != searchOwnerListRequest.ownerGuid)
-            continue;
-
-        std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
-        ++count;
-        ++totalcount;
-    }
-
-    searchResponse->packet.put<uint32>(0, count);
-    searchResponse->packet << (uint32)totalcount;
-    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
-
-    TC_LOG_DEBUG("auctionHouse", "SearchOwnerListRequest Queueing Response {}", GameTime::GetGameTimeMS());
-    responseQueue_->send(std::move(searchResponse));
-}
-
-void AuctionHouseWorkerThread::SearchBidderListRequest(AuctionSearchBidderListRequest const& searchBidderListRequest)
-{
-    TC_LOG_DEBUG("auctionHouse", "SearchBidderListRequest Called {}", GameTime::GetGameTimeMS());
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchBidderListRequest.listFaction);
-
-    auto searchResponse = std::make_unique<AuctionSearcherResponse>();
-    searchResponse->playerGuid = searchBidderListRequest.ownerGuid;
-    searchResponse->packet.Initialize(SMSG_AUCTION_BIDDER_LIST_RESULT, (4 + 4 + 4));
-    searchResponse->packet << (uint32)0;                                     //add 0 as count
-
-    uint32 count = 0;
-    uint32 totalcount = 0;
-
-    for (uint32 const auctionId : searchBidderListRequest.outbiddedAuctionIds)
-    {
-        SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionId);
-        if (itr == searchableAuctionMap.end())
-            continue;
-
-        std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = itr->second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
-        ++count;
-        ++totalcount;
-    }
-
-    for (auto const& pair : searchableAuctionMap)
-    {
-        if (pair.second->bidderGuid != searchBidderListRequest.ownerGuid)
-            continue;
-
-        std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
-        ++count;
-        ++totalcount;
-    }
-
-    searchResponse->packet.put<uint32>(0, count);
-    searchResponse->packet << totalcount;
-    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
-
-    TC_LOG_DEBUG("auctionHouse", "SearchBidderListRequest Queueing Response {}", GameTime::GetGameTimeMS());
-    responseQueue_->send(std::move(searchResponse));
-}
-
-void AuctionHouseWorkerThread::BuildListAuctionItems(AuctionSearchListRequest const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
+void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
 {
     TC_LOG_DEBUG("auctionHouse", "BuildListAuctionItems Called {}", GameTime::GetGameTimeMS());
     // pussywizard: optimization, this is a simplified case for the default search state (no filters)
@@ -308,4 +219,80 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(AuctionSearchListRequest co
 
         auctionEntries.push_back(Aentry.get());
     }
+}
+
+void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& searchBidderListRequest)
+{
+    TC_LOG_DEBUG("auctionHouse", "ListBidderAuctions Called {}", GameTime::GetGameTimeMS());
+    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchBidderListRequest.listFaction);
+
+    auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
+    searchResponse->playerGuid = searchBidderListRequest.ownerGuid;
+    searchResponse->packet.Initialize(SMSG_AUCTION_BIDDER_LIST_RESULT, (4 + 4 + 4));
+    searchResponse->packet << (uint32)0;                                     //add 0 as count
+
+    uint32 count = 0;
+    uint32 totalcount = 0;
+
+    for (uint32 const auctionId : searchBidderListRequest.outbiddedAuctionIds)
+    {
+        SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionId);
+        if (itr == searchableAuctionMap.end())
+            continue;
+
+        std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = itr->second;
+        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        ++count;
+        ++totalcount;
+    }
+
+    for (auto const& pair : searchableAuctionMap)
+    {
+        if (pair.second->bidderGuid != searchBidderListRequest.ownerGuid)
+            continue;
+
+        std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
+        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        ++count;
+        ++totalcount;
+    }
+
+    searchResponse->packet.put<uint32>(0, count);
+    searchResponse->packet << totalcount;
+    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
+
+    TC_LOG_DEBUG("auctionHouse", "ListBidderAuctions Queueing Response {}", GameTime::GetGameTimeMS());
+    responseQueue_->send(std::move(searchResponse));
+}
+
+void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& searchOwnerListRequest)
+{
+    TC_LOG_DEBUG("auctionHouse", "ListOwnerAuctions Called {}", GameTime::GetGameTimeMS());
+    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchOwnerListRequest.listFaction);
+
+    auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
+    searchResponse->playerGuid = searchOwnerListRequest.ownerGuid;
+    searchResponse->packet.Initialize(SMSG_AUCTION_OWNER_LIST_RESULT, (4 + 4 + 4));
+    searchResponse->packet << (uint32)0;
+
+    uint32 count = 0;
+    uint32 totalcount = 0;
+
+    for (auto const& pair : searchableAuctionMap)
+    {
+        if (pair.second->ownerGuid != searchOwnerListRequest.ownerGuid)
+            continue;
+
+        std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
+        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        ++count;
+        ++totalcount;
+    }
+
+    searchResponse->packet.put<uint32>(0, count);
+    searchResponse->packet << (uint32)totalcount;
+    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
+
+    TC_LOG_DEBUG("auctionHouse", "ListOwnerAuctions Queueing Response {}", GameTime::GetGameTimeMS());
+    responseQueue_->send(std::move(searchResponse));
 }

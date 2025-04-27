@@ -138,94 +138,81 @@ struct AuctionHouseSearchInfo
 
 typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
 
-struct AuctionSearcherRequest
+struct AuctionMessage
 {
     enum class Type : uint8
     {
-        LIST,
-        OWNER_LIST,
-        BIDDER_LIST
+        Add,
+        Remove,
+        UpdateBid
+        List,
+        OwnerList,
+        BidderList,
     };
 
-    AuctionSearcherRequest(Type const _requestType, uint8 _listFaction) : requestType(_requestType), listFaction(_listFaction) {}
-    virtual ~AuctionSearcherRequest() = default;
+    AuctionMessage(Type const _type, uint8 _listFaction) : type(_type), listFaction(_listFaction) {}
+    virtual ~AuctionMessage() = default;
 
-    Type requestType;
+    Type type;
     uint8 listFaction;
 };
 
-struct AuctionSearchListRequest : AuctionSearcherRequest
+struct AddAuctionMessage : AuctionMessage
 {
-    AuctionSearchListRequest(uint8 _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
-        : AuctionSearcherRequest(AuctionSearcherRequest::Type::LIST, _listFaction), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
+    AddAuctionMessage(std::shared_ptr<SearchableAuctionEntry> _searchableAuctionEntry)
+        : AuctionMessage(AuctionMessage::Type::Add, _searchableAuctionEntry->listFaction), searchableAuctionEntry(_searchableAuctionEntry) {}
+
+    std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry;
+};
+
+struct RemoveAuctionMessage : AuctionMessage
+{
+    RemoveAuctionMessage(uint32 _auctionId, AuctionHouseFaction _listFaction)
+        : AuctionMessage(AuctionMessage::Type::Remove, _listFaction), auctionId(_auctionId) {}
+
+    uint32 auctionId;
+};
+
+struct UpdateAuctionBidMessage : AuctionMessage
+{
+    UpdateAuctionBidMessage(uint32 _auctionId, AuctionHouseFaction _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
+        : AuctionMessage(AuctionMessage::Type::UpdateBid, _listFaction), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
+
+    uint32 auctionId;
+    uint32 bid;
+    ObjectGuid bidderGuid;
+};
+
+struct ListAuctionMessage : AuctionMessage
+{
+    ListAuctionMessage(AuctionHouseFaction _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
+        : AuctionMessage(AuctionMessage::Type::List, _listFaction), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
 
     AuctionHouseSearchInfo searchInfo;
     AuctionHousePlayerInfo playerInfo;
 };
 
-struct AuctionSearchOwnerListRequest : AuctionSearcherRequest
+struct ListOwnerAuctionMessage : AuctionMessage
 {
-    AuctionSearchOwnerListRequest(uint8 _listFaction, ObjectGuid _ownerGuid)
-        : AuctionSearcherRequest(AuctionSearcherRequest::Type::OWNER_LIST, _listFaction), ownerGuid(_ownerGuid) {}
+    ListOwnerAuctionMessage(AuctionHouseFaction _listFaction, ObjectGuid _ownerGuid)
+        : AuctionMessage(AuctionMessage::Type::OwnerList, _listFaction), ownerGuid(_ownerGuid) {}
 
     ObjectGuid ownerGuid;
 };
 
-struct AuctionSearchBidderListRequest : AuctionSearcherRequest
+struct ListBidderAuctionMessage : AuctionMessage
 {
-    AuctionSearchBidderListRequest(uint8 _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
-        : AuctionSearcherRequest(AuctionSearcherRequest::Type::BIDDER_LIST, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
+    ListBidderAuctionMessage(AuctionHouseFaction _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
+        : AuctionMessage(AuctionMessage::Type::BidderList, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
 
     std::vector<uint32> outbiddedAuctionIds;
     ObjectGuid ownerGuid;
 };
 
-struct AuctionSearcherResponse
+struct ListAuctionMessageResponse
 {
     ObjectGuid playerGuid;
     WorldPacket packet;
-};
-
-struct AuctionSearcherUpdate
-{
-    enum class Type : uint8
-    {
-        ADD,
-        REMOVE,
-        UPDATE_BID
-    };
-
-    AuctionSearcherUpdate(Type const _updateType, uint8 _listFaction) : updateType(_updateType), listFaction(_listFaction) {}
-    virtual ~AuctionSearcherUpdate() = default;
-
-    Type updateType;
-    uint8 listFaction;
-};
-
-struct AuctionSearchAdd : AuctionSearcherUpdate
-{
-    AuctionSearchAdd(std::shared_ptr<SearchableAuctionEntry> _searchableAuctionEntry)
-        : AuctionSearcherUpdate(AuctionSearcherUpdate::Type::ADD, _searchableAuctionEntry->listFaction), searchableAuctionEntry(_searchableAuctionEntry) {}
-
-    std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry;
-};
-
-struct AuctionSearchRemove : AuctionSearcherUpdate
-{
-    AuctionSearchRemove(uint32 _auctionId, uint8 _listFaction)
-        : AuctionSearcherUpdate(AuctionSearcherUpdate::Type::REMOVE, _listFaction), auctionId(_auctionId) {}
-
-    uint32 auctionId;
-};
-
-struct AuctionSearchUpdateBid : AuctionSearcherUpdate
-{
-    AuctionSearchUpdateBid(uint32 _auctionId, uint8 _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
-        : AuctionSearcherUpdate(AuctionSearcherUpdate::Type::UPDATE_BID, _listFaction), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
-
-    uint32 auctionId;
-    uint32 bid;
-    ObjectGuid bidderGuid;
 };
 
 typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;

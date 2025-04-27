@@ -45,7 +45,7 @@ enum eAuctionHouse
 
 AuctionHouseMgr::AuctionHouseMgr() {
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTIONHOUSE_WORKERTHREADS); ++i) {
-        workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&requestQueue_, &responseQueue_));
+        workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&messageQueue_, &responseQueue_));
     }
 }
 
@@ -54,7 +54,7 @@ AuctionHouseMgr::~AuctionHouseMgr()
     for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
         delete itr->second;
 
-    requestQueue_.close();
+    messageQueue_.close();
     responseQueue_.close();
 }
 
@@ -614,8 +614,10 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(uint8 ho
     return (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION)) ? sAuctionHouseStore.LookupEntry(AUCTIONHOUSE_NEUTRAL) : sAuctionHouseStore.LookupEntry(houseId);
 }
 
-void AuctionHouseMgr::ProcessSearchResponses() {
-    while (auto response = responseQueue_.try_receive()) {
+void AuctionHouseMgr::ProcessSearchResponses()
+{
+    while (auto response = responseQueue_.try_receive())
+    {
         TC_LOG_DEBUG("auctionHouse", "Received Response from Queue, Sending to Player {}", GameTime::GetGameTimeMS());
         if (Player* player = ObjectAccessor::FindConnectedPlayer((*response)->playerGuid))
         {
@@ -626,8 +628,9 @@ void AuctionHouseMgr::ProcessSearchResponses() {
     }
 }
 
-void AuctionHouseMgr::QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo) {
-    requestQueue_.send(std::move(searchRequestInfo));
+void AuctionHouseSearcher::QueueSearchRequest(std::unique_ptr<AuctionMessage> message)
+{
+    messageQueue_.send(std::move(message));
 }
 
 void AuctionHouseMgr::AddAuction(AuctionEntry const* auctionEntry)
@@ -669,13 +672,15 @@ void AuctionHouseMgr::AddAuction(AuctionEntry const* auctionEntry)
 
     searchableAuctionEntry->SetItemNames();
 
-    NotifyAllWorkers(std::make_shared<AuctionSearchAdd>(searchableAuctionEntry));
+    auto message = std::make_unique<AddAuctionMessage>(searchableAuctionEntry);
+    NotifyAllWorkers(std::move(message));
 }
 
 void AuctionHouseMgr::RemoveAuction(AuctionEntry const* auctionEntry)
 {
     TC_LOG_DEBUG("auctionHouse", "Removing Auction");
-    NotifyAllWorkers(std::make_shared<AuctionSearchRemove>(auctionEntry->Id, auctionEntry->GetFactionId()));
+    auto message = std::make_unique<RemoveAuctionMessage>(auctionEntry->Id, auctionEntry->GetFactionId());
+    NotifyAllWorkers(std::move(message));
 }
 
 void AuctionHouseMgr::UpdateBid(AuctionEntry const* auctionEntry)
@@ -684,19 +689,21 @@ void AuctionHouseMgr::UpdateBid(AuctionEntry const* auctionEntry)
     // Updating bids is a bit unique, we really only need to update a single worker as every worker thread contains
     // a map of shared pointers to the same SearchableAuctionEntry's, so updating one will update them all.
     ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
-    NotifyOneWorker(std::make_shared<AuctionSearchUpdateBid>(auctionEntry->Id, auctionEntry->GetFactionId(), auctionEntry->bid, bidderGuid));
+    auto message = std::make_unique<UpdateAuctionBidMessage>(auctionEntry->Id, auctionEntry->GetFactionId(), auctionEntry->bid, bidderGuid);
+    NotifyOneWorker(std::move(message));
 }
 
-void AuctionHouseMgr::NotifyAllWorkers(std::shared_ptr<AuctionSearcherUpdate> const update) {
-    for (auto const& worker : workerThreads_) {
-        TC_LOG_DEBUG("auctionHouse", "Notify All Workers");
-        worker->AddAuctionSearchUpdateToQueue(update);
+void AuctionHouseSearcher::NotifyAllWorkers(std::unique_ptr<AuctionMessage> message)
+{
+    for (auto const& worker : workerThreads_)
+    {
+        worker->AddAuctionMessage(std::make_unique<AuctionMessage>(*message));
     }
 }
 
-void AuctionHouseMgr::NotifyOneWorker(std::shared_ptr<AuctionSearcherUpdate> const update) {
-    TC_LOG_DEBUG("auctionHouse", "Notify One Worker");
-    workerThreads_.front()->AddAuctionSearchUpdateToQueue(update);
+void AuctionHouseSearcher::NotifyOneWorker(std::unique_ptr<AuctionMessage> message)
+{
+    workerThreads_.front()->AddAuctionMessage(std::move(message));
 }
 
 void AuctionHouseObject::AddAuction(AuctionEntry* auction)

@@ -203,13 +203,13 @@ class TC_GAME_API AuctionHouseMgr
         void Update();
 
         void ProcessSearchResponses();
-        void QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo);
+        void QueueSearchRequest(std::unique_ptr<AuctionMessage> message);
         void AddAuction(AuctionEntry const* auctionEntry);
         void RemoveAuction(AuctionEntry const* auctionEntry);
         void UpdateBid(AuctionEntry const* auctionEntry);
 
-        void NotifyAllWorkers(std::shared_ptr<AuctionSearcherUpdate> const update);
-        void NotifyOneWorker(std::shared_ptr<AuctionSearcherUpdate> const update);
+        void NotifyAllWorkers(std::unique_ptr<AuctionMessage> message);
+        void NotifyOneWorker(std::unique_ptr<AuctionMessage> message);
 
     private:
 
@@ -221,8 +221,8 @@ class TC_GAME_API AuctionHouseMgr
 
         ItemMap mAitems;
 
-        SignalQueue<std::unique_ptr<AuctionSearcherRequest>> requestQueue_;
-        SignalQueue<std::unique_ptr<AuctionSearcherResponse>> responseQueue_;
+        SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
+        SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
         std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
 };
 

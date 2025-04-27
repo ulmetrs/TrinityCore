@@ -62,6 +62,5 @@ void SignalQueue<T>::close() {
 }
 
 // Explicit template instantiations
-template class SignalQueue<std::unique_ptr<AuctionSearcherRequest>>;
-template class SignalQueue<std::unique_ptr<AuctionSearcherResponse>>;
-template class SignalQueue<std::shared_ptr<AuctionSearcherUpdate>>;
+template class SignalQueue<std::unique_ptr<AuctionMessage>>;
+template class SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>;

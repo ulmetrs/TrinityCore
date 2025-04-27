@@ -22,35 +22,34 @@
 #include "AuctionHouseCommon.h"
 #include <memory>
 #include <thread>
+#include <shared_mutex>
 #include <unordered_map>
 
 class AuctionHouseWorkerThread
 {
 public:
-    AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionSearcherRequest>>* requestQueue,
-                            SignalQueue<std::unique_ptr<AuctionSearcherResponse>>* responseQueue);
-    void AddAuctionSearchUpdateToQueue(std::shared_ptr<AuctionSearcherUpdate> const update);
+    AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
+        SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue);
+    ~AuctionHouseWorkerThread();
+    void AddAuctionMessage(std::unique_ptr<AuctionMessage> message);
 
 private:
-void Run(std::stop_token stop);
-    void ProcessSearchUpdate(std::shared_ptr<AuctionSearcherUpdate> const& update);
-    void ProcessSearchRequest(std::unique_ptr<AuctionSearcherRequest> request);
+    void Run(std::stop_token stop);
+    void ProcessMessage(std::unique_ptr<AuctionMessage> message);
+    void AddAuction(AddAuctionMessage const& message);
+    void RemoveAuction(RemoveAuctionMessage const& message);
+    void UpdateAuctionBid(UpdateAuctionBidMessage const& message);
+    void ListAuctions(ListAuctionMessage const& message);
+    void BuildListAuctionItems(ListAuctionMessage const& message, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const;
+    void ListBidderAuctions(ListBidderAuctionMessage const& message);
+    void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    void SearchUpdateAdd(AuctionSearchAdd const& auctionAdd);
-    void SearchUpdateRemove(AuctionSearchRemove const& auctionRemove);
-    void SearchUpdateBid(AuctionSearchUpdateBid const& auctionUpdateBid);
-    void SearchListRequest(AuctionSearchListRequest const& searchListRequest);
-    void SearchOwnerListRequest(AuctionSearchOwnerListRequest const& searchOwnerListRequest);
-    void SearchBidderListRequest(AuctionSearchBidderListRequest const& searchBidderListRequest);
-    void BuildListAuctionItems(AuctionSearchListRequest const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const;
-
-    SearchableAuctionEntriesMap& GetSearchableAuctionMap(uint8 faction) { return _searchableAuctionMap[faction]; }
+    SearchableAuctionEntriesMap& GetSearchableAuctionMap(AuctionHouseFaction faction) { return _searchableAuctionMap[static_cast<uint8>(faction)]; }
 
     SearchableAuctionEntriesMap _searchableAuctionMap[AUCTION_FACTION_MAX];
     std::jthread workerThread_;
-    SignalQueue<std::unique_ptr<AuctionSearcherRequest>>* requestQueue_;
-    SignalQueue<std::unique_ptr<AuctionSearcherResponse>>* responseQueue_;
-    SignalQueue<std::shared_ptr<AuctionSearcherUpdate>> updateQueue_;
+    SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue_;
+    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue_;
 };
 
 #endif // AUCTION_HOUSE_WORKER_THREAD_H
