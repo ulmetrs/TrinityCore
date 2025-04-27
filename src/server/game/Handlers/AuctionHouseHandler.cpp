@@ -18,6 +18,8 @@
 #include "WorldSession.h"
 #include "AccountMgr.h"
 #include "AuctionHouseMgr.h"
+#include "AuctionHouseSearcher.h"
+#include "AuctionSorter.h"
 #include "CharacterCache.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
@@ -515,6 +517,9 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
 
         auction->bidder = player->GetGUID().GetCounter();
         auction->bid = price;
+
+        sAuctionMgr->GetAuctionHouseSearcher()->UpdateBid(auction);
+
         if (HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
             auction->Flags = AuctionEntryFlag(auction->Flags | AUCTION_ENTRY_FLAG_GM_LOG_BUYER);
         else
@@ -681,35 +686,33 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
         return;
     }
 
+    // Arbitrary cap, can be adjusted if needed
+    if (outbiddedCount > 1000)
+        return;
+
     // remove fake death
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(creature->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryFromFactionTemplate(creature->GetFaction());
+    if (!ahEntry)
+        return;
 
-    WorldPacket data(SMSG_AUCTION_BIDDER_LIST_RESULT, (4+4+4));
-    Player* player = GetPlayer();
-    data << (uint32) 0;                                     //add 0 as count
-    uint32 count = 0;
-    uint32 totalcount = 0;
-    while (outbiddedCount > 0)                             //add all data, which client requires
+    AuctionHouseFaction auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(AuctionHouseId(ahEntry->houseId));
+
+    // Client sends this list, which I'm honestly not entirely sure why?
+    std::vector<uint32> auctionIds;
+    auctionIds.reserve(outbiddedCount);
+    while (outbiddedCount > 0) //add all data, which client requires
     {
         --outbiddedCount;
         uint32 outbiddedAuctionId;
         recvData >> outbiddedAuctionId;
-        AuctionEntry* auction = auctionHouse->GetAuction(outbiddedAuctionId);
-        if (auction && auction->BuildAuctionInfo(data))
-        {
-            ++totalcount;
-            ++count;
-        }
+        auctionIds.push_back(outbiddedAuctionId);
     }
 
-    auctionHouse->BuildListBidderItems(data, player, count, totalcount);
-    data.put<uint32>(0, count);                           // add count to placeholder
-    data << totalcount;
-    data << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
-    SendPacket(&data);
+    auto request = std::make_unique<AuctionSearchBidderListRequest>(auctionHouseFaction, std::move(auctionIds), GetPlayer()->GetGUID());
+    sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
 }
 
 //this void sends player info about his auctions
@@ -734,19 +737,14 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(creature->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryFromFactionTemplate(creature->GetFaction());
+    if (!ahEntry)
+        return;
 
-    WorldPacket data(SMSG_AUCTION_OWNER_LIST_RESULT, (4+4+4));
-    data << (uint32) 0;                                     // amount place holder
+    AuctionHouseFaction auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(AuctionHouseId(ahEntry->houseId));
 
-    uint32 count = 0;
-    uint32 totalcount = 0;
-
-    auctionHouse->BuildListOwnerItems(data, _player, count, totalcount);
-    data.put<uint32>(0, count);
-    data << (uint32) totalcount;
-    data << (uint32) sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
-    SendPacket(&data);
+    auto request = std::make_unique<AuctionSearchOwnerListRequest>(auctionHouseFaction, GetPlayer()->GetGUID());
+    sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
 }
 
 //this void is called when player clicks on search button
@@ -769,14 +767,32 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
 
     recvData >> getAll;
 
-    // this block looks like it uses some lame byte packing or similar...
-    uint8 unkCnt;
-    recvData >> unkCnt;
-    for (uint8 i = 0; i < unkCnt; i++)
+    // Read sort block
+    uint8 sortOrderCount;
+    recvData >> sortOrderCount;
+
+    if (sortOrderCount > AUCTION_SORT_MAX)
+        return;
+
+    AuctionSortOrderVector sortOrder;
+    for (uint8 i = 0; i < sortOrderCount; i++)
     {
-        recvData.read_skip<uint8>();
-        recvData.read_skip<uint8>();
+        uint8 sortMode;
+        uint8 isDesc;
+        recvData >> sortMode;
+        recvData >> isDesc;
+        AuctionSortInfo sortInfo;
+        sortInfo.isDesc = (isDesc == 1);
+        sortInfo.sortOrder = static_cast<AuctionSortOrder>(sortMode);
+        sortOrder.push_back(std::move(sortInfo));
     }
+
+    // converting string that we try to find to lower case
+    std::wstring wsearchedname;
+    if (!Utf8toWStr(searchedname, wsearchedname))
+        return;
+
+    wstrToLower(wsearchedname);
 
     Creature* creature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_AUCTIONEER);
     if (!creature)
@@ -789,32 +805,54 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(creature->GetFaction());
-
     TC_LOG_DEBUG("auctionHouse", "Auctionhouse search ({}) list from: {}, searchedname: {}, levelmin: {}, levelmax: {}, auctionSlotID: {}, auctionMainCategory: {}, auctionSubCategory: {}, quality: {}, usable: {}",
         guid.ToString(), listfrom, searchedname, levelmin, levelmax, auctionSlotID, auctionMainCategory, auctionSubCategory, quality, usable);
 
-    WorldPacket data(SMSG_AUCTION_LIST_RESULT, (4+4+4));
-    uint32 count = 0;
-    uint32 totalcount = 0;
-    data << (uint32) 0;
-
-    // converting string that we try to find to lower case
-    std::wstring wsearchedname;
-    if (!Utf8toWStr(searchedname, wsearchedname))
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryFromFactionTemplate(creature->GetFaction());
+    if (!ahEntry)
         return;
 
-    wstrToLower(wsearchedname);
+    AuctionHouseFaction auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(AuctionHouseId(ahEntry->houseId));
 
-    auctionHouse->BuildListAuctionItems(data, _player,
-        wsearchedname, listfrom, levelmin, levelmax, usable,
-        auctionSlotID, auctionMainCategory, auctionSubCategory, quality,
-        count, totalcount, (getAll != 0 && sWorld->getIntConfig(CONFIG_AUCTION_GETALL_DELAY) != 0));
+    AuctionHouseSearchInfo ahSearchInfo;
+    ahSearchInfo.wsearchedname = wsearchedname;
+    ahSearchInfo.listfrom = listfrom;
+    ahSearchInfo.levelmin = levelmin;
+    ahSearchInfo.levelmax = levelmax;
+    ahSearchInfo.usable = usable;
+    ahSearchInfo.inventoryType = auctionSlotID;
+    ahSearchInfo.itemClass = auctionMainCategory;
+    ahSearchInfo.itemSubClass = auctionSubCategory;
+    ahSearchInfo.quality = quality;
+    ahSearchInfo.getAll = getAll;
+    ahSearchInfo.sorting = std::move(sortOrder);
 
-    data.put<uint32>(0, count);
-    data << (uint32) totalcount;
-    data << (uint32) sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
-    SendPacket(&data);
+    AuctionHousePlayerInfo ahPlayerInfo;
+    ahPlayerInfo.playerGuid = GetPlayer()->GetGUID();
+    ahPlayerInfo.faction = GetPlayer()->GetFaction();
+    ahPlayerInfo.loc_idx = GetPlayer()->GetSession()->GetSessionDbLocaleIndex();
+    ahPlayerInfo.locdbc_idx = GetPlayer()->GetSession()->GetSessionDbcLocale();
+    if (usable)
+    {
+        AuctionHouseUsablePlayerInfo usablePlayerInfo;
+        usablePlayerInfo.classMask = GetPlayer()->getClassMask();
+        usablePlayerInfo.raceMask = GetPlayer()->getRaceMask();
+        usablePlayerInfo.level = GetPlayer()->GetLevel();
+
+        SkillStatusMap const& skillMap = GetPlayer()->GetSkillStatusMap();
+        for (auto const& pair : skillMap)
+            usablePlayerInfo.skills.insert(std::make_pair(pair.first, GetPlayer()->GetSkillValue(pair.first)));
+
+        PlayerSpellMap const& spellMap = GetPlayer()->GetSpellMap();
+        for (auto const& pair : spellMap)
+        {
+            if (pair.second->State != PLAYERSPELL_REMOVED && pair.second->IsInSpec(GetPlayer()->GetActiveSpec()))
+                usablePlayerInfo.spells.insert(pair.first);
+        }
+        ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
+    }
+    auto request = std::make_unique<AuctionSearchListRequest>(auctionHouseFaction, std::move(ahSearchInfo), std::move(ahPlayerInfo));
+    sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
 }
 
 void WorldSession::HandleAuctionListPendingSales(WorldPacket& recvData)

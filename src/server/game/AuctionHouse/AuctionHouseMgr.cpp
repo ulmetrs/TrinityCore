@@ -16,6 +16,7 @@
  */
 
 #include "AuctionHouseMgr.h"
+#include "AuctionHouseSearcher.h"
 #include "AuctionHouseBot.h"
 #include "AccountMgr.h"
 #include "Bag.h"
@@ -41,12 +42,14 @@ enum eAuctionHouse
     AH_MINIMUM_DEPOSIT = 100
 };
 
-AuctionHouseMgr::AuctionHouseMgr() { }
+AuctionHouseMgr::AuctionHouseMgr() : _auctionHouseSearcher(new AuctionHouseSearcher()) { }
 
 AuctionHouseMgr::~AuctionHouseMgr()
 {
     for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
         delete itr->second;
+
+    delete _auctionHouseSearcher;
 }
 
 AuctionHouseMgr* AuctionHouseMgr::instance()
@@ -561,6 +564,7 @@ void AuctionHouseMgr::Update()
     mHordeAuctions.Update();
     mAllianceAuctions.Update();
     mNeutralAuctions.Update();
+    auctionHouseSearcher_->Update();
 }
 
 AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTemplateId)
@@ -596,12 +600,15 @@ void AuctionHouseObject::AddAuction(AuctionEntry* auction)
     ASSERT(auction);
 
     AuctionsMap[auction->Id] = auction;
+    sAuctionMgr->GetAuctionHouseSearcher()->AddAuction(auction);
+
     sScriptMgr->OnAuctionAdd(this, auction);
 }
 
 bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
 {
     bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
+    sAuctionMgr->GetAuctionHouseSearcher()->RemoveAuction(auction);
 
     sScriptMgr->OnAuctionRemove(this, auction);
 
@@ -618,15 +625,6 @@ void AuctionHouseObject::Update()
     // If storage is empty, no need to update. next == NULL in this case.
     if (AuctionsMap.empty())
         return;
-
-    // Clear expired throttled players
-    for (PlayerGetAllThrottleMap::const_iterator itr = GetAllThrottleMap.begin(); itr != GetAllThrottleMap.end();)
-    {
-        if (itr->second <= curTime)
-            itr = GetAllThrottleMap.erase(itr);
-        else
-            ++itr;
-    }
 
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
@@ -667,207 +665,6 @@ void AuctionHouseObject::Update()
 
     // Run DB changes
     CharacterDatabase.CommitTransaction(trans);
-}
-
-void AuctionHouseObject::BuildListBidderItems(WorldPacket& data, Player* player, uint32& count, uint32& totalcount)
-{
-    for (AuctionEntryMap::const_iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); ++itr)
-    {
-        AuctionEntry* Aentry = itr->second;
-        if (Aentry && Aentry->bidders.find(player->GetGUID()) != Aentry->bidders.end())
-        {
-            if (itr->second->BuildAuctionInfo(data))
-                ++count;
-
-            ++totalcount;
-        }
-    }
-}
-
-void AuctionHouseObject::BuildListOwnerItems(WorldPacket& data, Player* player, uint32& count, uint32& totalcount)
-{
-    for (AuctionEntryMap::const_iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); ++itr)
-    {
-        AuctionEntry* Aentry = itr->second;
-        if (Aentry && Aentry->owner == player->GetGUID().GetCounter())
-        {
-            if (Aentry->BuildAuctionInfo(data))
-                ++count;
-
-            ++totalcount;
-        }
-    }
-}
-
-void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player,
-    std::wstring const& wsearchedname, uint32 listfrom, uint8 levelmin, uint8 levelmax, uint8 usable,
-    uint32 inventoryType, uint32 itemClass, uint32 itemSubClass, uint32 quality,
-    uint32& count, uint32& totalcount, bool getall)
-{
-    LocaleConstant localeConstant = player->GetSession()->GetSessionDbLocaleIndex();
-    int locdbc_idx = player->GetSession()->GetSessionDbcLocale();
-
-    time_t curTime = GameTime::GetGameTime();
-
-    auto itr = GetAllThrottleMap.find(player->GetGUID());
-    time_t throttleTime = itr != GetAllThrottleMap.end() ? itr->second : curTime;
-
-    if (getall && throttleTime <= curTime)
-    {
-        for (AuctionEntryMap::const_iterator it = AuctionsMap.begin(); it != AuctionsMap.end(); ++it)
-        {
-            AuctionEntry* Aentry = it->second;
-            // Skip expired auctions
-            if (Aentry->expire_time < curTime)
-                continue;
-
-            Item* item = sAuctionMgr->GetAItem(Aentry->itemGUIDLow);
-            if (!item)
-                continue;
-
-            ++count;
-            ++totalcount;
-            Aentry->BuildAuctionInfo(data, item);
-
-            if (count >= MAX_GETALL_RETURN)
-                break;
-        }
-        GetAllThrottleMap[player->GetGUID()] = curTime + sWorld->getIntConfig(CONFIG_AUCTION_GETALL_DELAY);
-        return;
-    }
-
-    for (AuctionEntryMap::const_iterator it = AuctionsMap.begin(); it != AuctionsMap.end(); ++it)
-    {
-        AuctionEntry* Aentry = it->second;
-        // Skip expired auctions
-        if (Aentry->expire_time < curTime)
-            continue;
-
-        Item* item = sAuctionMgr->GetAItem(Aentry->itemGUIDLow);
-        if (!item)
-            continue;
-
-        ItemTemplate const* proto = item->GetTemplate();
-
-        if (itemClass != 0xffffffff && proto->Class != itemClass)
-            continue;
-
-        if (itemSubClass != 0xffffffff && proto->SubClass != itemSubClass)
-            continue;
-
-        if (inventoryType != 0xffffffff && proto->InventoryType != inventoryType)
-        {
-            // Cloth items can have INVTYPE_CHEST or INVTYPE_ROBE
-            if (!(inventoryType == INVTYPE_CHEST && proto->InventoryType == INVTYPE_ROBE))
-                continue;
-        }
-
-        if (quality != 0xffffffff && proto->Quality != quality)
-            continue;
-
-        if (levelmin != 0x00 && (proto->RequiredLevel < levelmin || (levelmax != 0x00 && proto->RequiredLevel > levelmax)))
-            continue;
-
-        if (usable != 0x00 && player->CanUseItem(item) != EQUIP_ERR_OK)
-            continue;
-
-        // Allow search by suffix (ie: of the Monkey) or partial name (ie: Monkey)
-        // No need to do any of this if no search term was entered
-        if (!wsearchedname.empty())
-        {
-            std::string name = proto->Name1;
-            if (name.empty())
-                continue;
-
-            // local name
-            if (localeConstant != LOCALE_enUS)
-                if (ItemLocale const* il = sObjectMgr->GetItemLocale(proto->ItemId))
-                    ObjectMgr::GetLocaleString(il->Name, localeConstant, name);
-
-            // DO NOT use GetItemEnchantMod(proto->RandomProperty) as it may return a result
-            //  that matches the search but it may not equal item->GetItemRandomPropertyId()
-            //  used in BuildAuctionInfo() which then causes wrong items to be listed
-            int32 propRefID = item->GetItemRandomPropertyId();
-
-            if (propRefID)
-            {
-                // Append the suffix to the name (ie: of the Monkey) if one exists
-                // These are found in ItemRandomSuffix.dbc and ItemRandomProperties.dbc
-                //  even though the DBC names seem misleading
-
-                std::array<char const*, 16> const* suffix = nullptr;
-
-                if (propRefID < 0)
-                {
-                    ItemRandomSuffixEntry const* itemRandSuffix = sItemRandomSuffixStore.LookupEntry(-propRefID);
-                    if (itemRandSuffix)
-                        suffix = &itemRandSuffix->Name;
-                }
-                else
-                {
-                    ItemRandomPropertiesEntry const* itemRandProp = sItemRandomPropertiesStore.LookupEntry(propRefID);
-                    if (itemRandProp)
-                        suffix = &itemRandProp->Name;
-                }
-
-                // dbc local name
-                if (suffix)
-                {
-                    // Append the suffix (ie: of the Monkey) to the name using localization
-                    // or default enUS if localization is invalid
-                    name += ' ';
-                    name += (*suffix)[locdbc_idx >= 0 ? locdbc_idx : LOCALE_enUS];
-                }
-            }
-
-            // Perform the search (with or without suffix)
-            if (!Utf8FitTo(name, wsearchedname))
-                continue;
-        }
-
-        // Add the item if no search term or if entered search term was found
-        if (count < 50 && totalcount >= listfrom)
-        {
-            ++count;
-            Aentry->BuildAuctionInfo(data, item);
-        }
-        ++totalcount;
-    }
-}
-
-//this function inserts to WorldPacket auction's data
-bool AuctionEntry::BuildAuctionInfo(WorldPacket& data, Item* sourceItem) const
-{
-    Item* item = (sourceItem) ? sourceItem : sAuctionMgr->GetAItem(itemGUIDLow);
-    if (!item)
-    {
-        TC_LOG_ERROR("misc", "AuctionEntry::BuildAuctionInfo: Auction {} has a non-existent item: {}", Id, itemGUIDLow);
-        return false;
-    }
-    data << uint32(Id);
-    data << uint32(item->GetEntry());
-
-    for (uint8 i = 0; i < MAX_INSPECTED_ENCHANTMENT_SLOT; ++i)
-    {
-        data << uint32(item->GetEnchantmentId(EnchantmentSlot(i)));
-        data << uint32(item->GetEnchantmentDuration(EnchantmentSlot(i)));
-        data << uint32(item->GetEnchantmentCharges(EnchantmentSlot(i)));
-    }
-
-    data << int32(item->GetItemRandomPropertyId());                 // Random item property id
-    data << uint32(item->GetItemSuffixFactor());                    // SuffixFactor
-    data << uint32(item->GetCount());                               // item->count
-    data << uint32(item->GetSpellCharges());                        // item->charge FFFFFFF
-    data << uint32(item->GetUInt32Value(ITEM_FIELD_FLAGS));         // item flags
-    data << uint64(owner);                                          // Auction->owner
-    data << uint32(startbid);                                       // Auction->startbid (not sure if useful)
-    data << uint32(bid ? GetAuctionOutBid() : 0);
-    // Minimal outbid
-    data << uint32(buyout);                                         // Auction->buyout
-    data << uint32((expire_time - GameTime::GetGameTime()) * IN_MILLISECONDS);   // time left
-    data << uint64(bidder);                                         // auction->bidder current
-    data << uint32(bid);                                            // current bid
-    return true;
 }
 
 uint32 AuctionEntry::GetAuctionCut() const

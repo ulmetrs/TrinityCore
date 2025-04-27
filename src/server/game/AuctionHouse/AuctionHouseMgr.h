@@ -29,6 +29,7 @@ class Item;
 class Player;
 class WorldPacket;
 struct AuctionHouseEntry;
+class AuctionHouseSearcher;
 
 #define MIN_AUCTION_TIME (12*HOUR)
 #define MAX_AUCTION_ITEMS 160
@@ -122,7 +123,6 @@ public:
     }
 
     typedef std::map<uint32, AuctionEntry*> AuctionEntryMap;
-    typedef std::unordered_map<ObjectGuid, time_t> PlayerGetAllThrottleMap;
 
     uint32 Getcount() const { return AuctionsMap.size(); }
 
@@ -140,21 +140,8 @@ public:
     bool RemoveAuction(AuctionEntry* auction);
 
     void Update();
-
-    void BuildListBidderItems(WorldPacket& data, Player* player, uint32& count, uint32& totalcount);
-    void BuildListOwnerItems(WorldPacket& data, Player* player, uint32& count, uint32& totalcount);
-    void BuildListAuctionItems(WorldPacket& data, Player* player,
-        std::wstring const& searchedname, uint32 listfrom, uint8 levelmin, uint8 levelmax, uint8 usable,
-        uint32 inventoryType, uint32 itemClass, uint32 itemSubClass, uint32 quality,
-        uint32& count, uint32& totalcount, bool getall = false);
-
 private:
     AuctionEntryMap AuctionsMap;
-
-    // Map of throttled players for GetAll, and throttle expiry time
-    // Stored here, rather than player object to maintain persistence after logout
-    PlayerGetAllThrottleMap GetAllThrottleMap;
-
 };
 
 class TC_GAME_API AuctionHouseMgr
@@ -193,6 +180,9 @@ class TC_GAME_API AuctionHouseMgr
         static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
         static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
         static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
+
+        AuctionHouseSearcher* GetAuctionHouseSearcher() { return auctionHouseSearcher_; }
+
     public:
 
         //load first auction items, because of check if item exists, when loading
@@ -216,6 +206,8 @@ class TC_GAME_API AuctionHouseMgr
         std::map<ObjectGuid, AuctionPair> pendingAuctionMap;
 
         ItemMap mAitems;
+
+        AuctionHouseSearcher* auctionHouseSearcher_;
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()
