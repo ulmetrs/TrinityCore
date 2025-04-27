@@ -15,8 +15,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SignalQueue.h"
-#include "AuctionHouseCommon.h"
+ #include "SignalQueue.h"
+ #include "AuctionHouseCommon.h"
+ #include "AuctionHouseMgr.h" // Ensure all auction-related types are available
 
 template<typename T>
 void SignalQueue<T>::send(T value, std::stop_token stop) {
