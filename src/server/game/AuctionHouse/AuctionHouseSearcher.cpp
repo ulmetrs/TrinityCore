@@ -47,7 +47,7 @@ void AuctionHouseSearcher::QueueSearchRequest(std::unique_ptr<AuctionSearcherReq
 
 void AuctionHouseSearcher::AddAuction(AuctionEntry const* auctionEntry)
 {
-    Item* item = sAuctionMgr->GetAItem(auctionEntry->item_guid);
+    Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow);
     if (!item)
         return;
 

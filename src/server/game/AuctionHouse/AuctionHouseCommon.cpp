@@ -41,7 +41,7 @@ void SearchableAuctionEntry::BuildAuctionInfo(WorldPacket& data) const
     data << uint32(0);                                              // item->flags (client doesnt do anything with it)
     data << ownerGuid;                                              // Auction->owner
     data << uint32(startbid);                                       // Auction->startbid (not sure if useful)
-    data << uint32(bid ? AuctionEntry::CalculateAuctionOutBid(bid) : 0);
+    data << uint32(bid ? AuctionEntry::GetAuctionOutBid(bid) : 0);
     // Minimal outbid
     data << uint32(buyout);                                         // Auction->buyout
     data << uint32((expire_time - GameTime::GetGameTime().count()) * IN_MILLISECONDS); // time left
