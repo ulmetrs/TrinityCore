@@ -168,7 +168,7 @@ struct AddAuctionMessage : AuctionMessage
 
 struct RemoveAuctionMessage : AuctionMessage
 {
-    RemoveAuctionMessage(uint32 _auctionId, AuctionHouseFaction _listFaction)
+    RemoveAuctionMessage(uint32 _auctionId, uint8 _listFaction)
         : AuctionMessage(AuctionMessage::Type::Remove, _listFaction), auctionId(_auctionId) {}
 
     uint32 auctionId;
@@ -176,7 +176,7 @@ struct RemoveAuctionMessage : AuctionMessage
 
 struct UpdateAuctionBidMessage : AuctionMessage
 {
-    UpdateAuctionBidMessage(uint32 _auctionId, AuctionHouseFaction _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
+    UpdateAuctionBidMessage(uint32 _auctionId, uint8 _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
         : AuctionMessage(AuctionMessage::Type::UpdateBid, _listFaction), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
 
     uint32 auctionId;
@@ -186,7 +186,7 @@ struct UpdateAuctionBidMessage : AuctionMessage
 
 struct ListAuctionMessage : AuctionMessage
 {
-    ListAuctionMessage(AuctionHouseFaction _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
+    ListAuctionMessage(uint8 _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
         : AuctionMessage(AuctionMessage::Type::List, _listFaction), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
 
     AuctionHouseSearchInfo searchInfo;
@@ -195,7 +195,7 @@ struct ListAuctionMessage : AuctionMessage
 
 struct ListOwnerAuctionMessage : AuctionMessage
 {
-    ListOwnerAuctionMessage(AuctionHouseFaction _listFaction, ObjectGuid _ownerGuid)
+    ListOwnerAuctionMessage(uint8 _listFaction, ObjectGuid _ownerGuid)
         : AuctionMessage(AuctionMessage::Type::ListOwner, _listFaction), ownerGuid(_ownerGuid) {}
 
     ObjectGuid ownerGuid;
@@ -203,7 +203,7 @@ struct ListOwnerAuctionMessage : AuctionMessage
 
 struct ListBidderAuctionMessage : AuctionMessage
 {
-    ListBidderAuctionMessage(AuctionHouseFaction _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
+    ListBidderAuctionMessage(uint8 _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
         : AuctionMessage(AuctionMessage::Type::ListBidder, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
 
     std::vector<uint32> outbiddedAuctionIds;
