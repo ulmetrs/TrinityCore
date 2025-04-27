@@ -45,7 +45,7 @@ void SearchableAuctionEntry::BuildAuctionInfo(WorldPacket& data) const
     data << uint32(bid ? AuctionHouseCommon::CalculateAuctionOutBid(bid) : 0);
     // Minimal outbid
     data << uint32(buyout);                                         // Auction->buyout
-    data << uint32((expire_time - GameTime::GetGameTime().count()) * IN_MILLISECONDS); // time left
+    data << uint32((expire_time - GameTime::GetGameTime()) * IN_MILLISECONDS); // time left
     data << bidderGuid;                                             // auction->bidder current
     data << uint32(bid);                                            // current bid
 }
