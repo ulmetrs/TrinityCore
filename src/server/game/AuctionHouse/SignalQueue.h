@@ -84,7 +84,7 @@ typename SignalQueue<T>::AnyItem SignalQueue<T>::receive_any(std::stop_token sto
             cv.notify_one();
         }
         queues->mutex_.unlock();
-    }(), ...));
+    }(), ...);
 
     return result;
 }
