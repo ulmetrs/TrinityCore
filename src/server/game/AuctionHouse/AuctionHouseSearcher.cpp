@@ -64,7 +64,8 @@ void AuctionHouseSearcher::AddAuction(AuctionEntry const* auctionEntry)
     searchableAuctionEntry->expire_time = auctionEntry->expire_time;
     searchableAuctionEntry->listFaction = auctionEntry->GetFactionId();
     searchableAuctionEntry->bid = auctionEntry->bid;
-    searchableAuctionEntry->bidderGuid = auctionEntry->bidder;
+    ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
+    searchableAuctionEntry->bidderGuid = bidderGuid;
 
     // Item info
     searchableAuctionEntry->item.entry = item->GetEntry();
