@@ -37,6 +37,22 @@ enum AuctionHouseFaction : uint8
     AUCTION_FACTION_MAX
 };
 
+enum AuctionSortOrder
+{
+    AUCTION_SORT_MINLEVEL       = 0,
+    AUCTION_SORT_RARITY         = 1,
+    AUCTION_SORT_BUYOUT         = 2,
+    AUCTION_SORT_TIMELEFT       = 3,
+    AUCTION_SORT_UNK4           = 4,
+    AUCTION_SORT_ITEM           = 5,
+    AUCTION_SORT_MINBIDBUY      = 6,
+    AUCTION_SORT_OWNER          = 7,
+    AUCTION_SORT_BID            = 8,
+    AUCTION_SORT_STACK          = 9,
+    AUCTION_SORT_BUYOUT_2       = 10,
+    AUCTION_SORT_MAX
+};
+
 struct AuctionEntryItemEnchants
 {
     uint32 id;
@@ -77,19 +93,6 @@ struct SearchableAuctionEntry
 typedef std::unordered_map<uint32, uint16> AuctionPlayerSkills;
 typedef std::unordered_set<uint32> AuctionPlayerSpells;
 
-struct AuctionHouseUsablePlayerInfo
-{
-    uint32 classMask;
-    uint32 raceMask;
-    uint8 level;
-    AuctionPlayerSkills skills;
-    AuctionPlayerSpells spells;
-
-    bool PlayerCanUseItem(ItemTemplate const* proto) const;
-    uint16 GetSkillValue(uint32 skill) const;
-    bool HasSpell(uint32 spell) const;
-};
-
 struct AuctionHouseSearchInfo
 {
     std::wstring wsearchedname;
@@ -105,6 +108,15 @@ struct AuctionHouseSearchInfo
     std::vector<AuctionSortInfo> sorting;
 };
 
+struct AuctionSortInfo
+{
+    AuctionSortInfo() = default;
+    AuctionSortOrder sortOrder{ AUCTION_SORT_MAX };
+    bool isDesc{ true };
+};
+
+typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
+
 struct AuctionHousePlayerInfo
 {
     ObjectGuid playerGuid;
@@ -112,6 +124,19 @@ struct AuctionHousePlayerInfo
     int loc_idx;
     int locdbc_idx;
     std::optional<AuctionHouseUsablePlayerInfo> usablePlayerInfo;
+};
+
+struct AuctionHouseUsablePlayerInfo
+{
+    uint32 classMask;
+    uint32 raceMask;
+    uint8 level;
+    AuctionPlayerSkills skills;
+    AuctionPlayerSpells spells;
+
+    bool PlayerCanUseItem(ItemTemplate const* proto) const;
+    uint16 GetSkillValue(uint32 skill) const;
+    bool HasSpell(uint32 spell) const;
 };
 
 struct AuctionSearcherRequest

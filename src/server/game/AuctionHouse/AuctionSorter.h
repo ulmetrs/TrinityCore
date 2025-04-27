@@ -20,31 +20,7 @@
 
 #include "Common.h"
 #include <vector>
-
-enum AuctionSortOrder
-{
-    AUCTION_SORT_MINLEVEL       = 0,
-    AUCTION_SORT_RARITY         = 1,
-    AUCTION_SORT_BUYOUT         = 2,
-    AUCTION_SORT_TIMELEFT       = 3,
-    AUCTION_SORT_UNK4           = 4,
-    AUCTION_SORT_ITEM           = 5,
-    AUCTION_SORT_MINBIDBUY      = 6,
-    AUCTION_SORT_OWNER          = 7,
-    AUCTION_SORT_BID            = 8,
-    AUCTION_SORT_STACK          = 9,
-    AUCTION_SORT_BUYOUT_2       = 10,
-    AUCTION_SORT_MAX
-};
-
-struct AuctionSortInfo
-{
-    AuctionSortInfo() = default;
-    AuctionSortOrder sortOrder{ AUCTION_SORT_MAX };
-    bool isDesc{ true };
-};
-
-typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
+#include "AuctionHouseCommon.h"
 
 // Forward declaration
 class SearchableAuctionEntry;
