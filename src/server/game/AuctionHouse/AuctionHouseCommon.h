@@ -231,4 +231,10 @@ struct AuctionSearchUpdateBid : AuctionSearcherUpdate
 typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
 typedef std::vector<SearchableAuctionEntry*> SortableAuctionEntriesList;
 
+class AuctionHouseCommon
+{
+public:
+    static uint32 CalculateAuctionOutBid(uint32 bid);
+};
+
 #endif // AUCTION_HOUSE_COMMON_H

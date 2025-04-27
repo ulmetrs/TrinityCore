@@ -693,11 +693,9 @@ uint32 AuctionEntry::GetAuctionCut() const
     return std::max(cut, 0);
 }
 
-/// the sum of outbid is (1% from current bid)*5, if bid is very small, it is 1c
 uint32 AuctionEntry::GetAuctionOutBid() const
 {
-    uint32 outbid = CalculatePct(bid, 5);
-    return outbid ? outbid : 1;
+    return AuctionHouseCommon::CalculateAuctionOutBid(bid);
 }
 
 void AuctionEntry::DeleteFromDB(CharacterDatabaseTransaction trans) const
