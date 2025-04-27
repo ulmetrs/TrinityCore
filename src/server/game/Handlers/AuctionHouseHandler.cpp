@@ -846,7 +846,8 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         PlayerSpellMap const& spellMap = GetPlayer()->GetSpellMap();
         for (auto const& pair : spellMap)
         {
-            if (pair.second->state != PLAYERSPELL_REMOVED && pair.second->IsInSpec(GetPlayer()->GetActiveSpec()))
+            // TODO PlayerSpell doesn't implement spec/specmask so we can't filter by spec
+            if (pair.second.state != PLAYERSPELL_REMOVED /* && pair.second->IsInSpec(GetPlayer()->GetActiveSpec())*/)
                 usablePlayerInfo.spells.insert(pair.first);
         }
         ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
