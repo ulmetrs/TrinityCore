@@ -853,6 +853,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
     }
     auto request = std::make_unique<AuctionSearchListRequest>(auctionHouseFaction, std::move(ahSearchInfo), std::move(ahPlayerInfo));
+    TC_LOG_DEBUG("auctionHouse", "Queue search request({})", guid.ToString());
     sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
 }
 

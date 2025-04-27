@@ -43,11 +43,13 @@ void AuctionHouseSearcher::Update() {
 }
 
 void AuctionHouseSearcher::QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo) {
+    TC_LOG_DEBUG("auctionHouse", "QueueSearchRequest Called");
     requestQueue_.send(std::move(searchRequestInfo));
 }
 
 void AuctionHouseSearcher::AddAuction(AuctionEntry const* auctionEntry)
 {
+    TC_LOG_DEBUG("auctionHouse", "Adding Auction");
     Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow);
     if (!item)
         return;
@@ -90,11 +92,13 @@ void AuctionHouseSearcher::AddAuction(AuctionEntry const* auctionEntry)
 
 void AuctionHouseSearcher::RemoveAuction(AuctionEntry const* auctionEntry)
 {
+    TC_LOG_DEBUG("auctionHouse", "Removing Auction");
     NotifyAllWorkers(std::make_shared<AuctionSearchRemove>(auctionEntry->Id, auctionEntry->GetFactionId()));
 }
 
 void AuctionHouseSearcher::UpdateBid(AuctionEntry const* auctionEntry)
 {
+    TC_LOG_DEBUG("auctionHouse", "Updating Bid");
     // Updating bids is a bit unique, we really only need to update a single worker as every worker thread contains
     // a map of shared pointers to the same SearchableAuctionEntry's, so updating one will update them all.
     ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
@@ -103,10 +107,12 @@ void AuctionHouseSearcher::UpdateBid(AuctionEntry const* auctionEntry)
 
 void AuctionHouseSearcher::NotifyAllWorkers(std::shared_ptr<AuctionSearcherUpdate> const update) {
     for (auto const& worker : workerThreads_) {
+        TC_LOG_DEBUG("auctionHouse", "Notify All Workers");
         worker->AddAuctionSearchUpdateToQueue(update);
     }
 }
 
 void AuctionHouseSearcher::NotifyOneWorker(std::shared_ptr<AuctionSearcherUpdate> const update) {
+    TC_LOG_DEBUG("auctionHouse", "Notify One Worker");
     workerThreads_.front()->AddAuctionSearchUpdateToQueue(update);
 }

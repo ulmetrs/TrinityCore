@@ -78,18 +78,21 @@ void AuctionHouseWorkerThread::ProcessSearchRequest(std::unique_ptr<AuctionSearc
 
 void AuctionHouseWorkerThread::SearchUpdateAdd(AuctionSearchAdd const& auctionAdd)
 {
+    TC_LOG_DEBUG("auctionHouse", "SearchUpdateAdd Called");
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionAdd.listFaction);
     searchableAuctionMap.insert(std::make_pair(auctionAdd.searchableAuctionEntry->Id, auctionAdd.searchableAuctionEntry));
 }
 
 void AuctionHouseWorkerThread::SearchUpdateRemove(AuctionSearchRemove const& auctionRemove)
 {
+    TC_LOG_DEBUG("auctionHouse", "SearchUpdateRemove Called");
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionRemove.listFaction);
     searchableAuctionMap.erase(auctionRemove.auctionId);
 }
 
 void AuctionHouseWorkerThread::SearchUpdateBid(AuctionSearchUpdateBid const& auctionUpdateBid)
 {
+    TC_LOG_DEBUG("auctionHouse", "SearchUpdateBid Called");
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(auctionUpdateBid.listFaction);
     SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionUpdateBid.auctionId);
     if (itr != searchableAuctionMap.end())
@@ -101,6 +104,7 @@ void AuctionHouseWorkerThread::SearchUpdateBid(AuctionSearchUpdateBid const& auc
 
 void AuctionHouseWorkerThread::SearchListRequest(AuctionSearchListRequest const& searchListRequest)
 {
+    TC_LOG_DEBUG("auctionHouse", "SearchListRequest Called");
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchListRequest.listFaction);
     uint32 count = 0, totalCount = 0;
 
@@ -154,11 +158,14 @@ void AuctionHouseWorkerThread::SearchListRequest(AuctionSearchListRequest const&
     searchResponse->packet << totalCount;
     searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
+    TC_LOG_DEBUG("auctionHouse", "Queueing Response");
+
     responseQueue_->send(std::move(searchResponse));
 }
 
 void AuctionHouseWorkerThread::SearchOwnerListRequest(AuctionSearchOwnerListRequest const& searchOwnerListRequest)
 {
+    TC_LOG_DEBUG("auctionHouse", "SearchOwnerListRequest Called");
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchOwnerListRequest.listFaction);
 
     auto searchResponse = std::make_unique<AuctionSearcherResponse>();
@@ -184,11 +191,13 @@ void AuctionHouseWorkerThread::SearchOwnerListRequest(AuctionSearchOwnerListRequ
     searchResponse->packet << (uint32)totalcount;
     searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
+    TC_LOG_DEBUG("auctionHouse", "Queueing Response");
     responseQueue_->send(std::move(searchResponse));
 }
 
 void AuctionHouseWorkerThread::SearchBidderListRequest(AuctionSearchBidderListRequest const& searchBidderListRequest)
 {
+    TC_LOG_DEBUG("auctionHouse", "SearchBidderListRequest Called");
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchBidderListRequest.listFaction);
 
     auto searchResponse = std::make_unique<AuctionSearcherResponse>();
@@ -226,11 +235,13 @@ void AuctionHouseWorkerThread::SearchBidderListRequest(AuctionSearchBidderListRe
     searchResponse->packet << totalcount;
     searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
+    TC_LOG_DEBUG("auctionHouse", "Queueing Response");
     responseQueue_->send(std::move(searchResponse));
 }
 
 void AuctionHouseWorkerThread::BuildListAuctionItems(AuctionSearchListRequest const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
 {
+    TC_LOG_DEBUG("auctionHouse", "BuildListAuctionItems Called");
     // pussywizard: optimization, this is a simplified case for the default search state (no filters)
     if (searchRequest.searchInfo.itemClass == 0xffffffff && searchRequest.searchInfo.itemSubClass == 0xffffffff
         && searchRequest.searchInfo.inventoryType == 0xffffffff && searchRequest.searchInfo.quality == 0xffffffff
