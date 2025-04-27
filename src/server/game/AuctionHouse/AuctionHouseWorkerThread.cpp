@@ -18,6 +18,7 @@
 #include "AuctionHouseWorkerThread.h"
 #include "AuctionHouseMgr.h"
 #include "AuctionSorter.h"
+#include "GameTime.h"
 #include "World.h"
 
 #define MAX_AUCTIONS_PER_PAGE 50
