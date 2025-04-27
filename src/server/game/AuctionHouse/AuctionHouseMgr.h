@@ -202,6 +202,7 @@ class TC_GAME_API AuctionHouseMgr
         void UpdatePendingAuctions();
         void Update();
 
+        void ProcessSearchResponses();
         void QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo);
         void AddAuction(AuctionEntry const* auctionEntry);
         void RemoveAuction(AuctionEntry const* auctionEntry);

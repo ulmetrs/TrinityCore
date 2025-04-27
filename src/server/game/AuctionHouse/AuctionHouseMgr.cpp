@@ -570,15 +570,6 @@ void AuctionHouseMgr::Update()
     mHordeAuctions.Update();
     mAllianceAuctions.Update();
     mNeutralAuctions.Update();
-
-    while (auto response = responseQueue_.try_receive()) {
-        TC_LOG_DEBUG("auctionHouse", "Received Response from Queue, Sending to Player {}", GameTime::GetGameTimeMS());
-        if (Player* player = ObjectAccessor::FindConnectedPlayer((*response)->playerGuid)) {
-            TC_LOG_DEBUG("auctionHouse", "Found Player, Sending Packet {}", GameTime::GetGameTimeMS());
-            player->GetSession()->SendPacket(&(*response)->packet);
-            TC_LOG_DEBUG("auctionHouse", "Packet Sent {}", GameTime::GetGameTimeMS());
-        }
-    }
 }
 
 uint8 AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
@@ -621,6 +612,18 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTem
 AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(uint8 houseId)
 {
     return (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION)) ? sAuctionHouseStore.LookupEntry(AUCTIONHOUSE_NEUTRAL) : sAuctionHouseStore.LookupEntry(houseId);
+}
+
+void AuctionHouseMgr::ProcessSearchResponses() {
+    while (auto response = responseQueue_.try_receive()) {
+        TC_LOG_DEBUG("auctionHouse", "Received Response from Queue, Sending to Player {}", GameTime::GetGameTimeMS());
+        if (Player* player = ObjectAccessor::FindConnectedPlayer((*response)->playerGuid))
+        {
+            TC_LOG_DEBUG("auctionHouse", "Found Player, Sending Packet {}", GameTime::GetGameTimeMS());
+            player->GetSession()->SendPacket(&(*response)->packet);
+            TC_LOG_DEBUG("auctionHouse", "Packet Sent {}", GameTime::GetGameTimeMS());
+        }
+    }
 }
 
 void AuctionHouseMgr::QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo) {
