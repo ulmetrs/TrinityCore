@@ -286,8 +286,3 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(AuctionSearchListRequest co
         auctionEntries.push_back(Aentry.get());
     }
 }
-
-// Explicit template instantiations for SignalQueue
-template class SignalQueue<std::unique_ptr<AuctionSearcherRequest>>;
-template class SignalQueue<std::unique_ptr<AuctionSearcherResponse>>;
-template class SignalQueue<std::shared_ptr<AuctionSearcherUpdate>>;

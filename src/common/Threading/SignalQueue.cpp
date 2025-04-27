@@ -58,3 +58,8 @@ void SignalQueue<T>::close() {
     while (!queue_.empty()) queue_.pop();
     cv_.notify_all();
 }
+
+// Explicit template instantiations
+template class SignalQueue<std::unique_ptr<AuctionSearcherRequest>>;
+template class SignalQueue<std::unique_ptr<AuctionSearcherResponse>>;
+template class SignalQueue<std::shared_ptr<AuctionSearcherUpdate>>;
