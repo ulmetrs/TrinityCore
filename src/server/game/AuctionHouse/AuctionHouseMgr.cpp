@@ -568,7 +568,7 @@ void AuctionHouseMgr::Update()
     auctionHouseSearcher_->Update();
 }
 
-AuctionHouseFaction AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
+uint8 AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
 {
     switch (houseId)
     {
@@ -682,7 +682,7 @@ void AuctionHouseObject::Update()
     CharacterDatabase.CommitTransaction(trans);
 }
 
-AuctionHouseFaction AuctionEntry::GetFactionId() const
+uint8 AuctionEntry::GetFactionId() const
 {
     return AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(houseId);
 }

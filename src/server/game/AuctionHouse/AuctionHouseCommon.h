@@ -82,7 +82,7 @@ struct SearchableAuctionEntry
     uint32 startbid;
     uint32 bid;
     ObjectGuid bidderGuid;
-    AuctionHouseFaction listFaction;
+    uint8 listFaction;
     SearchableAuctionEntryItem item;
 
     void BuildAuctionInfo(WorldPacket& data) const;
@@ -147,16 +147,16 @@ struct AuctionSearcherRequest
         BIDDER_LIST
     };
 
-    AuctionSearcherRequest(Type const _requestType, AuctionHouseFaction _listFaction) : requestType(_requestType), listFaction(_listFaction) {}
+    AuctionSearcherRequest(Type const _requestType, uint8 _listFaction) : requestType(_requestType), listFaction(_listFaction) {}
     virtual ~AuctionSearcherRequest() = default;
 
     Type requestType;
-    AuctionHouseFaction listFaction;
+    uint8 listFaction;
 };
 
 struct AuctionSearchListRequest : AuctionSearcherRequest
 {
-    AuctionSearchListRequest(AuctionHouseFaction _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
+    AuctionSearchListRequest(uint8 _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
         : AuctionSearcherRequest(AuctionSearcherRequest::Type::LIST, _listFaction), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
 
     AuctionHouseSearchInfo searchInfo;
@@ -165,7 +165,7 @@ struct AuctionSearchListRequest : AuctionSearcherRequest
 
 struct AuctionSearchOwnerListRequest : AuctionSearcherRequest
 {
-    AuctionSearchOwnerListRequest(AuctionHouseFaction _listFaction, ObjectGuid _ownerGuid)
+    AuctionSearchOwnerListRequest(uint8 _listFaction, ObjectGuid _ownerGuid)
         : AuctionSearcherRequest(AuctionSearcherRequest::Type::OWNER_LIST, _listFaction), ownerGuid(_ownerGuid) {}
 
     ObjectGuid ownerGuid;
@@ -173,7 +173,7 @@ struct AuctionSearchOwnerListRequest : AuctionSearcherRequest
 
 struct AuctionSearchBidderListRequest : AuctionSearcherRequest
 {
-    AuctionSearchBidderListRequest(AuctionHouseFaction _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
+    AuctionSearchBidderListRequest(uint8 _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
         : AuctionSearcherRequest(AuctionSearcherRequest::Type::BIDDER_LIST, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
 
     std::vector<uint32> outbiddedAuctionIds;
@@ -195,11 +195,11 @@ struct AuctionSearcherUpdate
         UPDATE_BID
     };
 
-    AuctionSearcherUpdate(Type const _updateType, AuctionHouseFaction _listFaction) : updateType(_updateType), listFaction(_listFaction) {}
+    AuctionSearcherUpdate(Type const _updateType, uint8 _listFaction) : updateType(_updateType), listFaction(_listFaction) {}
     virtual ~AuctionSearcherUpdate() = default;
 
     Type updateType;
-    AuctionHouseFaction listFaction;
+    uint8 listFaction;
 };
 
 struct AuctionSearchAdd : AuctionSearcherUpdate
@@ -212,7 +212,7 @@ struct AuctionSearchAdd : AuctionSearcherUpdate
 
 struct AuctionSearchRemove : AuctionSearcherUpdate
 {
-    AuctionSearchRemove(uint32 _auctionId, AuctionHouseFaction _listFaction)
+    AuctionSearchRemove(uint32 _auctionId, uint8 _listFaction)
         : AuctionSearcherUpdate(AuctionSearcherUpdate::Type::REMOVE, _listFaction), auctionId(_auctionId) {}
 
     uint32 auctionId;
@@ -220,7 +220,7 @@ struct AuctionSearchRemove : AuctionSearcherUpdate
 
 struct AuctionSearchUpdateBid : AuctionSearcherUpdate
 {
-    AuctionSearchUpdateBid(uint32 _auctionId, AuctionHouseFaction _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
+    AuctionSearchUpdateBid(uint32 _auctionId, uint8 _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
         : AuctionSearcherUpdate(AuctionSearcherUpdate::Type::UPDATE_BID, _listFaction), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
 
     uint32 auctionId;

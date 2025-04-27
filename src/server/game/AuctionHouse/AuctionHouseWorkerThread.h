@@ -44,7 +44,7 @@ private:
     void SearchBidderListRequest(AuctionSearchBidderListRequest const& searchBidderListRequest);
     void BuildListAuctionItems(AuctionSearchListRequest const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const;
 
-    SearchableAuctionEntriesMap& GetSearchableAuctionMap(AuctionHouseFaction faction) { return _searchableAuctionMap[static_cast<uint8>(faction)]; }
+    SearchableAuctionEntriesMap& GetSearchableAuctionMap(uint8 faction) { return _searchableAuctionMap[faction]; }
 
     SearchableAuctionEntriesMap _searchableAuctionMap[AUCTION_FACTION_MAX];
     std::jthread workerThread_;
