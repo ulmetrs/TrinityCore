@@ -97,7 +97,8 @@ void AuctionHouseSearcher::UpdateBid(AuctionEntry const* auctionEntry)
 {
     // Updating bids is a bit unique, we really only need to update a single worker as every worker thread contains
     // a map of shared pointers to the same SearchableAuctionEntry's, so updating one will update them all.
-    NotifyOneWorker(std::make_shared<AuctionSearchUpdateBid>(auctionEntry->Id, auctionEntry->GetFactionId(), auctionEntry->bid, auctionEntry->bidder));
+    ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
+    NotifyOneWorker(std::make_shared<AuctionSearchUpdateBid>(auctionEntry->Id, auctionEntry->GetFactionId(), auctionEntry->bid, bidderGuid));
 }
 
 void AuctionHouseSearcher::NotifyAllWorkers(std::shared_ptr<AuctionSearcherUpdate> const update) {
