@@ -116,7 +116,7 @@ void AuctionHouseWorkerThread::SearchUpdateBid(AuctionSearchUpdateBid const& auc
 
 void AuctionHouseWorkerThread::SearchListRequest(AuctionSearchListRequest const& searchListRequest)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchListRequest Called");
+    TC_LOG_DEBUG("auctionHouse", "SearchListRequest Called {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchListRequest.listFaction);
     uint32 count = 0, totalCount = 0;
 
@@ -170,14 +170,13 @@ void AuctionHouseWorkerThread::SearchListRequest(AuctionSearchListRequest const&
     searchResponse->packet << totalCount;
     searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    TC_LOG_DEBUG("auctionHouse", "Queueing Response");
-
+    TC_LOG_DEBUG("auctionHouse", "SearchListRequest Queueing Response {}", GameTime::GetGameTimeMS());
     responseQueue_->send(std::move(searchResponse));
 }
 
 void AuctionHouseWorkerThread::SearchOwnerListRequest(AuctionSearchOwnerListRequest const& searchOwnerListRequest)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchOwnerListRequest Called");
+    TC_LOG_DEBUG("auctionHouse", "SearchOwnerListRequest Called {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchOwnerListRequest.listFaction);
 
     auto searchResponse = std::make_unique<AuctionSearcherResponse>();
@@ -203,13 +202,13 @@ void AuctionHouseWorkerThread::SearchOwnerListRequest(AuctionSearchOwnerListRequ
     searchResponse->packet << (uint32)totalcount;
     searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    TC_LOG_DEBUG("auctionHouse", "Queueing Response");
+    TC_LOG_DEBUG("auctionHouse", "SearchOwnerListRequest Queueing Response {}", GameTime::GetGameTimeMS());
     responseQueue_->send(std::move(searchResponse));
 }
 
 void AuctionHouseWorkerThread::SearchBidderListRequest(AuctionSearchBidderListRequest const& searchBidderListRequest)
 {
-    TC_LOG_DEBUG("auctionHouse", "SearchBidderListRequest Called");
+    TC_LOG_DEBUG("auctionHouse", "SearchBidderListRequest Called {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(searchBidderListRequest.listFaction);
 
     auto searchResponse = std::make_unique<AuctionSearcherResponse>();
@@ -247,13 +246,13 @@ void AuctionHouseWorkerThread::SearchBidderListRequest(AuctionSearchBidderListRe
     searchResponse->packet << totalcount;
     searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    TC_LOG_DEBUG("auctionHouse", "Queueing Response");
+    TC_LOG_DEBUG("auctionHouse", "SearchBidderListRequest Queueing Response {}", GameTime::GetGameTimeMS());
     responseQueue_->send(std::move(searchResponse));
 }
 
 void AuctionHouseWorkerThread::BuildListAuctionItems(AuctionSearchListRequest const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
 {
-    TC_LOG_DEBUG("auctionHouse", "BuildListAuctionItems Called");
+    TC_LOG_DEBUG("auctionHouse", "BuildListAuctionItems Called {}", GameTime::GetGameTimeMS());
     // pussywizard: optimization, this is a simplified case for the default search state (no filters)
     if (searchRequest.searchInfo.itemClass == 0xffffffff && searchRequest.searchInfo.itemSubClass == 0xffffffff
         && searchRequest.searchInfo.inventoryType == 0xffffffff && searchRequest.searchInfo.quality == 0xffffffff

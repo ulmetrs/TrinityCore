@@ -18,7 +18,6 @@
 #include "WorldSession.h"
 #include "AccountMgr.h"
 #include "AuctionHouseMgr.h"
-#include "AuctionHouseSearcher.h"
 #include "AuctionSorter.h"
 #include "CharacterCache.h"
 #include "Creature.h"
@@ -518,7 +517,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
         auction->bidder = player->GetGUID().GetCounter();
         auction->bid = price;
 
-        sAuctionMgr->GetAuctionHouseSearcher()->UpdateBid(auction);
+        sAuctionMgr->UpdateBid(auction);
 
         if (HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
             auction->Flags = AuctionEntryFlag(auction->Flags | AUCTION_ENTRY_FLAG_GM_LOG_BUYER);
@@ -712,7 +711,8 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     }
 
     auto request = std::make_unique<AuctionSearchBidderListRequest>(auctionHouseFaction, std::move(auctionIds), GetPlayer()->GetGUID());
-    sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
+    TC_LOG_DEBUG("auctionHouse", "Auction List Bidder Item Queue Search Request {}", GameTime::GetGameTimeMS());
+    sAuctionMgr->QueueSearchRequest(std::move(request));
 }
 
 //this void sends player info about his auctions
@@ -744,7 +744,8 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
     uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     auto request = std::make_unique<AuctionSearchOwnerListRequest>(auctionHouseFaction, GetPlayer()->GetGUID());
-    sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
+    TC_LOG_DEBUG("auctionHouse", "Auction List Owner Item Queue Search Request {}", GameTime::GetGameTimeMS());
+    sAuctionMgr->QueueSearchRequest(std::move(request));
 }
 
 //this void is called when player clicks on search button
@@ -853,8 +854,8 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
     }
     auto request = std::make_unique<AuctionSearchListRequest>(auctionHouseFaction, std::move(ahSearchInfo), std::move(ahPlayerInfo));
-    TC_LOG_DEBUG("auctionHouse", "Queue search request({})", guid.ToString());
-    sAuctionMgr->GetAuctionHouseSearcher()->QueueSearchRequest(std::move(request));
+    TC_LOG_DEBUG("auctionHouse", "Auction List Item Queue Search Request {}", GameTime::GetGameTimeMS());
+    sAuctionMgr->QueueSearchRequest(std::move(request));
 }
 
 void WorldSession::HandleAuctionListPendingSales(WorldPacket& recvData)

@@ -18,18 +18,23 @@
 #ifndef _AUCTION_HOUSE_MGR_H
 #define _AUCTION_HOUSE_MGR_H
 
+#include "AuctionHouseCommon.h"
 #include "Define.h"
 #include "DatabaseEnvFwd.h"
 #include "ObjectGuid.h"
+#include "SignalQueue.h"
 #include <map>
+#include <memory>
 #include <set>
 #include <unordered_map>
+#include <vector>
 
+class AuctionHouseWorkerThread;
 class Item;
 class Player;
 class WorldPacket;
+
 struct AuctionHouseEntry;
-class AuctionHouseSearcher;
 
 #define MIN_AUCTION_TIME (12*HOUR)
 #define MAX_AUCTION_ITEMS 160
@@ -183,8 +188,6 @@ class TC_GAME_API AuctionHouseMgr
         static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
         static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
 
-        AuctionHouseSearcher* GetAuctionHouseSearcher() { return auctionHouseSearcher_; }
-
     public:
 
         //load first auction items, because of check if item exists, when loading
@@ -199,6 +202,14 @@ class TC_GAME_API AuctionHouseMgr
         void UpdatePendingAuctions();
         void Update();
 
+        void QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo);
+        void AddAuction(AuctionEntry const* auctionEntry);
+        void RemoveAuction(AuctionEntry const* auctionEntry);
+        void UpdateBid(AuctionEntry const* auctionEntry);
+
+        void NotifyAllWorkers(std::shared_ptr<AuctionSearcherUpdate> const update);
+        void NotifyOneWorker(std::shared_ptr<AuctionSearcherUpdate> const update);
+
     private:
 
         AuctionHouseObject mHordeAuctions;
@@ -209,7 +220,9 @@ class TC_GAME_API AuctionHouseMgr
 
         ItemMap mAitems;
 
-        AuctionHouseSearcher* auctionHouseSearcher_;
+        SignalQueue<std::unique_ptr<AuctionSearcherRequest>> requestQueue_;
+        SignalQueue<std::unique_ptr<AuctionSearcherResponse>> responseQueue_;
+        std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()

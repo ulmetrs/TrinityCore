@@ -17,7 +17,7 @@
 
 #include "AuctionHouseMgr.h"
 #include "AuctionHouseCommon.h"
-#include "AuctionHouseSearcher.h"
+#include "AuctionHouseWorkerThread.h"
 #include "AuctionHouseBot.h"
 #include "AccountMgr.h"
 #include "Bag.h"
@@ -43,14 +43,19 @@ enum eAuctionHouse
     AH_MINIMUM_DEPOSIT = 100
 };
 
-AuctionHouseMgr::AuctionHouseMgr() : auctionHouseSearcher_(new AuctionHouseSearcher()) { }
+AuctionHouseMgr::AuctionHouseMgr() {
+    for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTIONHOUSE_WORKERTHREADS); ++i) {
+        workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&requestQueue_, &responseQueue_));
+    }
+}
 
 AuctionHouseMgr::~AuctionHouseMgr()
 {
     for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
         delete itr->second;
 
-    delete auctionHouseSearcher_;
+    requestQueue_.close();
+    responseQueue_.close();
 }
 
 AuctionHouseMgr* AuctionHouseMgr::instance()
@@ -565,7 +570,15 @@ void AuctionHouseMgr::Update()
     mHordeAuctions.Update();
     mAllianceAuctions.Update();
     mNeutralAuctions.Update();
-    auctionHouseSearcher_->Update();
+
+    while (auto response = responseQueue_.try_receive()) {
+        TC_LOG_DEBUG("auctionHouse", "Received Response from Queue, Sending to Player {}", GameTime::GetGameTimeMS());
+        if (Player* player = ObjectAccessor::FindConnectedPlayer((*response)->playerGuid)) {
+            TC_LOG_DEBUG("auctionHouse", "Found Player, Sending Packet {}", GameTime::GetGameTimeMS());
+            player->GetSession()->SendPacket(&(*response)->packet);
+            TC_LOG_DEBUG("auctionHouse", "Packet Sent {}", GameTime::GetGameTimeMS());
+        }
+    }
 }
 
 uint8 AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
@@ -610,12 +623,85 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(uint8 ho
     return (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION)) ? sAuctionHouseStore.LookupEntry(AUCTIONHOUSE_NEUTRAL) : sAuctionHouseStore.LookupEntry(houseId);
 }
 
+void AuctionHouseMgr::QueueSearchRequest(std::unique_ptr<AuctionSearcherRequest> searchRequestInfo) {
+    requestQueue_.send(std::move(searchRequestInfo));
+}
+
+void AuctionHouseMgr::AddAuction(AuctionEntry const* auctionEntry)
+{
+    Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow);
+    if (!item)
+        return;
+
+    // SearchableAuctionEntry is a shared_ptr as it will be shared among all the worker threads and needs to be self-managed
+    std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry = std::make_shared<SearchableAuctionEntry>();
+    searchableAuctionEntry->Id = auctionEntry->Id;
+    
+    // Auction info
+    ObjectGuid ownerGuid = ObjectGuid(HighGuid::Player, auctionEntry->owner);
+    searchableAuctionEntry->ownerGuid = ownerGuid;
+    sCharacterCache->GetCharacterNameByGuid(ownerGuid, searchableAuctionEntry->ownerName);
+    searchableAuctionEntry->startbid = auctionEntry->startbid;
+    searchableAuctionEntry->buyout = auctionEntry->buyout;
+    searchableAuctionEntry->expire_time = auctionEntry->expire_time;
+    searchableAuctionEntry->listFaction = auctionEntry->GetFactionId();
+    searchableAuctionEntry->bid = auctionEntry->bid;
+    ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
+    searchableAuctionEntry->bidderGuid = bidderGuid;
+
+    // Item info
+    searchableAuctionEntry->item.entry = item->GetEntry();
+    for (uint8 i = 0; i < MAX_INSPECTED_ENCHANTMENT_SLOT; ++i)
+    {
+        searchableAuctionEntry->item.enchants[i].id = item->GetEnchantmentId(EnchantmentSlot(i));
+        searchableAuctionEntry->item.enchants[i].duration = item->GetEnchantmentDuration(EnchantmentSlot(i));
+        searchableAuctionEntry->item.enchants[i].charges = item->GetEnchantmentCharges(EnchantmentSlot(i));
+    }
+
+    searchableAuctionEntry->item.randomPropertyId = item->GetItemRandomPropertyId();
+    searchableAuctionEntry->item.suffixFactor = item->GetItemSuffixFactor();
+    searchableAuctionEntry->item.count = item->GetCount();
+    searchableAuctionEntry->item.spellCharges = item->GetSpellCharges();
+    searchableAuctionEntry->item.itemTemplate = item->GetTemplate();
+
+    searchableAuctionEntry->SetItemNames();
+
+    NotifyAllWorkers(std::make_shared<AuctionSearchAdd>(searchableAuctionEntry));
+}
+
+void AuctionHouseMgr::RemoveAuction(AuctionEntry const* auctionEntry)
+{
+    TC_LOG_DEBUG("auctionHouse", "Removing Auction");
+    NotifyAllWorkers(std::make_shared<AuctionSearchRemove>(auctionEntry->Id, auctionEntry->GetFactionId()));
+}
+
+void AuctionHouseMgr::UpdateBid(AuctionEntry const* auctionEntry)
+{
+    TC_LOG_DEBUG("auctionHouse", "Updating Bid");
+    // Updating bids is a bit unique, we really only need to update a single worker as every worker thread contains
+    // a map of shared pointers to the same SearchableAuctionEntry's, so updating one will update them all.
+    ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
+    NotifyOneWorker(std::make_shared<AuctionSearchUpdateBid>(auctionEntry->Id, auctionEntry->GetFactionId(), auctionEntry->bid, bidderGuid));
+}
+
+void AuctionHouseMgr::NotifyAllWorkers(std::shared_ptr<AuctionSearcherUpdate> const update) {
+    for (auto const& worker : workerThreads_) {
+        TC_LOG_DEBUG("auctionHouse", "Notify All Workers");
+        worker->AddAuctionSearchUpdateToQueue(update);
+    }
+}
+
+void AuctionHouseMgr::NotifyOneWorker(std::shared_ptr<AuctionSearcherUpdate> const update) {
+    TC_LOG_DEBUG("auctionHouse", "Notify One Worker");
+    workerThreads_.front()->AddAuctionSearchUpdateToQueue(update);
+}
+
 void AuctionHouseObject::AddAuction(AuctionEntry* auction)
 {
     ASSERT(auction);
 
     AuctionsMap[auction->Id] = auction;
-    sAuctionMgr->GetAuctionHouseSearcher()->AddAuction(auction);
+    sAuctionMgr->AddAuction(auction);
 
     sScriptMgr->OnAuctionAdd(this, auction);
 }
@@ -623,7 +709,7 @@ void AuctionHouseObject::AddAuction(AuctionEntry* auction)
 bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
 {
     bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
-    sAuctionMgr->GetAuctionHouseSearcher()->RemoveAuction(auction);
+    sAuctionMgr->RemoveAuction(auction);
 
     sScriptMgr->OnAuctionRemove(this, auction);
 
