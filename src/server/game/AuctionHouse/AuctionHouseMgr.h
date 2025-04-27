@@ -100,6 +100,7 @@ struct TC_GAME_API AuctionEntry
 
     // helpers
     uint8 GetHouseId() const { return houseId; }
+    uint8 GetFactionId() const;
     uint32 GetAuctionCut() const;
     uint32 GetAuctionOutBid() const;
     bool BuildAuctionInfo(WorldPacket & data, Item* sourceItem = nullptr) const;
@@ -178,6 +179,7 @@ class TC_GAME_API AuctionHouseMgr
         void SendAuctionCancelledToBidderMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
 
         static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
+        static uint8 GetAuctionHouseFactionFromHouseId(uint8 houseId);
         static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
         static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
 

@@ -16,6 +16,7 @@
  */
 
 #include "AuctionHouseMgr.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseSearcher.h"
 #include "AuctionHouseBot.h"
 #include "AccountMgr.h"
@@ -567,6 +568,20 @@ void AuctionHouseMgr::Update()
     auctionHouseSearcher_->Update();
 }
 
+uint8 AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
+{
+    switch (houseId)
+    {
+        case AUCTIONHOUSE_ALLIANCE:
+            return AUCTION_FACTION_ALLIANCE;
+        case AUCTIONHOUSE_HORDE:
+            return AUCTION_FACTION_HORDE;
+        case AUCTIONHOUSE_NEUTRAL:
+            return AUCTION_FACTION_NEUTRAL;
+    }
+    return AUCTION_FACTION_NEUTRAL;
+}
+
 AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTemplateId)
 {
     uint32 houseid = AUCTIONHOUSE_NEUTRAL; // goblin auction house
@@ -665,6 +680,11 @@ void AuctionHouseObject::Update()
 
     // Run DB changes
     CharacterDatabase.CommitTransaction(trans);
+}
+
+uint8 AuctionEntry::GetFactionId() const
+{
+    return AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(houseId);
 }
 
 uint32 AuctionEntry::GetAuctionCut() const
