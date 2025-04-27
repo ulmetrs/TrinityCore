@@ -32,7 +32,7 @@ public:
     void AddAuctionSearchUpdateToQueue(std::shared_ptr<AuctionSearcherUpdate> const update);
 
 private:
-    void Run(std::stop_token stop = {});
+void Run(std::stop_token stop);
     void ProcessSearchUpdate(std::shared_ptr<AuctionSearcherUpdate> const& update);
     void ProcessSearchRequest(std::unique_ptr<AuctionSearcherRequest> request);
 

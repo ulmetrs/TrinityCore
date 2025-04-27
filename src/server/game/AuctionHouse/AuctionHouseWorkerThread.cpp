@@ -26,7 +26,7 @@
 AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionSearcherRequest>>* requestQueue,
                                                    SignalQueue<std::unique_ptr<AuctionSearcherResponse>>* responseQueue)
     : requestQueue_(requestQueue), responseQueue_(responseQueue) {
-    workerThread_ = std::jthread(&AuctionHouseWorkerThread::Run, this);
+    workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
 }
 
 void AuctionHouseWorkerThread::AddAuctionSearchUpdateToQueue(std::shared_ptr<AuctionSearcherUpdate> const update) {
