@@ -56,8 +56,9 @@ void AuctionHouseSearcher::AddAuction(AuctionEntry const* auctionEntry)
     searchableAuctionEntry->Id = auctionEntry->Id;
     
     // Auction info
-    searchableAuctionEntry->ownerGuid = auctionEntry->owner;
-    sCharacterCache->GetCharacterNameByGuid(auctionEntry->owner, searchableAuctionEntry->ownerName);
+    ObjectGuid ownerGuid = ObjectGuid(HighGuid::Player, auctionEntry->owner);
+    searchableAuctionEntry->ownerGuid = ownerGuid;
+    sCharacterCache->GetCharacterNameByGuid(ownerGuid, searchableAuctionEntry->ownerName);
     searchableAuctionEntry->startbid = auctionEntry->startbid;
     searchableAuctionEntry->buyout = auctionEntry->buyout;
     searchableAuctionEntry->expire_time = auctionEntry->expire_time;
