@@ -15,12 +15,13 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AuctionHouseMgr.h"
 #include "AuctionHouseSearcher.h"
 #include "AuctionHouseWorkerThread.h"
-#include "AuctionHouseMgr.h"
 #include "CharacterCache.h"
-#include "World.h"
+#include "Item.h"
 #include "ObjectAccessor.h"
+#include "World.h"
 
 AuctionHouseSearcher::AuctionHouseSearcher() {
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTIONHOUSE_WORKERTHREADS); ++i) {
