@@ -43,14 +43,14 @@ enum eAuctionHouse
     AH_MINIMUM_DEPOSIT = 100
 };
 
-AuctionHouseMgr::AuctionHouseMgr() : _auctionHouseSearcher(new AuctionHouseSearcher()) { }
+AuctionHouseMgr::AuctionHouseMgr() : auctionHouseSearcher_(new AuctionHouseSearcher()) { }
 
 AuctionHouseMgr::~AuctionHouseMgr()
 {
     for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
         delete itr->second;
 
-    delete _auctionHouseSearcher;
+    delete auctionHouseSearcher_;
 }
 
 AuctionHouseMgr* AuctionHouseMgr::instance()
