@@ -147,8 +147,8 @@ struct AuctionMessage
         Remove,
         UpdateBid,
         List,
-        OwnerList,
-        BidderList
+        ListOwner,
+        ListBidder
     };
 
     AuctionMessage(Type const _type, uint8 _listFaction) : type(_type), listFaction(_listFaction) {}
