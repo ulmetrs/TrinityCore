@@ -15,14 +15,16 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SignalQueue.h"
-#include "AuctionHouseCommon.h"
-#include "AuctionHouseMgr.h"
+ #include "SignalQueue.h"
+ #include "AuctionHouseCommon.h"
+ #include "AuctionHouseMgr.h" // Ensure all auction-related types are available
 
 template<typename T>
 void SignalQueue<T>::send(T value, std::stop_token stop) {
     std::unique_lock lock(mutex_);
-    cv_.wait(lock, stop, [this] { return queue_.size() < capacity_ || capacity_ == 0; });
+    cv_.wait(lock, stop, [this] {
+        return queue_.size() < capacity_ || capacity_ == 0;
+    });
     if (stop.stop_requested()) return;
     queue_.push(std::move(value));
     lock.unlock();

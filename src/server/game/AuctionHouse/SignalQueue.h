@@ -23,8 +23,6 @@
 #include <condition_variable>
 #include <optional>
 #include <stop_token>
-#include <vector>
-#include <variant>
 
 template<typename T>
 class SignalQueue {
@@ -36,57 +34,11 @@ public:
     std::optional<T> try_receive();
     void close();
 
-    // Variant to hold an item from any queue
-    using AnyItem = std::variant<std::monostate, T>;
-
-    // Wait on multiple queues and return the first available item
-    template<typename... Ts>
-    static AnyItem receive_any(std::stop_token stop, SignalQueue<Ts>*... queues);
-
 private:
     std::queue<T> queue_;
     size_t capacity_;
     std::mutex mutex_;
     std::condition_variable_any cv_;
 };
-
-template<typename T>
-template<typename... Ts>
-typename SignalQueue<T>::AnyItem SignalQueue<T>::receive_any(std::stop_token stop, SignalQueue<Ts>*... queues) {
-    // Create a shared condition variable for coordination
-    std::condition_variable_any cv;
-    std::mutex mtx;
-    bool item_received = false;
-    AnyItem result;
-
-    // Lambda to check if any queue has an item
-    auto check_queues = [&]() {
-        return (queues->queue_.empty() && ...);
-    };
-
-    // Lock all queues
-    std::unique_lock lock(mtx);
-    cv.wait(lock, stop, [&] {
-        return stop.stop_requested() || !check_queues();
-    });
-
-    if (stop.stop_requested()) {
-        return std::monostate{};
-    }
-
-    // Check each queue for an item
-    ((queues->mutex_.lock(), true), ...);
-    ([&] {
-        if (!queues->queue_.empty() && !item_received) {
-            result = std::move(queues->queue_.front());
-            queues->queue_.pop();
-            item_received = true;
-            cv.notify_one();
-        }
-        queues->mutex_.unlock();
-    }(), ...));
-
-    return result;
-}
 
 #endif // SIGNAL_QUEUE_H

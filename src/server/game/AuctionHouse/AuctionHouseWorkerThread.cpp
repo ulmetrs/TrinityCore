@@ -34,24 +34,26 @@ void AuctionHouseWorkerThread::AddAuctionSearchUpdateToQueue(std::shared_ptr<Auc
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop) {
+    TC_LOG_DEBUG("auctionHouse", "AuctionHouseWorkerThread Running");
     while (!stop.stop_requested()) {
-        // Wait for an item from either queue
-        auto item = SignalQueue<std::shared_ptr<AuctionSearcherUpdate>>::receive_any(
-            stop, &updateQueue_, requestQueue_);
-        
-        // Process the item based on its type
-        std::visit([&](auto&& value) {
-            using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<T, std::shared_ptr<AuctionSearcherUpdate>>) {
-                if (value) {
-                    ProcessSearchUpdate(*value);
-                }
-            } else if constexpr (std::is_same_v<T, std::unique_ptr<AuctionSearcherRequest>>) {
-                if (value) {
-                    ProcessSearchRequest(std::move(*value));
-                }
-            }
-        }, item);
+        bool processed = false;
+
+        // Check for an update
+        if (auto update = updateQueue_.try_receive()) {
+            ProcessSearchUpdate(*update);
+            processed = true;
+        }
+
+        // Check for a request
+        if (auto request = requestQueue_->try_receive()) {
+            ProcessSearchRequest(std::move(*request));
+            processed = true;
+        }
+
+        // If no work was processed, sleep briefly to avoid busy-waiting
+        if (!processed) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 }
 
