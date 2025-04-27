@@ -846,7 +846,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         PlayerSpellMap const& spellMap = GetPlayer()->GetSpellMap();
         for (auto const& pair : spellMap)
         {
-            if (pair.second->State != PLAYERSPELL_REMOVED && pair.second->IsInSpec(GetPlayer()->GetActiveSpec()))
+            if (pair.second->state != PLAYERSPELL_REMOVED && pair.second->IsInSpec(GetPlayer()->GetActiveSpec()))
                 usablePlayerInfo.spells.insert(pair.first);
         }
         ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
