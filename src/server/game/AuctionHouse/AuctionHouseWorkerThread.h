@@ -37,11 +37,11 @@ struct AuctionMessage
         ListBidder
     };
 
-    AuctionMessage(Type const _type, AuctionHouseId _houseId) : type(_type), houseId(_houseId) {}
+    AuctionMessage(Type const _type, uint8 _houseId) : type(_type), houseId(_houseId) {}
     virtual ~AuctionMessage() = default;
 
     Type type;
-    AuctionHouseId houseId;
+    uint8 houseId;
 };
 
 struct AddAuctionMessage : AuctionMessage
@@ -54,7 +54,7 @@ struct AddAuctionMessage : AuctionMessage
 
 struct RemoveAuctionMessage : AuctionMessage
 {
-    RemoveAuctionMessage(uint32 _auctionId, AuctionHouseId _houseId)
+    RemoveAuctionMessage(uint32 _auctionId, uint8 _houseId)
         : AuctionMessage(AuctionMessage::Type::Remove, _houseId), auctionId(_auctionId) {}
 
     uint32 auctionId;
@@ -62,7 +62,7 @@ struct RemoveAuctionMessage : AuctionMessage
 
 struct UpdateAuctionBidMessage : AuctionMessage
 {
-    UpdateAuctionBidMessage(uint32 _auctionId, AuctionHouseId _houseId, uint32 _bid, ObjectGuid _bidderGuid)
+    UpdateAuctionBidMessage(uint32 _auctionId, uint8 _houseId, uint32 _bid, ObjectGuid _bidderGuid)
         : AuctionMessage(AuctionMessage::Type::UpdateBid, _houseId), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
     uint32 auctionId;
     uint32 bid;
@@ -71,7 +71,7 @@ struct UpdateAuctionBidMessage : AuctionMessage
 
 struct ListAuctionMessage : AuctionMessage
 {
-    ListAuctionMessage(AuctionHouseId _houseId, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
+    ListAuctionMessage(uint8 _houseId, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
         : AuctionMessage(AuctionMessage::Type::List, _houseId), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
 
     AuctionHouseSearchInfo searchInfo;
@@ -80,7 +80,7 @@ struct ListAuctionMessage : AuctionMessage
 
 struct ListOwnerAuctionMessage : AuctionMessage
 {
-    ListOwnerAuctionMessage(AuctionHouseId _houseId, ObjectGuid _ownerGuid)
+    ListOwnerAuctionMessage(uint8 _houseId, ObjectGuid _ownerGuid)
         : AuctionMessage(AuctionMessage::Type::ListOwner, _houseId), ownerGuid(_ownerGuid) {}
 
     ObjectGuid ownerGuid;
@@ -88,7 +88,7 @@ struct ListOwnerAuctionMessage : AuctionMessage
 
 struct ListBidderAuctionMessage : AuctionMessage
 {
-    ListBidderAuctionMessage(AuctionHouseId _houseId, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
+    ListBidderAuctionMessage(uint8 _houseId, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
         : AuctionMessage(AuctionMessage::Type::ListBidder, _houseId), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
     std::vector<uint32> outbiddedAuctionIds;
     ObjectGuid ownerGuid;
@@ -120,7 +120,7 @@ private:
     void ListBidderAuctions(ListBidderAuctionMessage const& message);
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    AuctionHouseObject* GetAuctionHouse(AuctionHouseId houseId) {
+    AuctionHouseObject* GetAuctionHouse(uint8 houseId) {
         auto it = auctionHouseMap_.find(houseId);
         return it != auctionHouseMap_.end() ? it->second.get() : nullptr;
     }

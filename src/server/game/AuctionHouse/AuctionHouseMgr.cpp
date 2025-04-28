@@ -45,9 +45,9 @@ enum eAuctionHouse
 
 AuctionHouseMgr::AuctionHouseMgr()
 {
-    auctionHouseMap_[AuctionHouseId::Alliance] = std::make_unique<AuctionHouseObject>();
-    auctionHouseMap_[AuctionHouseId::Horde]    = std::make_unique<AuctionHouseObject>();
-    auctionHouseMap_[AuctionHouseId::Neutral]  = std::make_unique<AuctionHouseObject>();
+    auctionHouseMap_[AUCTIONHOUSE_ALLIANCE] = std::make_unique<AuctionHouseObject>();
+    auctionHouseMap_[AUCTIONHOUSE_HORDE]    = std::make_unique<AuctionHouseObject>();
+    auctionHouseMap_[AUCTIONHOUSE_NEUTRAL]  = std::make_unique<AuctionHouseObject>();
 
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTION_WORKER_THREADS); ++i)
     {
@@ -63,17 +63,17 @@ AuctionHouseMgr* AuctionHouseMgr::instance()
 
 AuctionHouseObject* AuctionHouseMgr::GetAuctionHouseByFactionTemplateId(uint32 factionTemplateId)
 {
-    AuctionHouseId houseId = GetAuctionHouseId(factionTemplateId);
+    uint8 houseId = GetAuctionHouseId(factionTemplateId);
     return GetAuctionHouse(houseId);
 }
 
-AuctionHouseObject* AuctionHouseMgr::GetAuctionHouse(AuctionHouseId houseId)
+AuctionHouseObject* AuctionHouseMgr::GetAuctionHouse(uint8 houseId)
 {
     switch(houseId)
     {
-        case AuctionHouseId::Alliance : return auctionHouseMap_[AuctionHouseId::Alliance].get();
-        case AuctionHouseId::Horde : return auctionHouseMap_[AuctionHouseId::Horde].get();
-        default : return auctionHouseMap_[AuctionHouseId::Neutral].get();
+        case AUCTIONHOUSE_ALLIANCE : return auctionHouseMap_[AUCTIONHOUSE_ALLIANCE].get();
+        case AUCTIONHOUSE_HORDE : return auctionHouseMap_[AUCTIONHOUSE_HORDE].get();
+        default : return auctionHouseMap_[AUCTIONHOUSE_NEUTRAL].get();
     }
 }
 
@@ -518,25 +518,6 @@ void AuctionHouseMgr::ProcessListResponses()
     }
 }
 
-AuctionHouseId AuctionHouseMgr::GetAuctionHouseId(uint32 factionTemplateId)
-{
-    if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        return AuctionHouseId::Neutral; // goblin auction house
-
-    // FIXME: found way for proper auctionhouse selection by another way
-    // AuctionHouse.dbc have faction field with _player_ factions associated with auction house races.
-    // but no easy way convert creature faction to player race faction for specific city
-    FactionTemplateEntry const* u_entry = sFactionTemplateStore.LookupEntry(factionTemplateId);
-    if (!u_entry)
-        return AuctionHouseId::Neutral; // goblin auction house
-    else if (u_entry->FactionGroup & FACTION_MASK_ALLIANCE)
-        return AuctionHouseId::Alliance; // human auction house
-    else if (u_entry->FactionGroup & FACTION_MASK_HORDE)
-        return AuctionHouseId::Horde; // orc auction house
-    else
-        return AuctionHouseId::Neutral; // goblin auction house
-}
-
 bool AuctionHouseMgr::PendingAuctionAdd(Player* player, AuctionEntry* aEntry)
 {
     PlayerAuctions* thisAH;
@@ -667,11 +648,30 @@ void AuctionHouseMgr::Update()
 
 AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTemplateId)
 {
-    AuctionHouseId houseId = GetAuctionHouseId(factionTemplateId);
+    uint8 houseId = GetAuctionHouseId(factionTemplateId);
     return sAuctionHouseStore.LookupEntry(static_cast<uint32>(houseId));
 }
 
-AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(AuctionHouseId houseId)
+AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(uint8 houseId)
 {
     return sAuctionHouseStore.LookupEntry(static_cast<uint32>(houseId));
+}
+
+uint8 AuctionHouseMgr::GetAuctionHouseId(uint32 factionTemplateId)
+{
+    if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
+        return AUCTIONHOUSE_ALLIANCE; // goblin auction house
+
+    // FIXME: found way for proper auctionhouse selection by another way
+    // AuctionHouse.dbc have faction field with _player_ factions associated with auction house races.
+    // but no easy way convert creature faction to player race faction for specific city
+    FactionTemplateEntry const* u_entry = sFactionTemplateStore.LookupEntry(factionTemplateId);
+    if (!u_entry)
+        return AUCTIONHOUSE_NEUTRAL; // goblin auction house
+    else if (u_entry->FactionGroup & FACTION_MASK_ALLIANCE)
+        return AUCTIONHOUSE_ALLIANCE; // human auction house
+    else if (u_entry->FactionGroup & FACTION_MASK_HORDE)
+        return AUCTIONHOUSE_HORDE; // orc auction house
+    else
+        return AUCTIONHOUSE_NEUTRAL; // goblin auction house
 }

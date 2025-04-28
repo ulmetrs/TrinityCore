@@ -491,8 +491,7 @@ void AuctionHouseBot::PrepareStatusInfos(std::unordered_map<AuctionHouseType, Au
         for (AuctionQuality quality : EnumUtils::Iterate<AuctionQuality>())
             statusInfo[ahType].QualityInfo[quality] = 0;
 
-
-        AuctionHouseId houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AuctionHouseId::Alliance : (ahType == AUCTION_HOUSE_HORDE) ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
+        uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
         AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
         for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
@@ -516,7 +515,7 @@ void AuctionHouseBot::Rebuild(bool all)
 {
     for (AuctionHouseType ahType : EnumUtils::Iterate<AuctionHouseType>())
     {
-        AuctionHouseId houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AuctionHouseId::Alliance : (ahType == AUCTION_HOUSE_HORDE) ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
+        uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
         AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
         for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
             if (!itr->second->owner || sAuctionBotConfig->IsBotChar(itr->second->owner)) // ahbot auction

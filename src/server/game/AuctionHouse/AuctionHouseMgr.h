@@ -41,10 +41,11 @@ public:
     static AuctionHouseMgr* instance();
     static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
     static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
-    static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(AuctionHouseId houseId);
+    static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
+    static uint8 GetAuctionHouseId(uint32 factionTemplateId);
 
     AuctionHouseObject* GetAuctionHouseByFactionTemplateId(uint32 factionTemplateId);
-    AuctionHouseObject* GetAuctionHouse(AuctionHouseId houseId);
+    AuctionHouseObject* GetAuctionHouse(uint8 houseId);
 
     Item* GetAItem(ObjectGuid::LowType id)
     {
@@ -92,7 +93,6 @@ private:
         messageQueue_.close();
         responseQueue_.close();
     }
-    AuctionHouseId GetAuctionHouseId(uint32 factionTemplateId);
 
     AuctionHouseMap auctionHouseMap_;
     std::map<ObjectGuid, AuctionPair> pendingAuctionMap;

@@ -132,7 +132,7 @@ void AuctionEntry::SaveToDB(CharacterDatabaseTransaction trans) const
 bool AuctionEntry::LoadFromDB(Field* fields, bool moveToNeutralAH)
 {
     Id = fields[0].GetUInt32();
-    houseId = moveToNeutralAH ? AuctionHouseId::Neutral : AuctionHouseId(fields[1].GetUInt8());
+    houseId = moveToNeutralAH ? AUCTIONHOUSE_NEUTRAL : fields[1].GetUInt8();
     itemGUIDLow = fields[2].GetUInt32();
     itemEntry = fields[3].GetUInt32();
     itemCount = fields[4].GetUInt32();

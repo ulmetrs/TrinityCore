@@ -37,13 +37,6 @@ class Item;
 class Player;
 class WorldPacket;
 
-enum class AuctionHouseId : uint32 // To match the AuctionHouse.dbc
-{
-    Alliance       = 2,
-    Horde          = 6,
-    Neutral        = 7
-};
-
 enum AuctionError : uint8
 {
     ERR_AUCTION_OK                  = 0,
@@ -75,6 +68,13 @@ enum MailAuctionAnswers
     AUCTION_SALE_PENDING        = 6
 };
 
+enum AuctionHouseId
+{
+    AUCTIONHOUSE_ALLIANCE       = 2,
+    AUCTIONHOUSE_HORDE          = 6,
+    AUCTIONHOUSE_NEUTRAL        = 7
+};
+
 enum AuctionEntryFlag : uint8
 {
     AUCTION_ENTRY_FLAG_NONE         = 0x0,
@@ -84,7 +84,7 @@ enum AuctionEntryFlag : uint8
 struct TC_GAME_API AuctionEntry
 {
     uint32 Id;
-    AuctionHouseId houseId;
+    uint8 houseId;
     ObjectGuid::LowType itemGUIDLow;
     uint32 itemEntry;
     uint32 itemCount;
@@ -101,7 +101,7 @@ struct TC_GAME_API AuctionEntry
     AuctionEntryFlag Flags;
 
     // helpers
-    AuctionHouseId GetHouseId() const { return houseId; }
+    uint8 GetHouseId() const { return houseId; }
     uint32 GetAuctionCut() const;
     uint32 GetAuctionOutBid() const;
     bool BuildAuctionInfo(WorldPacket & data, Item* sourceItem = nullptr) const;
@@ -152,7 +152,7 @@ struct SearchableAuctionEntryItem
 struct SearchableAuctionEntry
 {
     uint32 Id;
-    AuctionHouseId houseId;
+    uint8 houseId;
     ObjectGuid ownerGuid;
     std::string ownerName;
     uint32 buyout;
@@ -238,8 +238,8 @@ public:
     SearchableAuctionEntriesMap& GetSearchableAuctionMap() const { return searchableAuctionMap_; }
     std::shared_mutex& GetMapMutex() const { return mapMutex_; }
 
-    void AddAuction(AuctionEntry* auction);
-    bool RemoveAuction(AuctionEntry* auction);
+    void AddAuction(AuctionEntry const* auction);
+    bool RemoveAuction(AuctionEntry const* auction);
     void Update();
 
 private:
@@ -249,7 +249,7 @@ private:
 
 };
 
-typedef std::map<AuctionHouseId, std::unique_ptr<AuctionHouseObject>> AuctionHouseMap;
+typedef std::map<uint8, std::unique_ptr<AuctionHouseObject>> AuctionHouseMap;
 
 class AuctionHouseCommon
 {

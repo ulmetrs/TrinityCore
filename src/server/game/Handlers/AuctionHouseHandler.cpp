@@ -272,7 +272,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
 
     // GetAuctionHouseEntry does this for you, this will simply bypass creature checks, is that intended?
     if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        AH->houseId = AuctionHouseId::Neutral;
+        AH->houseId = AUCTIONHOUSE_NEUTRAL;
     else
     {
         CreatureData const* auctioneerData = sObjectMgr->GetCreatureData(creature->GetSpawnId());
@@ -294,7 +294,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         }
 
         AuctionHouseEntry const* AHEntry = sAuctionMgr->GetAuctionHouseEntry(auctioneerInfo->faction);
-        AH->houseId = AuctionHouseId(AHEntry->ID);
+        AH->houseId = AHEntry->ID;
     }
 
     // Required stack size of auction matches to current item stack size, just move item to auctionhouse
