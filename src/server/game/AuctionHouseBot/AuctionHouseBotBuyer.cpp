@@ -16,6 +16,7 @@
  */
 
 #include "AuctionHouseBotBuyer.h"
+#include "AuctionHouseCommon.h"
 #include "GameTime.h"
 #include "DatabaseEnv.h"
 #include "Item.h"
@@ -102,7 +103,7 @@ uint32 AuctionBotBuyer::GetItemInformation(BuyerConfiguration& config)
     uint32 count = 0;
 
     AuctionHouseObject* house = sAuctionMgr->GetAuctionHouseByFactionTemplateId(config.GetHouseType());
-    for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = house->GetAuctionsBegin(); itr != house->GetAuctionsEnd(); ++itr)
+    for (AuctionEntryMap::const_iterator itr = house->GetAuctionsBegin(); itr != house->GetAuctionsEnd(); ++itr)
     {
         AuctionEntry* entry = itr->second;
 

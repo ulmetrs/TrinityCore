@@ -478,8 +478,6 @@ void AuctionHouseMgr::AddAuction(AuctionEntry const* auction)
     // Queue the searchable auction entry to be added asynchronously
     auto message = std::make_unique<AddAuctionMessage>(searchableAuctionEntry);
     messageQueue_.send(std::move(message));
-
-    sScriptMgr->OnAuctionAdd(this, auction);
 }
 
 bool AuctionHouseMgr::RemoveAuction(AuctionEntry const* auction)
@@ -490,8 +488,6 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry const* auction)
     // Queue the searchable auction entry to be removed asynchronously
     auto message = std::make_unique<RemoveAuctionMessage>(auction->Id, auction->houseId);
     messageQueue_.send(std::move(message));
-
-    sScriptMgr->OnAuctionRemove(this, auction);
 
     // we need to delete the entry, it is not referenced any more
     delete auction;

@@ -27,11 +27,14 @@
 void AuctionHouseObject::AddAuction(AuctionEntry* auction)
 {
     AuctionsMap[auction->Id] = auction;
+    sScriptMgr->OnAuctionAdd(this, auction);
 }
 
 bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
 {
-    return AuctionsMap.erase(auction->Id) ? true : false;
+    bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
+    sScriptMgr->OnAuctionRemove(this, auction);
+    return wasInMap;
 }
 
 void AuctionHouseObject::Update()
@@ -112,7 +115,7 @@ void AuctionEntry::SaveToDB(CharacterDatabaseTransaction trans) const
 {
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_AUCTION);
     stmt->setUInt32(0, Id);
-    stmt->setUInt8(1, houseId);
+    stmt->setUInt8(1, uint8(houseId));
     stmt->setUInt32(2, itemGUIDLow);
     stmt->setUInt32(3, owner);
     stmt->setUInt32(4, buyout);
