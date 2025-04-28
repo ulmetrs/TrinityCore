@@ -44,7 +44,7 @@ enum eAuctionHouse
 };
 
 AuctionHouseMgr::AuctionHouseMgr() {
-    for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTIONHOUSE_WORKERTHREADS); ++i) {
+    for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTION_WORKER_THREADS); ++i) {
         workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(
             &messageQueue_, &responseQueue_, searchableAuctionMap_, mapMutex_));
     }
