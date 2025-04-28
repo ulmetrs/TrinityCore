@@ -26,15 +26,92 @@
 #include <unordered_set>
 #include <vector>
 
+#define MIN_AUCTION_TIME (12*HOUR)
+#define MAX_AUCTION_ITEMS 160
+#define MAX_GETALL_RETURN 55000
+#define MAX_AUCTIONS_PER_PAGE 50
+
+struct AuctionHouseEntry;
 struct ItemTemplate;
+class Item;
+class Player;
 class WorldPacket;
 
-enum class AuctionHouseFactionId : uint8
+enum class AuctionHouseId : uint32 // To match the AuctionHouse.dbc
 {
-    Alliance,
-    Horde,
-    Neutral,
-    Max
+    Alliance       = 2,
+    Horde          = 6,
+    Neutral        = 7
+};
+
+enum AuctionError : uint8
+{
+    ERR_AUCTION_OK                  = 0,
+    ERR_AUCTION_INVENTORY           = 1,
+    ERR_AUCTION_DATABASE_ERROR      = 2,
+    ERR_AUCTION_NOT_ENOUGHT_MONEY   = 3,
+    ERR_AUCTION_ITEM_NOT_FOUND      = 4,
+    ERR_AUCTION_HIGHER_BID          = 5,
+    ERR_AUCTION_BID_INCREMENT       = 7,
+    ERR_AUCTION_BID_OWN             = 10,
+    ERR_AUCTION_RESTRICTED_ACCOUNT  = 13
+};
+
+enum AuctionAction : uint8
+{
+    AUCTION_SELL_ITEM   = 0,
+    AUCTION_CANCEL      = 1,
+    AUCTION_PLACE_BID   = 2
+};
+
+enum MailAuctionAnswers
+{
+    AUCTION_OUTBIDDED           = 0,
+    AUCTION_WON                 = 1,
+    AUCTION_SUCCESSFUL          = 2,
+    AUCTION_EXPIRED             = 3,
+    AUCTION_CANCELLED_TO_BIDDER = 4,
+    AUCTION_CANCELED            = 5,
+    AUCTION_SALE_PENDING        = 6
+};
+
+enum AuctionEntryFlag : uint8
+{
+    AUCTION_ENTRY_FLAG_NONE         = 0x0,
+    AUCTION_ENTRY_FLAG_GM_LOG_BUYER = 0x1  // write transaction to gm log file for buyer (optimization flag - avoids querying database for offline player permissions)
+};
+
+struct TC_GAME_API AuctionEntry
+{
+    uint32 Id;
+    AuctionHouseId houseId;
+    ObjectGuid::LowType itemGUIDLow;
+    uint32 itemEntry;
+    uint32 itemCount;
+    ObjectGuid::LowType owner;
+    uint32 startbid;                                        //maybe useless
+    uint32 bid;
+    uint32 buyout;
+    time_t expire_time;
+    ObjectGuid::LowType bidder;
+    uint32 deposit;                                         //deposit can be calculated only when creating auction
+    uint32 etime;
+    std::unordered_set<ObjectGuid> bidders;
+    AuctionHouseEntry const* auctionHouseEntry;             // in AuctionHouse.dbc
+    AuctionEntryFlag Flags;
+
+    // helpers
+    AuctionHouseId GetHouseId() const { return houseId; }
+    uint32 GetAuctionCut() const;
+    uint32 GetAuctionOutBid() const;
+    bool BuildAuctionInfo(WorldPacket & data, Item* sourceItem = nullptr) const;
+    void DeleteFromDB(CharacterDatabaseTransaction trans) const;
+    void SaveToDB(CharacterDatabaseTransaction trans) const;
+    bool LoadFromDB(Field* fields, bool moveToNeutralAH = false);
+    std::string BuildAuctionMailSubject(MailAuctionAnswers response) const;
+    static std::string BuildAuctionWonMailBody(ObjectGuid guid, uint32 bid, uint32 buyout);
+    static std::string BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment);
+    static std::string BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta);
 };
 
 enum AuctionSortOrder
@@ -75,6 +152,7 @@ struct SearchableAuctionEntryItem
 struct SearchableAuctionEntry
 {
     uint32 Id;
+    AuctionHouseId houseId;
     ObjectGuid ownerGuid;
     std::string ownerName;
     uint32 buyout;
@@ -82,7 +160,6 @@ struct SearchableAuctionEntry
     uint32 startbid;
     uint32 bid;
     ObjectGuid bidderGuid;
-    AuctionHouseFactionId listFaction;
     SearchableAuctionEntryItem item;
 
     void BuildAuctionInfo(WorldPacket& data) const;
@@ -137,87 +214,42 @@ struct AuctionHouseSearchInfo
     std::vector<AuctionSortInfo> sorting;
 };
 
+typedef std::map<uint32, AuctionEntry*> AuctionEntryMap;
 typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
-
-struct AuctionMessage
-{
-    enum class Type : uint8
-    {
-        Add,
-        Remove,
-        UpdateBid,
-        List,
-        ListOwner,
-        ListBidder
-    };
-
-    AuctionMessage(Type const _type, AuctionHouseFactionId _listFaction) : type(_type), listFaction(_listFaction) {}
-    virtual ~AuctionMessage() = default;
-
-    Type type;
-    AuctionHouseFactionId listFaction;
-};
-
-struct AddAuctionMessage : AuctionMessage
-{
-    AddAuctionMessage(std::shared_ptr<SearchableAuctionEntry> _searchableAuctionEntry)
-        : AuctionMessage(AuctionMessage::Type::Add, _searchableAuctionEntry->listFaction), searchableAuctionEntry(_searchableAuctionEntry) {}
-
-    std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry;
-};
-
-struct RemoveAuctionMessage : AuctionMessage
-{
-    RemoveAuctionMessage(uint32 _auctionId, AuctionHouseFactionId _listFaction)
-        : AuctionMessage(AuctionMessage::Type::Remove, _listFaction), auctionId(_auctionId) {}
-
-    uint32 auctionId;
-};
-
-struct UpdateAuctionBidMessage : AuctionMessage
-{
-    UpdateAuctionBidMessage(uint32 _auctionId, AuctionHouseFactionId _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
-        : AuctionMessage(AuctionMessage::Type::UpdateBid, _listFaction), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
-
-    uint32 auctionId;
-    uint32 bid;
-    ObjectGuid bidderGuid;
-};
-
-struct ListAuctionMessage : AuctionMessage
-{
-    ListAuctionMessage(AuctionHouseFactionId _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
-        : AuctionMessage(AuctionMessage::Type::List, _listFaction), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
-
-    AuctionHouseSearchInfo searchInfo;
-    AuctionHousePlayerInfo playerInfo;
-};
-
-struct ListOwnerAuctionMessage : AuctionMessage
-{
-    ListOwnerAuctionMessage(AuctionHouseFactionId _listFaction, ObjectGuid _ownerGuid)
-        : AuctionMessage(AuctionMessage::Type::ListOwner, _listFaction), ownerGuid(_ownerGuid) {}
-
-    ObjectGuid ownerGuid;
-};
-
-struct ListBidderAuctionMessage : AuctionMessage
-{
-    ListBidderAuctionMessage(AuctionHouseFactionId _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
-        : AuctionMessage(AuctionMessage::Type::ListBidder, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
-
-    std::vector<uint32> outbiddedAuctionIds;
-    ObjectGuid ownerGuid;
-};
-
-struct ListAuctionMessageResponse
-{
-    ObjectGuid playerGuid;
-    WorldPacket packet;
-};
-
 typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
 typedef std::vector<SearchableAuctionEntry*> SortableAuctionEntriesList;
+
+class TC_GAME_API AuctionHouseObject
+{
+public:
+    ~AuctionHouseObject()
+    {
+        for (AuctionEntryMap::iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); ++itr)
+            delete itr->second;
+    }
+    uint32 Getcount() const { return AuctionsMap.size(); }
+    AuctionEntryMap::iterator GetAuctionsBegin() { return AuctionsMap.begin(); }
+    AuctionEntryMap::iterator GetAuctionsEnd() { return AuctionsMap.end(); }
+    AuctionEntry* GetAuction(uint32 id) const
+    {
+        AuctionEntryMap::const_iterator itr = AuctionsMap.find(id);
+        return itr != AuctionsMap.end() ? itr->second : nullptr;
+    }
+    SearchableAuctionEntriesMap GetSearchableAuctionMap() const { return searchableAuctionMap_; }
+    std::shared_mutex GetMapMutex() const { return mapMutex_; }
+
+    void AddAuction(AuctionEntry* auction);
+    bool RemoveAuction(AuctionEntry* auction);
+    void Update();
+
+private:
+    AuctionEntryMap AuctionsMap;
+    SearchableAuctionEntriesMap searchableAuctionMap_;
+    std::shared_mutex mapMutex_;
+
+};
+
+typedef std::map<AuctionHouseId, std::unique_ptr<AuctionHouseObject>> AuctionHouseMap;
 
 class AuctionHouseCommon
 {

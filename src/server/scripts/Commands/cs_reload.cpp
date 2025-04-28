@@ -30,6 +30,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "BattlegroundMgr.h"
 #include "Chat.h"

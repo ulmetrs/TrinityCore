@@ -16,30 +16,18 @@
  */
 
 #include "AuctionHouseWorkerThread.h"
-#include "AuctionHouseMgr.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionSorter.h"
 #include "GameTime.h"
 #include "World.h"
 
-#define MAX_AUCTIONS_PER_PAGE 50
-
 AuctionHouseWorkerThread::AuctionHouseWorkerThread(
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
-    SearchableAuctionEntriesMap* searchableAuctionMap,
-    std::shared_mutex* mapMutex)
-    : messageQueue_(messageQueue), responseQueue_(responseQueue),
-      searchableAuctionMap_(searchableAuctionMap), mapMutex_(mapMutex)
+    AuctionHouseMap& auctionHouseMap)
+    : messageQueue_(messageQueue), responseQueue_(responseQueue), auctionHouseMap_(auctionHouseMap)
 {
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
-}
-
-AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
-{
-    if (workerThread_.joinable())
-    {
-        workerThread_.join();
-    }
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop)
@@ -80,25 +68,28 @@ void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> me
     }
 }
 
-void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& auctionAdd)
+void AuctionHouseObject::AddAuction(AddAuctionMessage const& message)
 {
-    SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionAdd.listFaction);
-    std::unique_lock<std::shared_mutex> lock(GetMapMutex(auctionAdd.listFaction));
-    searchableAuctionMap.insert(std::make_pair(auctionAdd.searchableAuctionEntry->Id, auctionAdd.searchableAuctionEntry));
+    AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
+    SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
+    std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
+    searchableAuctionMap.insert(std::make_pair(message.searchableAuctionEntry->Id, message.searchableAuctionEntry));
 }
 
-void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& auctionRemove)
+void AuctionHouseObject::RemoveAuction(RemoveAuctionMessage const& message)
 {
-    SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionRemove.listFaction);
-    std::unique_lock<std::shared_mutex> lock(GetMapMutex(auctionRemove.listFaction));
-    searchableAuctionMap.erase(auctionRemove.auctionId);
+    AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
+    SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
+    std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
+    searchableAuctionMap.erase(message.auctionId);
 }
 
-void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& auctionUpdateBid)
+void AuctionHouseObject::UpdateAuctionBid(UpdateAuctionBidMessage const& message)
 {
-    SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionUpdateBid.listFaction);
-    std::unique_lock<std::shared_mutex> lock(GetMapMutex(auctionUpdateBid.listFaction));
-    SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionUpdateBid.auctionId);
+    AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
+    SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
+    std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
+    SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(message.auctionId);
     if (itr != searchableAuctionMap.end())
     {
         itr->second->bid = auctionUpdateBid.bid;
@@ -106,40 +97,41 @@ void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& a
     }
 }
 
-void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& searchListRequest)
+void AuctionHouseObject::ListAuctions(ListAuctionMessage const& message)
 {
-    std::shared_lock<std::shared_mutex> lock(GetMapMutex(searchListRequest.listFaction));
-    SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(searchListRequest.listFaction);
+    AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
+    SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
+    std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
     uint32 count = 0, totalCount = 0;
 
-    auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
-    searchResponse->playerGuid = searchListRequest.playerInfo.playerGuid;
-    searchResponse->packet.Initialize(SMSG_AUCTION_LIST_RESULT, (4 + 4 + 4));
-    searchResponse->packet << (uint32)0;
+    auto response = std::make_unique<ListAuctionMessageResponse>();
+    response->playerGuid = message.playerInfo.playerGuid;
+    response->packet.Initialize(SMSG_AUCTION_LIST_RESULT, (4 + 4 + 4));
+    response->packet << (uint32)0;
 
-    if (!searchListRequest.searchInfo.getAll)
+    if (!message.searchInfo.getAll)
     {
         SortableAuctionEntriesList auctionEntries;
-        BuildListAuctionItems(searchListRequest, auctionEntries, searchableAuctionMap);
+        BuildListAuctionItems(message, auctionEntries, searchableAuctionMap);
 
-        if (!searchListRequest.searchInfo.sorting.empty() && auctionEntries.size() > MAX_AUCTIONS_PER_PAGE)
+        if (!message.searchInfo.sorting.empty() && auctionEntries.size() > MAX_AUCTIONS_PER_PAGE)
         {
-            AuctionSorter sorter(&searchListRequest.searchInfo.sorting, searchListRequest.playerInfo.loc_idx);
+            AuctionSorter sorter(&message.searchInfo.sorting, message.playerInfo.loc_idx);
             std::sort(auctionEntries.begin(), auctionEntries.end(), sorter);
         }
 
         SortableAuctionEntriesList::const_iterator itr = auctionEntries.begin();
-        if (searchListRequest.searchInfo.listfrom)
+        if (message.searchInfo.listfrom)
         {
-            if (searchListRequest.searchInfo.listfrom > auctionEntries.size())
+            if (message.searchInfo.listfrom > auctionEntries.size())
                 itr = auctionEntries.end();
             else
-                itr += searchListRequest.searchInfo.listfrom;
+                itr += message.searchInfo.listfrom;
         }
 
         for (; itr != auctionEntries.end(); ++itr)
         {
-            (*itr)->BuildAuctionInfo(searchResponse->packet);
+            (*itr)->BuildAuctionInfo(response->packet);
             if (++count >= MAX_AUCTIONS_PER_PAGE)
                 break;
         }
@@ -151,27 +143,27 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& searchList
         {
             std::shared_ptr<SearchableAuctionEntry> const& Aentry = pair.second;
             ++count;
-            Aentry->BuildAuctionInfo(searchResponse->packet);
+            Aentry->BuildAuctionInfo(response->packet);
             if (count >= MAX_GETALL_RETURN)
                 break;
         }
         totalCount = searchableAuctionMap.size();
     }
 
-    searchResponse->packet.put<uint32>(0, count);
-    searchResponse->packet << totalCount;
-    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
+    response->packet.put<uint32>(0, count);
+    response->packet << totalCount;
+    response->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    responseQueue_->send(std::move(searchResponse));
+    responseQueue_->send(std::move(response));
 }
 
-void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& searchRequest, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
+void AuctionHouseObject::BuildListAuctionItems(ListAuctionMessage const& message, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
 {
     // pussywizard: optimization, this is a simplified case for the default search state (no filters)
-    if (searchRequest.searchInfo.itemClass == 0xffffffff && searchRequest.searchInfo.itemSubClass == 0xffffffff
-        && searchRequest.searchInfo.inventoryType == 0xffffffff && searchRequest.searchInfo.quality == 0xffffffff
-        && searchRequest.searchInfo.levelmin == 0x00 && searchRequest.searchInfo.levelmax == 0x00
-        && searchRequest.searchInfo.usable == 0x00 && searchRequest.searchInfo.wsearchedname.empty())
+    if (message.searchInfo.itemClass == 0xffffffff && message.searchInfo.itemSubClass == 0xffffffff
+        && message.searchInfo.inventoryType == 0xffffffff && message.searchInfo.quality == 0xffffffff
+        && message.searchInfo.levelmin == 0x00 && message.searchInfo.levelmax == 0x00
+        && message.searchInfo.usable == 0x00 && message.searchInfo.wsearchedname.empty())
     {
         for (auto const& pair : auctionMap)
             auctionEntries.push_back(pair.second.get());
@@ -185,37 +177,37 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& s
         SearchableAuctionEntryItem const& Aitem = Aentry->item;
         ItemTemplate const* proto = Aitem.itemTemplate;
 
-        if (searchRequest.searchInfo.itemClass != 0xffffffff && proto->Class != searchRequest.searchInfo.itemClass)
+        if (message.searchInfo.itemClass != 0xffffffff && proto->Class != message.searchInfo.itemClass)
             continue;
 
-        if (searchRequest.searchInfo.itemSubClass != 0xffffffff && proto->SubClass != searchRequest.searchInfo.itemSubClass)
+        if (message.searchInfo.itemSubClass != 0xffffffff && proto->SubClass != message.searchInfo.itemSubClass)
             continue;
 
-        if (searchRequest.searchInfo.inventoryType != 0xffffffff && proto->InventoryType != searchRequest.searchInfo.inventoryType)
+        if (message.searchInfo.inventoryType != 0xffffffff && proto->InventoryType != message.searchInfo.inventoryType)
         {
             // xinef: exception, robes are counted as chests
-            if (searchRequest.searchInfo.inventoryType != INVTYPE_CHEST || proto->InventoryType != INVTYPE_ROBE)
+            if (message.searchInfo.inventoryType != INVTYPE_CHEST || proto->InventoryType != INVTYPE_ROBE)
                 continue;
         }
 
-        if (searchRequest.searchInfo.quality != 0xffffffff && proto->Quality < searchRequest.searchInfo.quality)
+        if (message.searchInfo.quality != 0xffffffff && proto->Quality < message.searchInfo.quality)
             continue;
 
-        if (searchRequest.searchInfo.levelmin != 0x00 && (proto->RequiredLevel < searchRequest.searchInfo.levelmin
-            || (searchRequest.searchInfo.levelmax != 0x00 && proto->RequiredLevel > searchRequest.searchInfo.levelmax)))
+        if (message.searchInfo.levelmin != 0x00 && (proto->RequiredLevel < message.searchInfo.levelmin
+            || (message.searchInfo.levelmax != 0x00 && proto->RequiredLevel > message.searchInfo.levelmax)))
             continue;
 
-        if (searchRequest.searchInfo.usable != 0x00)
+        if (message.searchInfo.usable != 0x00)
         {
-            if (!searchRequest.playerInfo.usablePlayerInfo.value().PlayerCanUseItem(proto))
+            if (!message.playerInfo.usablePlayerInfo.value().PlayerCanUseItem(proto))
                 continue;
         }
 
         // Allow search by suffix (ie: of the Monkey) or partial name (ie: Monkey)
         // No need to do any of this if no search term was entered
-        if (!searchRequest.searchInfo.wsearchedname.empty())
+        if (!message.searchInfo.wsearchedname.empty())
         {
-            if (Aitem.itemName[searchRequest.playerInfo.loc_idx].find(searchRequest.searchInfo.wsearchedname) == std::wstring::npos)
+            if (Aitem.itemName[message.playerInfo.loc_idx].find(message.searchInfo.wsearchedname) == std::wstring::npos)
                 continue;
         }
 
@@ -223,10 +215,11 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& s
     }
 }
 
-void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& message)
+void AuctionHouseObject::ListBidderAuctions(ListBidderAuctionMessage const& message)
 {
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(message.listFaction);
-    std::shared_lock<std::shared_mutex> lock(GetMapMutex(message.listFaction));
+    AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
+    SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
+    std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
 
     auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
     searchResponse->playerGuid = message.ownerGuid;
@@ -266,10 +259,11 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
     responseQueue_->send(std::move(searchResponse));
 }
 
-void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
+void AuctionHouseObject::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
 {
-    SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(message.listFaction);
-    std::shared_lock<std::shared_mutex> lock(GetMapMutex(message.listFaction));
+    AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
+    SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
+    std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
 
     auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
     searchResponse->playerGuid = message.ownerGuid;

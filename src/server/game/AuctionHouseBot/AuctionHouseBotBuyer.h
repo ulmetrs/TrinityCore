@@ -19,6 +19,7 @@
 #define AUCTION_HOUSE_BOT_BUYER_H
 
 #include "Define.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "AuctionHouseBot.h"
 

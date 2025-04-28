@@ -19,6 +19,7 @@
 #include "AccountMgr.h"
 #include "AuctionHouseBotBuyer.h"
 #include "AuctionHouseBotSeller.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "Config.h"
 #include "Containers.h"
@@ -490,7 +491,7 @@ void AuctionHouseBot::PrepareStatusInfos(std::unordered_map<AuctionHouseType, Au
         for (AuctionQuality quality : EnumUtils::Iterate<AuctionQuality>())
             statusInfo[ahType].QualityInfo[quality] = 0;
 
-        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(ahType);
+        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(ahType);
         for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
             AuctionEntry* auctionEntry = itr->second;
@@ -513,7 +514,7 @@ void AuctionHouseBot::Rebuild(bool all)
 {
     for (uint32 i = 0; i < MAX_AUCTION_HOUSE_TYPE; ++i)
     {
-        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(AuctionHouseType(i));
+        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(AuctionHouseType(i));
         for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
             if (!itr->second->owner || sAuctionBotConfig->IsBotChar(itr->second->owner)) // ahbot auction
                 if (all || itr->second->bid == 0)           // expire now auction if no bid or forced

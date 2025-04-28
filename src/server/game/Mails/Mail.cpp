@@ -16,6 +16,7 @@
  */
 
 #include "Mail.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "BattlegroundMgr.h"
 #include "CalendarMgr.h"

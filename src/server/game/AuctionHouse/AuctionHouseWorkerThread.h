@@ -16,7 +16,7 @@
  */
 
 #ifndef AUCTION_HOUSE_WORKER_THREAD_H
-#define AUCTION_HOUSE_WORKER_THREAD_H
+#define AUCTION_HOUSE_WORKER_THREADH
 
 #include "SignalQueue.h"
 #include "AuctionHouseCommon.h"
@@ -25,14 +25,88 @@
 #include <unordered_map>
 #include <shared_mutex>
 
+struct AuctionMessage
+{
+    enum class Type : uint8
+    {
+        Add,
+        Remove,
+        UpdateBid,
+        List,
+        ListOwner,
+        ListBidder
+    };
+
+    AuctionMessage(Type const _type, AuctionHouseId _houseId) : type(_type), houseId(_houseId) {}
+    virtual ~AuctionMessage() = default;
+
+    Type type;
+    AuctionHouseId houseId;
+};
+
+struct AddAuctionMessage : AuctionMessage
+{
+    AddAuctionMessage(std::shared_ptr<SearchableAuctionEntry> _searchableAuctionEntry)
+        : AuctionMessage(AuctionMessage::Type::Add, _searchableAuctionEntry->houseId), searchableAuctionEntry(_searchableAuctionEntry) {}
+
+    std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry;
+};
+
+struct RemoveAuctionMessage : AuctionMessage
+{
+    RemoveAuctionMessage(uint32 _auctionId, AuctionHouseId _houseId)
+        : AuctionMessage(AuctionMessage::Type::Remove, _houseId), auctionId(_auctionId) {}
+
+    uint32 auctionId;
+};
+
+struct UpdateAuctionBidMessage : AuctionMessage
+{
+    UpdateAuctionBidMessage(uint32 _auctionId, AuctionHouseId _houseId, uint32 _bid, ObjectGuid _bidderGuid)
+        : AuctionMessage(AuctionMessage::Type::UpdateBid, _houseId), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
+    uint32 auctionId;
+    uint32 bid;
+    ObjectGuid bidderGuid;
+};
+
+struct ListAuctionMessage : AuctionMessage
+{
+    ListAuctionMessage(AuctionHouseId _houseId, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
+        : AuctionMessage(AuctionMessage::Type::List, _houseId), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
+
+    AuctionHouseSearchInfo searchInfo;
+    AuctionHousePlayerInfo playerInfo;
+};
+
+struct ListOwnerAuctionMessage : AuctionMessage
+{
+    ListOwnerAuctionMessage(AuctionHouseId _houseId, ObjectGuid _ownerGuid)
+        : AuctionMessage(AuctionMessage::Type::ListOwner, _houseId), ownerGuid(_ownerGuid) {}
+
+    ObjectGuid ownerGuid;
+};
+
+struct ListBidderAuctionMessage : AuctionMessage
+{
+    ListBidderAuctionMessage(AuctionHouseId _houseId, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
+        : AuctionMessage(AuctionMessage::Type::ListBidder, _houseId), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
+    std::vector<uint32> outbiddedAuctionIds;
+    ObjectGuid ownerGuid;
+};
+
+struct ListAuctionMessageResponse
+{
+    ObjectGuid playerGuid;
+    WorldPacket packet;
+};
+
 class AuctionHouseWorkerThread
 {
 public:
     AuctionHouseWorkerThread(
         SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
         SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
-        SearchableAuctionEntriesMap* searchableAuctionMap,
-        std::shared_mutex* mapMutex);
+        AuctionHouseMap& auctionHouseMap);
     ~AuctionHouseWorkerThread();
 
 private:
@@ -46,15 +120,15 @@ private:
     void ListBidderAuctions(ListBidderAuctionMessage const& message);
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    SearchableAuctionEntriesMap& GetSearchableAuctionMap(AuctionHouseFactionId faction) { return searchableAuctionMap_[static_cast<uint8>(faction)]; }
-    std::shared_mutex& GetMapMutex(AuctionHouseFactionId faction) { return mapMutex_[static_cast<uint8>(faction)]; }
+    AuctionHouseObject* GetAuctionHouse(AuctionHouseId houseId) {
+        auto it = auctionHouseMap_.find(houseId);
+        return it != auctionHouseMap_.end() ? it->second.get() : nullptr;
+    }
 
-    SearchableAuctionEntriesMap* searchableAuctionMap_;
-    std::shared_mutex* mapMutex_;
-    std::jthread workerThread_;
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue_;
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue_;
-
+    AuctionHouseMap& auctionHouseMap_;
+    std::jthread workerThread_;
 };
 
 #endif // AUCTION_HOUSE_WORKER_THREAD_H

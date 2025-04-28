@@ -16,6 +16,7 @@
  */
 
 #include "AuctionHouseBotSeller.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "Containers.h"
 #include "DatabaseEnv.h"
@@ -526,7 +527,7 @@ uint32 AuctionBotSeller::SetStat(SellerConfiguration& config)
 {
     AllItemsArray itemsSaved(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(config.GetHouseType());
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(config.GetHouseType());
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
     {
         AuctionEntry* auctionEntry = itr->second;
@@ -836,19 +837,19 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
     switch (config.GetHouseType())
     {
         case AUCTION_HOUSE_ALLIANCE:
-            houseid = AUCTIONHOUSE_ALLIANCE;
+            houseid = AuctionHouseId::Alliance;
             break;
         case AUCTION_HOUSE_HORDE:
-            houseid = AUCTIONHOUSE_HORDE;
+            houseid = AuctionHouseId::Horde;
             break;
         default:
-            houseid = AUCTIONHOUSE_NEUTRAL;
+            houseid = AuctionHouseId::Neutral;
             break;
     }
 
     AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(houseid);
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(config.GetHouseType());
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(config.GetHouseType());
 
     ItemsToSellArray itemsToSell;
     AllItemsArray allItems(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
@@ -932,10 +933,8 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
 
         item->SaveToDB(trans);
         sAuctionMgr->AddAItem(item);
-        auctionHouse->AddAuction(auctionEntry);
+        sAuctionMgr->AddAuction(auctionEntry);
         auctionEntry->SaveToDB(trans);
-
-        auctionHouse->AddAuction(auctionEntry);
 
         ++count;
     }

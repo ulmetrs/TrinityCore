@@ -17,6 +17,7 @@
 
 #include "WorldSession.h"
 #include "AccountMgr.h"
+#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "AuctionSorter.h"
 #include "CharacterCache.h"
@@ -259,7 +260,6 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
     Item* item = items[0];
 
     uint32 auctionTime = uint32(etime * sWorld->getRate(RATE_AUCTION_TIME));
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(creature->GetFaction());
 
     uint32 deposit = sAuctionMgr->GetAuctionDeposit(auctionHouseEntry, etime, item, finalCount);
     if (!_player->HasEnoughMoney(deposit))
@@ -270,8 +270,9 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
 
     AuctionEntry* AH = new AuctionEntry();
 
+    // GetAuctionHouseEntry does this for you, this will simply bypass creature checks, is that intended?
     if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        AH->houseId = AUCTIONHOUSE_NEUTRAL;
+        AH->houseId = AuctionHouseId::Neutral;
     else
     {
         CreatureData const* auctioneerData = sObjectMgr->GetCreatureData(creature->GetSpawnId());
@@ -331,7 +332,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         }
 
         sAuctionMgr->AddAItem(item);
-        auctionHouse->AddAuction(AH);
+        sAuctionMgr->AddAuction(AH);
         _player->MoveItemFromInventory(item->GetBagSlot(), item->GetSlot(), true);
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
@@ -389,7 +390,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         }
 
         sAuctionMgr->AddAItem(newItem);
-        auctionHouse->AddAuction(AH);
+        sAuctionMgr->AddAuction(AH);
         for (uint32 j = 0; j < itemsCount; ++j)
         {
             Item* item2 = items[j];
@@ -455,7 +456,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(creature->GetFaction());
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(creature->GetFaction());
 
     AuctionEntry* auction = auctionHouse->GetAuction(auctionId);
     Player* player = GetPlayer();
@@ -577,7 +578,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
         auction->DeleteFromDB(trans);
 
         sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
-        auctionHouse->RemoveAuction(auction);
+        sAuctionMgr->RemoveAuction(auction);
     }
     player->SaveInventoryAndGoldToDB(trans);
     CharacterDatabase.CommitTransaction(trans);
@@ -605,7 +606,7 @@ void WorldSession::HandleAuctionRemoveItem(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(creature->GetFaction());
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(creature->GetFaction());
 
     AuctionEntry* auction = auctionHouse->GetAuction(auctionId);
     Player* player = GetPlayer();
@@ -656,7 +657,7 @@ void WorldSession::HandleAuctionRemoveItem(WorldPacket& recvData)
     CharacterDatabase.CommitTransaction(trans);
 
     sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
-    auctionHouse->RemoveAuction(auction);
+    sAuctionMgr->RemoveAuction(auction);
 }
 
 //called when player lists his bids
@@ -693,11 +694,10 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
+    // verifies the warehouse entry exists
     AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
     if (!ahEntry)
         return;
-
-    AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     // Client sends this list, which I'm honestly not entirely sure why?
     std::vector<uint32> auctionIds;
@@ -710,7 +710,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
         auctionIds.push_back(outbiddedAuctionId);
     }
 
-    auto message = std::make_unique<ListBidderAuctionMessage>(auctionHouseFaction, std::move(auctionIds), GetPlayer()->GetGUID());
+    auto message = std::make_unique<ListBidderAuctionMessage>(ahEntry->ID, std::move(auctionIds), GetPlayer()->GetGUID());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
@@ -736,13 +736,12 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
+    // verifies the warehouse entry exists
     AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
     if (!ahEntry)
         return;
 
-    AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
-
-    auto message = std::make_unique<ListOwnerAuctionMessage>(auctionHouseFaction, GetPlayer()->GetGUID());
+    auto message = std::make_unique<ListOwnerAuctionMessage>(ahEntry->ID, GetPlayer()->GetGUID());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
@@ -807,11 +806,10 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     TC_LOG_DEBUG("auctionHouse", "Auctionhouse search ({}) list from: {}, searchedname: {}, levelmin: {}, levelmax: {}, auctionSlotID: {}, auctionMainCategory: {}, auctionSubCategory: {}, quality: {}, usable: {}",
         guid.ToString(), listfrom, searchedname, levelmin, levelmax, auctionSlotID, auctionMainCategory, auctionSubCategory, quality, usable);
 
+    // verifies the warehouse entry exists
     AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
     if (!ahEntry)
         return;
-
-    AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     AuctionHouseSearchInfo ahSearchInfo;
     ahSearchInfo.wsearchedname = wsearchedname;
@@ -853,7 +851,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
     }
 
-    auto message = std::make_unique<ListAuctionMessage>(auctionHouseFaction, std::move(ahSearchInfo), std::move(ahPlayerInfo));
+    auto message = std::make_unique<ListAuctionMessage>(ahEntry->ID, std::move(ahSearchInfo), std::move(ahPlayerInfo));
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
