@@ -71,9 +71,9 @@ public:
     void AddAItem(Item* it);
     bool RemoveAItem(ObjectGuid::LowType id, bool deleteItem = false, CharacterDatabaseTransaction* trans = nullptr);
 
-    void AddAuction(AuctionEntry const* auctionEntry);
-    bool RemoveAuction(AuctionEntry const* auctionEntry);
-    void UpdateBid(AuctionEntry const* auctionEntry);
+    void AddAuction(AuctionEntry* auctionEntry);
+    bool RemoveAuction(AuctionEntry* auctionEntry);
+    void UpdateBid(AuctionEntry* auctionEntry);
     void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
     void ProcessListResponses();
 

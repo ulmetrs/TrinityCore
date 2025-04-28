@@ -431,7 +431,7 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
     return true;
 }
 
-void AuctionHouseMgr::AddAuction(AuctionEntry const* auction)
+void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 {
     ASSERT(auction);
 
@@ -480,7 +480,7 @@ void AuctionHouseMgr::AddAuction(AuctionEntry const* auction)
     messageQueue_.send(std::move(message));
 }
 
-bool AuctionHouseMgr::RemoveAuction(AuctionEntry const* auction)
+bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
     bool wasInMap = auctionHouse->RemoveAuction(auction);
@@ -494,7 +494,7 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry const* auction)
     return wasInMap;
 }
 
-void AuctionHouseMgr::UpdateBid(AuctionEntry const* auction)
+void AuctionHouseMgr::UpdateBid(AuctionEntry* auction)
 {
     // Queue the searchable auction entry to be removed asynchronously Note: the synchronous bid update is done in the handler
     ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auction->bidder);

@@ -238,8 +238,8 @@ public:
     SearchableAuctionEntriesMap& GetSearchableAuctionMap() const { return searchableAuctionMap_; }
     std::shared_mutex& GetMapMutex() const { return mapMutex_; }
 
-    void AddAuction(AuctionEntry const* auction);
-    bool RemoveAuction(AuctionEntry const* auction);
+    void AddAuction(AuctionEntry* auction);
+    bool RemoveAuction(AuctionEntry* auction);
     void Update();
 
 private:
