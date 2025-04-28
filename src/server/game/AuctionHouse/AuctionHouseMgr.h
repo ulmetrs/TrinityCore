@@ -220,8 +220,8 @@ private:
     SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
     std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
-    SearchableAuctionEntriesMap searchableAuctionMap_[AuctionHouseFactionId::Max];
-    std::shared_mutex mapMutex_[AuctionHouseFactionId::Max];
+    SearchableAuctionEntriesMap searchableAuctionMap_[static_cast<uint8>(AuctionHouseFactionId::Max)];
+    std::shared_mutex mapMutex_[static_cast<uint8>(AuctionHouseFactionId::Max)];
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()
