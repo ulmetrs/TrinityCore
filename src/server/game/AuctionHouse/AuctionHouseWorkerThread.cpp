@@ -23,7 +23,13 @@
 
 #define MAX_AUCTIONS_PER_PAGE 50
 
-AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue, SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue) : messageQueue_(messageQueue), responseQueue_(responseQueue)
+AuctionHouseWorkerThread::AuctionHouseWorkerThread(
+    SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
+    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
+    SearchableAuctionEntriesMap* searchableAuctionMap,
+    std::shared_mutex* mapMutex)
+    : messageQueue_(messageQueue), responseQueue_(responseQueue),
+      searchableAuctionMap_(searchableAuctionMap), mapMutex_(mapMutex)
 {
     TC_LOG_DEBUG("auctionHouse", "Creating AH WORKER {}", GameTime::GetGameTimeMS());
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
@@ -32,17 +38,10 @@ AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<A
 
 AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
 {
-    messageQueue_->close();
-    responseQueue_->close();
-    if (workerThread_.joinable()) {
+    if (workerThread_.joinable())
+    {
         workerThread_.join();
     }
-}
-
-void AuctionHouseWorkerThread::AddAuctionMessageToQueue(std::unique_ptr<AuctionMessage> message)
-{
-    TC_LOG_DEBUG("auctionHouse", "Add Auction Message To Queue {}", GameTime::GetGameTimeMS());
-    messageQueue_->send(std::move(message), workerThread_.get_stop_token());
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop)
@@ -52,7 +51,14 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
         if (auto message = messageQueue_->receive(stop))
         {
             TC_LOG_DEBUG("auctionHouse", "Receive Auction Message From Queue {}", GameTime::GetGameTimeMS());
-            ProcessMessage(std::move(*message));
+            try
+            {
+                ProcessMessage(std::move(*message));
+            }
+            catch (const std::exception& e)
+            {
+                TC_LOG_ERROR("auctionHouse", "Exception in ProcessMessage: {}", e.what());
+            }
         }
     }
 }
@@ -89,6 +95,7 @@ void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& auctionAdd)
 {
     TC_LOG_DEBUG("auctionHouse", "AddAuction {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionAdd.listFaction);
+    std::unique_lock<std::shared_mutex> lock(GetMapMutex(auctionAdd.listFaction));
     searchableAuctionMap.insert(std::make_pair(auctionAdd.searchableAuctionEntry->Id, auctionAdd.searchableAuctionEntry));
 }
 
@@ -96,6 +103,7 @@ void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& auction
 {
     TC_LOG_DEBUG("auctionHouse", "RemoveAuction {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionRemove.listFaction);
+    std::unique_lock<std::shared_mutex> lock(GetMapMutex(auctionRemove.listFaction));
     searchableAuctionMap.erase(auctionRemove.auctionId);
 }
 
@@ -103,6 +111,7 @@ void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& a
 {
     TC_LOG_DEBUG("auctionHouse", "UpdateAuctionBid {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(auctionUpdateBid.listFaction);
+    std::unique_lock<std::shared_mutex> lock(GetMapMutex(auctionUpdateBid.listFaction));
     SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(auctionUpdateBid.auctionId);
     if (itr != searchableAuctionMap.end())
     {
@@ -114,6 +123,7 @@ void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& a
 void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& searchListRequest)
 {
     TC_LOG_DEBUG("auctionHouse", "ListAuctions Called {}", GameTime::GetGameTimeMS());
+    std::shared_lock<std::shared_mutex> lock(GetMapMutex(searchListRequest.listFaction));
     SearchableAuctionEntriesMap& searchableAuctionMap = GetSearchableAuctionMap(searchListRequest.listFaction);
     uint32 count = 0, totalCount = 0;
 
@@ -234,6 +244,7 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
 {
     TC_LOG_DEBUG("auctionHouse", "ListBidderAuctions Called {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(message.listFaction);
+    std::shared_lock<std::shared_mutex> lock(GetMapMutex(message.listFaction));
 
     auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
     searchResponse->playerGuid = message.ownerGuid;
@@ -278,6 +289,7 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
 {
     TC_LOG_DEBUG("auctionHouse", "ListOwnerAuctions Called {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap const& searchableAuctionMap = GetSearchableAuctionMap(message.listFaction);
+    std::shared_lock<std::shared_mutex> lock(GetMapMutex(message.listFaction));
 
     auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
     searchResponse->playerGuid = message.ownerGuid;

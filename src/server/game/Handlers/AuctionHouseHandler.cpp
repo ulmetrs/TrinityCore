@@ -712,7 +712,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
 
     auto message = std::make_unique<ListBidderAuctionMessage>(auctionHouseFaction, std::move(auctionIds), GetPlayer()->GetGUID());
     TC_LOG_DEBUG("auctionHouse", "Auction List Bidder Item Queue Search Request {}", GameTime::GetGameTimeMS());
-    sAuctionMgr->QueueSearchRequest(std::move(message));
+    sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
 //this void sends player info about his auctions
@@ -745,7 +745,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
 
     auto message = std::make_unique<ListOwnerAuctionMessage>(auctionHouseFaction, GetPlayer()->GetGUID());
     TC_LOG_DEBUG("auctionHouse", "Auction List Owner Item Queue Search Request {}", GameTime::GetGameTimeMS());
-    sAuctionMgr->QueueSearchRequest(std::move(message));
+    sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
 //this void is called when player clicks on search button
@@ -855,7 +855,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     }
     auto message = std::make_unique<ListAuctionMessage>(auctionHouseFaction, std::move(ahSearchInfo), std::move(ahPlayerInfo));
     TC_LOG_DEBUG("auctionHouse", "Auction List Item Queue Search Request {}", GameTime::GetGameTimeMS());
-    sAuctionMgr->QueueSearchRequest(std::move(message));
+    sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
 void WorldSession::HandleAuctionListPendingSales(WorldPacket& recvData)

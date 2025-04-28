@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -202,13 +203,10 @@ public:
     void Update();
 
     void ProcessListResponses();
-    void QueueSearchRequest(std::unique_ptr<AuctionMessage> message);
+    void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
     void AddAuction(AuctionEntry const* auctionEntry);
     void RemoveAuction(AuctionEntry const* auctionEntry);
     void UpdateBid(AuctionEntry const* auctionEntry);
-
-    void NotifyAllWorkers(std::unique_ptr<AuctionMessage> message);
-    void NotifyOneWorker(std::unique_ptr<AuctionMessage> message);
 
 private:
     AuctionHouseObject mHordeAuctions;
@@ -222,6 +220,8 @@ private:
     SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
     std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
+    SearchableAuctionEntriesMap searchableAuctionMap_[AUCTION_FACTION_MAX];
+    std::shared_mutex mapMutex_[AUCTION_FACTION_MAX];
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()

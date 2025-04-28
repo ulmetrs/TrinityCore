@@ -23,14 +23,17 @@
 #include <memory>
 #include <thread>
 #include <unordered_map>
+#include <shared_mutex>
 
 class AuctionHouseWorkerThread
 {
 public:
-    AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
-        SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue);
+    AuctionHouseWorkerThread(
+        SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
+        SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
+        SearchableAuctionEntriesMap* searchableAuctionMap,
+        std::shared_mutex* mapMutex);
     ~AuctionHouseWorkerThread();
-    void AddAuctionMessageToQueue(std::unique_ptr<AuctionMessage> message);
 
 private:
     void Run(std::stop_token stop);
@@ -44,11 +47,14 @@ private:
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
     SearchableAuctionEntriesMap& GetSearchableAuctionMap(uint8 faction) { return searchableAuctionMap_[faction]; }
+    std::shared_mutex& GetMapMutex(uint8 faction) { return mapMutex_[faction]; }
 
-    SearchableAuctionEntriesMap searchableAuctionMap_[AUCTION_FACTION_MAX];
+    SearchableAuctionEntriesMap* searchableAuctionMap_;
+    std::shared_mutex* mapMutex_;
     std::jthread workerThread_;
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue_;
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue_;
+
 };
 
 #endif // AUCTION_HOUSE_WORKER_THREAD_H
