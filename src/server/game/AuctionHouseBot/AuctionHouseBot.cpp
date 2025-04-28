@@ -494,7 +494,7 @@ void AuctionHouseBot::PrepareStatusInfos(std::unordered_map<AuctionHouseType, Au
 
         AuctionHouseId houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AuctionHouseId::Alliance : ahType == AUCTION_HOUSE_HORDE ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
         AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseid);
-        for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+        for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
             AuctionEntry* auctionEntry = itr->second;
             if (Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow))
@@ -518,7 +518,7 @@ void AuctionHouseBot::Rebuild(bool all)
     {
         AuctionHouseId houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AuctionHouseId::Alliance : ahType == AUCTION_HOUSE_HORDE ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
         AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseid);
-        for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+        for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
             if (!itr->second->owner || sAuctionBotConfig->IsBotChar(itr->second->owner)) // ahbot auction
                 if (all || itr->second->bid == 0)           // expire now auction if no bid or forced
                     itr->second->expire_time = GameTime::GetGameTime();
