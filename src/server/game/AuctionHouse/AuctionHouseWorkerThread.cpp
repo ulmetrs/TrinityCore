@@ -25,7 +25,9 @@
 
 AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue, SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue) : messageQueue_(messageQueue), responseQueue_(responseQueue)
 {
+    TC_LOG_DEBUG("auctionHouse", "Creating AH WORKER {}", GameTime::GetGameTimeMS());
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
+    TC_LOG_DEBUG("auctionHouse", "Finished Creating AH WORKER {}", GameTime::GetGameTimeMS());
 }
 
 AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
@@ -39,6 +41,7 @@ AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
 
 void AuctionHouseWorkerThread::AddAuctionMessageToQueue(std::unique_ptr<AuctionMessage> message)
 {
+    TC_LOG_DEBUG("auctionHouse", "Add Auction Message To Queue {}", GameTime::GetGameTimeMS());
     messageQueue_->send(std::move(message), workerThread_.get_stop_token());
 }
 
@@ -55,6 +58,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
 
 void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> message)
 {
+    TC_LOG_DEBUG("auctionHouse", "ProcessMessage {}", GameTime::GetGameTimeMS());
     switch (message->type)
     {
         case AuctionMessage::Type::Add:

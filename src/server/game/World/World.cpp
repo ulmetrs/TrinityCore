@@ -2588,7 +2588,8 @@ void World::Update(uint32 diff)
         sAuctionMgr->UpdatePendingAuctions();
     }
 
-    sAuctionMgr->ProcessSearchResponses();
+    TC_LOG_DEBUG("auctionHouse", "Call Process Search Responses {}", GameTime::GetGameTimeMS());
+    sAuctionMgr->ProcessListResponses();
 
     /// <li> Handle AHBot operations
     if (m_timers[WUPDATE_AHBOT].Passed())

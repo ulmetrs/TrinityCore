@@ -201,7 +201,7 @@ public:
     void UpdatePendingAuctions();
     void Update();
 
-    void ProcessSearchResponses();
+    void ProcessListResponses();
     void QueueSearchRequest(std::unique_ptr<AuctionMessage> message);
     void AddAuction(AuctionEntry const* auctionEntry);
     void RemoveAuction(AuctionEntry const* auctionEntry);

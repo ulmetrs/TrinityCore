@@ -44,9 +44,11 @@ enum eAuctionHouse
 };
 
 AuctionHouseMgr::AuctionHouseMgr() {
+    TC_LOG_DEBUG("auctionHouse", "Creating AuctionHouseMgr and all workers {}", GameTime::GetGameTimeMS());
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTIONHOUSE_WORKERTHREADS); ++i) {
         workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&messageQueue_, &responseQueue_));
     }
+    TC_LOG_DEBUG("auctionHouse", "Finished Creating AuctionHouseMgr and all workers {}", GameTime::GetGameTimeMS());
 }
 
 AuctionHouseMgr::~AuctionHouseMgr()
@@ -614,7 +616,7 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(uint8 ho
     return (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION)) ? sAuctionHouseStore.LookupEntry(AUCTIONHOUSE_NEUTRAL) : sAuctionHouseStore.LookupEntry(houseId);
 }
 
-void AuctionHouseMgr::ProcessSearchResponses()
+void AuctionHouseMgr::ProcessListResponses()
 {
     while (auto response = responseQueue_.try_receive())
     {
