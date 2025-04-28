@@ -30,6 +30,14 @@ AuctionHouseWorkerThread::AuctionHouseWorkerThread(
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
 }
 
+AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
+{
+    if (workerThread_.joinable())
+    {
+        workerThread_.join();
+    }
+}
+
 void AuctionHouseWorkerThread::Run(std::stop_token stop)
 {
     while (!stop.stop_requested())
@@ -68,7 +76,7 @@ void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> me
     }
 }
 
-void AuctionHouseObject::AddAuction(AddAuctionMessage const& message)
+void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& message)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
@@ -76,7 +84,7 @@ void AuctionHouseObject::AddAuction(AddAuctionMessage const& message)
     searchableAuctionMap.insert(std::make_pair(message.searchableAuctionEntry->Id, message.searchableAuctionEntry));
 }
 
-void AuctionHouseObject::RemoveAuction(RemoveAuctionMessage const& message)
+void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& message)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
@@ -84,7 +92,7 @@ void AuctionHouseObject::RemoveAuction(RemoveAuctionMessage const& message)
     searchableAuctionMap.erase(message.auctionId);
 }
 
-void AuctionHouseObject::UpdateAuctionBid(UpdateAuctionBidMessage const& message)
+void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& message)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
@@ -92,12 +100,12 @@ void AuctionHouseObject::UpdateAuctionBid(UpdateAuctionBidMessage const& message
     SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(message.auctionId);
     if (itr != searchableAuctionMap.end())
     {
-        itr->second->bid = auctionUpdateBid.bid;
-        itr->second->bidderGuid = auctionUpdateBid.bidderGuid;
+        itr->second->bid = message.bid;
+        itr->second->bidderGuid = message.bidderGuid;
     }
 }
 
-void AuctionHouseObject::ListAuctions(ListAuctionMessage const& message)
+void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
@@ -157,7 +165,7 @@ void AuctionHouseObject::ListAuctions(ListAuctionMessage const& message)
     responseQueue_->send(std::move(response));
 }
 
-void AuctionHouseObject::BuildListAuctionItems(ListAuctionMessage const& message, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
+void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& message, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
 {
     // pussywizard: optimization, this is a simplified case for the default search state (no filters)
     if (message.searchInfo.itemClass == 0xffffffff && message.searchInfo.itemSubClass == 0xffffffff
@@ -215,7 +223,7 @@ void AuctionHouseObject::BuildListAuctionItems(ListAuctionMessage const& message
     }
 }
 
-void AuctionHouseObject::ListBidderAuctions(ListBidderAuctionMessage const& message)
+void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& message)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
@@ -259,7 +267,7 @@ void AuctionHouseObject::ListBidderAuctions(ListBidderAuctionMessage const& mess
     responseQueue_->send(std::move(searchResponse));
 }
 
-void AuctionHouseObject::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
+void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
