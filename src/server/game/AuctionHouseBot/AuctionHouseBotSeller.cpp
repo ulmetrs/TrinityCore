@@ -527,7 +527,9 @@ uint32 AuctionBotSeller::SetStat(SellerConfiguration& config)
 {
     AllItemsArray itemsSaved(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(config.GetHouseType());
+    int ahType = config.GetHouseType();
+    AuctionHouseId houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AuctionHouseId::Alliance : ahType == AUCTION_HOUSE_HORDE ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
     for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
     {
         AuctionEntry* auctionEntry = itr->second;
@@ -833,23 +835,10 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
     else
         items = sAuctionBotConfig->GetItemPerCycleNormal();
 
-    uint32 houseid = 0;
-    switch (config.GetHouseType())
-    {
-        case AUCTION_HOUSE_ALLIANCE:
-            houseid = AuctionHouseId::Alliance;
-            break;
-        case AUCTION_HOUSE_HORDE:
-            houseid = AuctionHouseId::Horde;
-            break;
-        default:
-            houseid = AuctionHouseId::Neutral;
-            break;
-    }
-
-    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(houseid);
-
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(config.GetHouseType());
+    int ahType = config.GetHouseType();
+    AuctionHouseId houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AuctionHouseId::Alliance : ahType == AUCTION_HOUSE_HORDE ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
+    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(uint32(houseid));
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseid);
 
     ItemsToSellArray itemsToSell;
     AllItemsArray allItems(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
