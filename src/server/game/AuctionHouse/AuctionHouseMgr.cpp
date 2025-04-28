@@ -44,12 +44,10 @@ enum eAuctionHouse
 };
 
 AuctionHouseMgr::AuctionHouseMgr() {
-    TC_LOG_DEBUG("auctionHouse", "Creating AuctionHouseMgr and all workers {}", GameTime::GetGameTimeMS());
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTIONHOUSE_WORKERTHREADS); ++i) {
         workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(
             &messageQueue_, &responseQueue_, searchableAuctionMap_, mapMutex_));
     }
-    TC_LOG_DEBUG("auctionHouse", "Finished Creating AuctionHouseMgr and all workers {}", GameTime::GetGameTimeMS());
 }
 
 AuctionHouseMgr::~AuctionHouseMgr()
@@ -577,18 +575,18 @@ void AuctionHouseMgr::Update()
     mNeutralAuctions.Update();
 }
 
-uint8 AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
+AuctionHouseFactionId AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(uint8 houseId)
 {
     switch (houseId)
     {
         case AUCTIONHOUSE_ALLIANCE:
-            return AUCTION_FACTION_ALLIANCE;
+            return AuctionHouseFactionId::Alliance;
         case AUCTIONHOUSE_HORDE:
-            return AUCTION_FACTION_HORDE;
+            return AuctionHouseFactionId::Horde;
         case AUCTIONHOUSE_NEUTRAL:
-            return AUCTION_FACTION_NEUTRAL;
+            return AuctionHouseFactionId::Neutral;
     }
-    return AUCTION_FACTION_NEUTRAL;
+    return AuctionHouseFactionId::Neutral;
 }
 
 AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTemplateId)
@@ -623,12 +621,9 @@ void AuctionHouseMgr::ProcessListResponses()
 {
     while (auto response = responseQueue_.try_receive())
     {
-        TC_LOG_DEBUG("auctionHouse", "Received Response from Queue, Sending to Player {}", GameTime::GetGameTimeMS());
         if (Player* player = ObjectAccessor::FindConnectedPlayer((*response)->playerGuid))
         {
-            TC_LOG_DEBUG("auctionHouse", "Found Player, Sending Packet {}", GameTime::GetGameTimeMS());
             player->GetSession()->SendPacket(&(*response)->packet);
-            TC_LOG_DEBUG("auctionHouse", "Packet Sent {}", GameTime::GetGameTimeMS());
         }
     }
 }
@@ -683,14 +678,12 @@ void AuctionHouseMgr::AddAuction(AuctionEntry const* auctionEntry)
 
 void AuctionHouseMgr::RemoveAuction(AuctionEntry const* auctionEntry)
 {
-    TC_LOG_DEBUG("auctionHouse", "Removing Auction");
     auto message = std::make_unique<RemoveAuctionMessage>(auctionEntry->Id, auctionEntry->GetFactionId());
     messageQueue_.send(std::move(message));
 }
 
 void AuctionHouseMgr::UpdateBid(AuctionEntry const* auctionEntry)
 {
-    TC_LOG_DEBUG("auctionHouse", "Updating Bid");
     // Updating bids is a bit unique, we really only need to update a single worker as every worker thread contains
     // a map of shared pointers to the same SearchableAuctionEntry's, so updating one will update them all.
     ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auctionEntry->bidder);
@@ -770,7 +763,7 @@ void AuctionHouseObject::Update()
     CharacterDatabase.CommitTransaction(trans);
 }
 
-uint8 AuctionEntry::GetFactionId() const
+AuctionHouseFactionId AuctionEntry::GetFactionId() const
 {
     return AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(houseId);
 }

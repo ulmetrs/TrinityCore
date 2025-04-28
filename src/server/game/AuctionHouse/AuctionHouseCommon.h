@@ -29,12 +29,12 @@
 struct ItemTemplate;
 class WorldPacket;
 
-enum AuctionHouseFaction : uint8
+enum class AuctionHouseFactionId : uint8
 {
-    AUCTION_FACTION_ALLIANCE = 0,
-    AUCTION_FACTION_HORDE    = 1,
-    AUCTION_FACTION_NEUTRAL  = 2,
-    AUCTION_FACTION_MAX
+    Alliance,
+    Horde,
+    Neutral,
+    Max
 };
 
 enum AuctionSortOrder
@@ -82,7 +82,7 @@ struct SearchableAuctionEntry
     uint32 startbid;
     uint32 bid;
     ObjectGuid bidderGuid;
-    uint8 listFaction;
+    AuctionHouseFactionId listFaction;
     SearchableAuctionEntryItem item;
 
     void BuildAuctionInfo(WorldPacket& data) const;
@@ -151,11 +151,11 @@ struct AuctionMessage
         ListBidder
     };
 
-    AuctionMessage(Type const _type, uint8 _listFaction) : type(_type), listFaction(_listFaction) {}
+    AuctionMessage(Type const _type, AuctionHouseFactionId _listFaction) : type(_type), listFaction(_listFaction) {}
     virtual ~AuctionMessage() = default;
 
     Type type;
-    uint8 listFaction;
+    AuctionHouseFactionId listFaction;
 };
 
 struct AddAuctionMessage : AuctionMessage
@@ -168,7 +168,7 @@ struct AddAuctionMessage : AuctionMessage
 
 struct RemoveAuctionMessage : AuctionMessage
 {
-    RemoveAuctionMessage(uint32 _auctionId, uint8 _listFaction)
+    RemoveAuctionMessage(uint32 _auctionId, AuctionHouseFactionId _listFaction)
         : AuctionMessage(AuctionMessage::Type::Remove, _listFaction), auctionId(_auctionId) {}
 
     uint32 auctionId;
@@ -176,7 +176,7 @@ struct RemoveAuctionMessage : AuctionMessage
 
 struct UpdateAuctionBidMessage : AuctionMessage
 {
-    UpdateAuctionBidMessage(uint32 _auctionId, uint8 _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
+    UpdateAuctionBidMessage(uint32 _auctionId, AuctionHouseFactionId _listFaction, uint32 _bid, ObjectGuid _bidderGuid)
         : AuctionMessage(AuctionMessage::Type::UpdateBid, _listFaction), auctionId(_auctionId), bid(_bid), bidderGuid(_bidderGuid) {}
 
     uint32 auctionId;
@@ -186,7 +186,7 @@ struct UpdateAuctionBidMessage : AuctionMessage
 
 struct ListAuctionMessage : AuctionMessage
 {
-    ListAuctionMessage(uint8 _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
+    ListAuctionMessage(AuctionHouseFactionId _listFaction, AuctionHouseSearchInfo const&& _searchInfo, AuctionHousePlayerInfo const&& _playerInfo)
         : AuctionMessage(AuctionMessage::Type::List, _listFaction), searchInfo(_searchInfo), playerInfo(_playerInfo) {}
 
     AuctionHouseSearchInfo searchInfo;
@@ -195,7 +195,7 @@ struct ListAuctionMessage : AuctionMessage
 
 struct ListOwnerAuctionMessage : AuctionMessage
 {
-    ListOwnerAuctionMessage(uint8 _listFaction, ObjectGuid _ownerGuid)
+    ListOwnerAuctionMessage(AuctionHouseFactionId _listFaction, ObjectGuid _ownerGuid)
         : AuctionMessage(AuctionMessage::Type::ListOwner, _listFaction), ownerGuid(_ownerGuid) {}
 
     ObjectGuid ownerGuid;
@@ -203,7 +203,7 @@ struct ListOwnerAuctionMessage : AuctionMessage
 
 struct ListBidderAuctionMessage : AuctionMessage
 {
-    ListBidderAuctionMessage(uint8 _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
+    ListBidderAuctionMessage(AuctionHouseFactionId _listFaction, std::vector<uint32> const&& _outbiddedAuctionIds, ObjectGuid _ownerGuid)
         : AuctionMessage(AuctionMessage::Type::ListBidder, _listFaction), outbiddedAuctionIds(_outbiddedAuctionIds), ownerGuid(_ownerGuid) {}
 
     std::vector<uint32> outbiddedAuctionIds;

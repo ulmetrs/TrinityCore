@@ -106,7 +106,7 @@ struct TC_GAME_API AuctionEntry
 
     // helpers
     uint8 GetHouseId() const { return houseId; }
-    uint8 GetFactionId() const;
+    AuctionHouseFactionId GetFactionId() const;
     uint32 GetAuctionCut() const;
     uint32 GetAuctionOutBid() const;
     bool BuildAuctionInfo(WorldPacket & data, Item* sourceItem = nullptr) const;
@@ -185,7 +185,7 @@ public:
     void SendAuctionCancelledToBidderMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
 
     static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
-    static uint8 GetAuctionHouseFactionFromHouseId(uint8 houseId);
+    static AuctionHouseFactionId GetAuctionHouseFactionFromHouseId(uint8 houseId);
     static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
     static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
 
@@ -220,8 +220,8 @@ private:
     SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
     std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
-    SearchableAuctionEntriesMap searchableAuctionMap_[AUCTION_FACTION_MAX];
-    std::shared_mutex mapMutex_[AUCTION_FACTION_MAX];
+    SearchableAuctionEntriesMap searchableAuctionMap_[AuctionHouseFactionId::Max];
+    std::shared_mutex mapMutex_[AuctionHouseFactionId::Max];
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()

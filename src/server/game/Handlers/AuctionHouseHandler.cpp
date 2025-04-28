@@ -697,7 +697,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     if (!ahEntry)
         return;
 
-    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
+    AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     // Client sends this list, which I'm honestly not entirely sure why?
     std::vector<uint32> auctionIds;
@@ -741,7 +741,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
     if (!ahEntry)
         return;
 
-    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
+    AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     auto message = std::make_unique<ListOwnerAuctionMessage>(auctionHouseFaction, GetPlayer()->GetGUID());
     TC_LOG_DEBUG("auctionHouse", "Auction List Owner Item Queue Search Request {}", GameTime::GetGameTimeMS());
@@ -813,7 +813,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     if (!ahEntry)
         return;
 
-    uint8 auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
+    AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     AuctionHouseSearchInfo ahSearchInfo;
     ahSearchInfo.wsearchedname = wsearchedname;
@@ -833,6 +833,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     ahPlayerInfo.faction = GetPlayer()->GetFaction();
     ahPlayerInfo.loc_idx = GetPlayer()->GetSession()->GetSessionDbLocaleIndex();
     ahPlayerInfo.locdbc_idx = GetPlayer()->GetSession()->GetSessionDbcLocale();
+
     if (usable)
     {
         AuctionHouseUsablePlayerInfo usablePlayerInfo;
@@ -853,8 +854,8 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         }
         ahPlayerInfo.usablePlayerInfo = std::move(usablePlayerInfo);
     }
+
     auto message = std::make_unique<ListAuctionMessage>(auctionHouseFaction, std::move(ahSearchInfo), std::move(ahPlayerInfo));
-    TC_LOG_DEBUG("auctionHouse", "Auction List Item Queue Search Request {}", GameTime::GetGameTimeMS());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 

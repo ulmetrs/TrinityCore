@@ -46,8 +46,8 @@ private:
     void ListBidderAuctions(ListBidderAuctionMessage const& message);
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    SearchableAuctionEntriesMap& GetSearchableAuctionMap(uint8 faction) { return searchableAuctionMap_[faction]; }
-    std::shared_mutex& GetMapMutex(uint8 faction) { return mapMutex_[faction]; }
+    SearchableAuctionEntriesMap& GetSearchableAuctionMap(AuctionHouseFactionId faction) { return searchableAuctionMap_[faction]; }
+    std::shared_mutex& GetMapMutex(AuctionHouseFactionId faction) { return mapMutex_[faction]; }
 
     SearchableAuctionEntriesMap* searchableAuctionMap_;
     std::shared_mutex* mapMutex_;
