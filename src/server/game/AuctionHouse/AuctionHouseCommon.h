@@ -236,7 +236,7 @@ public:
         return itr != AuctionsMap.end() ? itr->second : nullptr;
     }
     SearchableAuctionEntriesMap GetSearchableAuctionMap() const { return searchableAuctionMap_; }
-    std::shared_mutex GetMapMutex() const { return mapMutex_; }
+    std::shared_mutex& GetMapMutex() const { return mapMutex_; }
 
     void AddAuction(AuctionEntry* auction);
     bool RemoveAuction(AuctionEntry* auction);

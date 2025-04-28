@@ -294,7 +294,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         }
 
         AuctionHouseEntry const* AHEntry = sAuctionMgr->GetAuctionHouseEntry(auctioneerInfo->faction);
-        AH->houseId = AHEntry->ID;
+        AH->houseId = AuctionHouseId(AHEntry->ID);
     }
 
     // Required stack size of auction matches to current item stack size, just move item to auctionhouse
