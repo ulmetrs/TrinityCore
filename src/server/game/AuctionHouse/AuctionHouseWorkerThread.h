@@ -18,8 +18,8 @@
 #ifndef AUCTION_HOUSE_WORKER_THREAD_H
 #define AUCTION_HOUSE_WORKER_THREAD_H
 
-#include "SignalQueue.h"
 #include "AuctionHouseCommon.h"
+#include "SignalQueue.h"
 #include <memory>
 #include <thread>
 #include <unordered_map>

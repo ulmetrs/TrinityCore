@@ -19,7 +19,6 @@
 #include "AccountMgr.h"
 #include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
-#include "AuctionSorter.h"
 #include "CharacterCache.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
