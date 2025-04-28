@@ -21,6 +21,7 @@
 #include "GameTime.h"
 #include "Item.h"
 #include "ObjectMgr.h"
+#include "ScriptMgr.h"
 #include "Util.h"
 #include "WorldPacket.h"
 

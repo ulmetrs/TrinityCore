@@ -528,7 +528,7 @@ uint32 AuctionBotSeller::SetStat(SellerConfiguration& config)
     AllItemsArray itemsSaved(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
 
     AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(config.GetHouseType());
-    for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+    for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
     {
         AuctionEntry* auctionEntry = itr->second;
         Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow);
