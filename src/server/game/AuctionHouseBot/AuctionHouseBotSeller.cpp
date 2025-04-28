@@ -837,7 +837,7 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
 
     int ahType = config.GetHouseType();
     uint8 houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AUCTIONHOUSE_ALLIANCE : ahType == AUCTION_HOUSE_HORDE ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
-    AuctionHouseEntry const* ahEntry = sAuctionHouseStore->LookupEntry(houseid);
+    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(houseid);
     AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseid);
 
     ItemsToSellArray itemsToSell;
