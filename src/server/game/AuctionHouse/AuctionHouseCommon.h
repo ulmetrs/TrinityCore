@@ -235,8 +235,8 @@ public:
         AuctionEntryMap::const_iterator itr = AuctionsMap.find(id);
         return itr != AuctionsMap.end() ? itr->second : nullptr;
     }
-    mutable SearchableAuctionEntriesMap GetSearchableAuctionMap() const { return searchableAuctionMap_; }
-    mutable std::shared_mutex GetMapMutex() const { return mapMutex_; }
+    SearchableAuctionEntriesMap& GetSearchableAuctionMap() const { return searchableAuctionMap_; }
+    std::shared_mutex& GetMapMutex() const { return mapMutex_; }
 
     void AddAuction(AuctionEntry* auction);
     bool RemoveAuction(AuctionEntry* auction);
@@ -244,8 +244,8 @@ public:
 
 private:
     AuctionEntryMap AuctionsMap;
-    SearchableAuctionEntriesMap searchableAuctionMap_;
-    std::shared_mutex mapMutex_;
+    mutable SearchableAuctionEntriesMap searchableAuctionMap_;
+    mutable std::shared_mutex mapMutex_;
 
 };
 
