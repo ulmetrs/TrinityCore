@@ -16,7 +16,7 @@
  */
 
 #ifndef AUCTION_HOUSE_WORKER_THREAD_H
-#define AUCTION_HOUSE_WORKER_THREADH
+#define AUCTION_HOUSE_WORKER_THREAD_H
 
 #include "SignalQueue.h"
 #include "AuctionHouseCommon.h"
