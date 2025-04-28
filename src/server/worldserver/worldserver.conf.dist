@@ -4499,6 +4499,13 @@ NameReservation = 0
 DontCacheRandomMovementPaths = 0
 
 #
+#     AuctionHouse.WorkerThreads
+#        Description: Count of auctionhouse searcher worker threads to spawn
+#        Default:     1
+
+AuctionHouse.WorkerThreads = 1
+
+#
 ###################################################################################################
 
 ###################################################################################################
