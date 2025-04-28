@@ -51,6 +51,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
     {
         if (auto message = messageQueue_->receive(stop))
         {
+            TC_LOG_DEBUG("auctionHouse", "Receive Auction Message From Queue {}", GameTime::GetGameTimeMS());
             ProcessMessage(std::move(*message));
         }
     }
