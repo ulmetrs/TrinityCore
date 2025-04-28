@@ -48,14 +48,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
     {
         if (auto message = messageQueue_->receive(stop))
         {
-            try
-            {
-                ProcessMessage(std::move(*message));
-            }
-            catch (const std::exception& e)
-            {
-                TC_LOG_ERROR("auctionHouse", "Exception in ProcessMessage: {}", e.what());
-            }
+            ProcessMessage(std::move(*message));
         }
     }
 }

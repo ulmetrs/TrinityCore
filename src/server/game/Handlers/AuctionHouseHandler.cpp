@@ -711,7 +711,6 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListBidderAuctionMessage>(auctionHouseFaction, std::move(auctionIds), GetPlayer()->GetGUID());
-    TC_LOG_DEBUG("auctionHouse", "Auction List Bidder Item Queue Search Request {}", GameTime::GetGameTimeMS());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
@@ -744,7 +743,6 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
     AuctionHouseFactionId auctionHouseFaction = AuctionHouseMgr::GetAuctionHouseFactionFromHouseId(ahEntry->ID);
 
     auto message = std::make_unique<ListOwnerAuctionMessage>(auctionHouseFaction, GetPlayer()->GetGUID());
-    TC_LOG_DEBUG("auctionHouse", "Auction List Owner Item Queue Search Request {}", GameTime::GetGameTimeMS());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
