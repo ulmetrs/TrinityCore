@@ -103,7 +103,7 @@ uint32 AuctionBotBuyer::GetItemInformation(BuyerConfiguration& config)
     uint32 count = 0;
 
     int ahType = config.GetHouseType();
-    AuctionHouseId houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AuctionHouseId::Alliance : ahType == AUCTION_HOUSE_HORDE ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
+    AuctionHouseId houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AuctionHouseId::Alliance : (ahType == AUCTION_HOUSE_HORDE) ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
     AuctionHouseObject* house = sAuctionMgr->GetAuctionHouse(houseId);
     for (AuctionEntryMap::const_iterator itr = house->GetAuctionsBegin(); itr != house->GetAuctionsEnd(); ++itr)
     {
@@ -259,7 +259,7 @@ void AuctionBotBuyer::BuyAndBidItems(BuyerConfiguration& config)
 {
     time_t now = GameTime::GetGameTime();
     int ahType = config.GetHouseType();
-    AuctionHouseId houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AuctionHouseId::Alliance : ahType == AUCTION_HOUSE_HORDE ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
+    AuctionHouseId houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AuctionHouseId::Alliance : (ahType == AUCTION_HOUSE_HORDE) ? AuctionHouseId::Horde : AuctionHouseId::Neutral;
     AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
     CheckEntryMap& items = config.EligibleItems;
 

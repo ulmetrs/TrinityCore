@@ -25,13 +25,13 @@
 #include "Util.h"
 #include "WorldPacket.h"
 
-void AuctionHouseObject::AddAuction(AuctionEntry* auction)
+void AuctionHouseObject::AddAuction(AuctionEntry const* auction)
 {
     AuctionsMap[auction->Id] = auction;
     sScriptMgr->OnAuctionAdd(this, auction);
 }
 
-bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
+bool AuctionHouseObject::RemoveAuction(AuctionEntry const* auction)
 {
     bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
     sScriptMgr->OnAuctionRemove(this, auction);

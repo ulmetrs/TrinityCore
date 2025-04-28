@@ -351,7 +351,7 @@ void AuctionHouseMgr::LoadAuctionItems()
 void AuctionHouseMgr::LoadAuctions()
 {
     uint32 oldMSTime = getMSTime();
-    bool moveToNeutralAH = sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION)
+    bool moveToNeutralAH = sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION);
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_AUCTIONS);
     PreparedQueryResult resultAuctions = CharacterDatabase.Query(stmt);
