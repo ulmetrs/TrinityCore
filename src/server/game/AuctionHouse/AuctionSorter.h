@@ -18,9 +18,9 @@
 #ifndef AUCTION_SORTER_H
 #define AUCTION_SORTER_H
 
+#include "AuctionHouseCommon.h"
 #include "Common.h"
 #include <vector>
-#include "AuctionHouseCommon.h"
 
 class AuctionSorter
 {

@@ -18,12 +18,10 @@
 #ifndef _AUCTION_HOUSE_MGR_H
 #define _AUCTION_HOUSE_MGR_H
 
-#include "AuctionHouseCommon.h"
 #include "AuctionHouseWorkerThread.h"
 #include "Define.h"
 #include "DatabaseEnvFwd.h"
 #include "ObjectGuid.h"
-#include "SignalQueue.h"
 #include <map>
 #include <memory>
 #include <set>
