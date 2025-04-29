@@ -110,6 +110,7 @@ struct TC_GAME_API AuctionEntry
     static std::string BuildAuctionWonMailBody(ObjectGuid guid, uint32 bid, uint32 buyout);
     static std::string BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment);
     static std::string BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta);
+    static uint32 CalculateAuctionOutBid(uint32 bid);
 };
 
 enum AuctionSortOrder
@@ -258,11 +259,5 @@ private:
 };
 
 typedef std::map<uint8, std::unique_ptr<AuctionHouseObject>> AuctionHouseMap;
-
-class AuctionHouseCommon
-{
-public:
-    static uint32 CalculateAuctionOutBid(uint32 bid);
-};
 
 #endif // AUCTION_HOUSE_COMMON_H

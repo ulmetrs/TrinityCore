@@ -31,7 +31,7 @@ uint32 AuctionEntry::GetAuctionCut() const
 
 uint32 AuctionEntry::GetAuctionOutBid() const
 {
-    return AuctionHouseCommon::CalculateAuctionOutBid(bid);
+    return AuctionEntry::CalculateAuctionOutBid(bid);
 }
 
 void AuctionEntry::DeleteFromDB(CharacterDatabaseTransaction trans) const
@@ -99,6 +99,13 @@ std::string AuctionEntry::BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, 
 std::string AuctionEntry::BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta)
 {
     return Trinity::StringFormat("{:X}:{}:{}:{}:{}:{}:{}", guid.GetRawValue(), bid, buyout, deposit, consignment, moneyDelay, eta);
+}
+
+// the sum of outbid is (1% from current bid)*5, if bid is very small, it is 1c
+uint32 AuctionEntry::CalculateAuctionOutBid(uint32 bid)
+{
+    uint32 outbid = CalculatePct(bid, 5);
+    return outbid ? outbid : 1;
 }
 
 bool AuctionHouseUsablePlayerInfo::PlayerCanUseItem(ItemTemplate const* proto) const
@@ -181,7 +188,7 @@ void SearchableAuctionEntry::BuildAuctionInfo(WorldPacket& data) const
     data << uint32(0);                                              // item->flags (client doesnt do anything with it)
     data << ownerGuid;                                              // Auction->owner
     data << uint32(startbid);                                       // Auction->startbid (not sure if useful)
-    data << uint32(bid ? AuctionHouseCommon::CalculateAuctionOutBid(bid) : 0);
+    data << uint32(bid ? AuctionEntry::CalculateAuctionOutBid(bid) : 0);
     // Minimal outbid
     data << uint32(buyout);                                         // Auction->buyout
     data << uint32((expire_time - GameTime::GetGameTime()) * IN_MILLISECONDS); // time left
@@ -245,20 +252,6 @@ void SearchableAuctionEntry::SetItemNames()
 
         wstrToLower(item.itemName[locale]);
     }
-}
-
-bool AuctionSorter::operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const
-{
-    if (_sort->empty()) return false;
-
-    for (AuctionSortOrderVector::const_iterator itr = _sort->begin(); itr != _sort->end(); ++itr)
-    {
-        int res = auc1->CompareAuctionEntry(itr->sortOrder, *auc2, _loc_idx);
-        if (res == 0) continue;
-        return (res < 0) == itr->isDesc;
-    }
-
-    return false;
 }
 
 int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuctionEntry const& auc, int loc_idx) const
@@ -379,6 +372,20 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
     return 0;
 }
 
+bool AuctionSorter::operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const
+{
+    if (_sort->empty()) return false;
+
+    for (AuctionSortOrderVector::const_iterator itr = _sort->begin(); itr != _sort->end(); ++itr)
+    {
+        int res = auc1->CompareAuctionEntry(itr->sortOrder, *auc2, _loc_idx);
+        if (res == 0) continue;
+        return (res < 0) == itr->isDesc;
+    }
+
+    return false;
+}
+
 void AuctionHouseObject::AddAuction(AuctionEntry* auction)
 {
     AuctionsMap[auction->Id] = auction;
@@ -387,11 +394,4 @@ void AuctionHouseObject::AddAuction(AuctionEntry* auction)
 bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
 {
     return AuctionsMap.erase(auction->Id) ? true : false;
-}
-
-// the sum of outbid is (1% from current bid)*5, if bid is very small, it is 1c
-uint32 AuctionHouseCommon::CalculateAuctionOutBid(uint32 bid)
-{
-    uint32 outbid = CalculatePct(bid, 5);
-    return outbid ? outbid : 1;
 }
