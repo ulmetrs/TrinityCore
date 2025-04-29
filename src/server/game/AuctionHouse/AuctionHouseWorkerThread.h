@@ -19,11 +19,15 @@
 #define AUCTION_HOUSE_WORKER_THREAD_H
 
 #include "AuctionHouseCommon.h"
-#include "SignalQueue.h"
+#include <condition_variable>
 #include <memory>
+#include <mutex>
+#include <optional>
+#include <queue>
+#include <shared_mutex>
+#include <stop_token>
 #include <thread>
 #include <unordered_map>
-#include <shared_mutex>
 
 struct AuctionMessage
 {
@@ -98,6 +102,23 @@ struct ListAuctionMessageResponse
 {
     ObjectGuid playerGuid;
     WorldPacket packet;
+};
+
+template<typename T>
+class SignalQueue {
+public:
+    explicit SignalQueue(size_t capacity = 0) : capacity_(capacity) {}
+
+    void send(T value, std::stop_token stop = {});
+    std::optional<T> receive(std::stop_token stop = {});
+    std::optional<T> try_receive();
+    void close();
+
+private:
+    std::queue<T> queue_;
+    size_t capacity_;
+    std::mutex mutex_;
+    std::condition_variable_any cv_;
 };
 
 class AuctionHouseWorkerThread

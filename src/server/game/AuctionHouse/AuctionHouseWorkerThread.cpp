@@ -20,6 +20,52 @@
 #include "GameTime.h"
 #include "World.h"
 
+template<typename T>
+void SignalQueue<T>::send(T value, std::stop_token stop) {
+    std::unique_lock lock(mutex_);
+    cv_.wait(lock, stop, [this] {
+        return queue_.size() < capacity_ || capacity_ == 0;
+    });
+    if (stop.stop_requested()) return;
+    queue_.push(std::move(value));
+    lock.unlock();
+    cv_.notify_one();
+}
+
+template<typename T>
+std::optional<T> SignalQueue<T>::receive(std::stop_token stop) {
+    std::unique_lock lock(mutex_);
+    cv_.wait(lock, stop, [this] { return !queue_.empty(); });
+    if (stop.stop_requested() || queue_.empty()) return std::nullopt;
+    T value = std::move(queue_.front());
+    queue_.pop();
+    lock.unlock();
+    cv_.notify_one();
+    return value;
+}
+
+template<typename T>
+std::optional<T> SignalQueue<T>::try_receive() {
+    std::unique_lock lock(mutex_);
+    if (queue_.empty()) return std::nullopt;
+    T value = std::move(queue_.front());
+    queue_.pop();
+    lock.unlock();
+    cv_.notify_one();
+    return value;
+}
+
+template<typename T>
+void SignalQueue<T>::close() {
+    std::unique_lock lock(mutex_);
+    while (!queue_.empty()) queue_.pop();
+    cv_.notify_all();
+}
+
+// Explicit template instantiations
+template class SignalQueue<std::unique_ptr<AuctionMessage>>;
+template class SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>;
+
 AuctionHouseWorkerThread::AuctionHouseWorkerThread(
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
     SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
