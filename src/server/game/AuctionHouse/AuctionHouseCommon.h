@@ -106,7 +106,7 @@ struct TC_GAME_API AuctionEntry
     void DeleteFromDB(CharacterDatabaseTransaction trans) const;
     void SaveToDB(CharacterDatabaseTransaction trans) const;
     void LoadFromDB(Field* fields);
-    static std::string BuildAuctionMailSubject(Item* item, MailAuctionAnswers response);
+    std::string BuildAuctionMailSubject(Item* item, MailAuctionAnswers response);
     static std::string BuildAuctionWonMailBody(ObjectGuid guid, uint32 bid, uint32 buyout);
     static std::string BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment);
     static std::string BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta);
