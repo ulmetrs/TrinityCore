@@ -111,7 +111,7 @@ uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32
         return deposit;
 }
 
-std::string AuctionHouseMgr::BuildAuctionMailSubject(AuctionEntry* auction, MailAuctionAnswers response) const
+std::string AuctionHouseMgr::BuildAuctionMailSubject(AuctionEntry* auction, MailAuctionAnswers response)
 {
     Item* item = GetAItem(auction->itemGUIDLow);
     return Trinity::StringFormat("{}:{}:{}:{}:{}", auction->itemEntry, item ? item->GetItemRandomPropertyId() : 0, response, auction->Id, auction->itemCount);
