@@ -55,7 +55,6 @@ public:
     }
 
     //auction messages
-    std::string BuildAuctionMailSubject(AuctionEntry* auction, MailAuctionAnswers response);
     void SendAuctionWonMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
     void SendAuctionSalePendingMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
     void SendAuctionSuccessfulMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);

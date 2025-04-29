@@ -81,6 +81,26 @@ void AuctionEntry::LoadFromDB(Field* fields)
     Flags = AuctionEntryFlag(fields[12].GetUInt8());
 }
 
+std::string AuctionEntry::BuildAuctionMailSubject(Item* item, MailAuctionAnswers response) const
+{
+    return Trinity::StringFormat("{}:{}:{}:{}:{}", itemEntry, item ? item->GetItemRandomPropertyId() : 0, response, Id, itemCount);
+}
+
+std::string AuctionEntry::BuildAuctionWonMailBody(ObjectGuid guid, uint32 bid, uint32 buyout)
+{
+    return Trinity::StringFormat("{:X}:{}:{}", guid.GetRawValue(), bid, buyout);
+}
+
+std::string AuctionEntry::BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment)
+{
+    return Trinity::StringFormat("{:X}:{}:{}:{}:{}", guid.GetRawValue(), bid, buyout, deposit, consignment);
+}
+
+std::string AuctionEntry::BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta)
+{
+    return Trinity::StringFormat("{:X}:{}:{}:{}:{}:{}:{}", guid.GetRawValue(), bid, buyout, deposit, consignment, moneyDelay, eta);
+}
+
 bool AuctionHouseUsablePlayerInfo::PlayerCanUseItem(ItemTemplate const* proto) const
 {
     uint32 itemSkill = proto->GetSkill();
