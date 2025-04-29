@@ -627,7 +627,7 @@ void WorldSession::HandleAuctionRemoveItem(WorldPacket& recvData)
             }
 
             // item will deleted or added to received mail list
-            MailDraft(auction->BuildAuctionMailSubject(AUCTION_CANCELED), "")
+            MailDraft(sAuctionMgr->BuildAuctionMailSubject(auction, AUCTION_CANCELED), "")
                 .AddItem(pItem)
                 .SendMailTo(trans, player, auction, MAIL_CHECK_MASK_COPIED);
         }
