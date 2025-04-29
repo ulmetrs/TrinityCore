@@ -174,7 +174,7 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, CharacterDatabas
             bidder->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WON_AUCTIONS, 1);
         }
 
-        MailDraft(auction->BuildAuctionMailSubject(auction, AUCTION_WON),
+        MailDraft(BuildAuctionMailSubject(auction, AUCTION_WON),
             Trinity::StringFormat("{:X}:{}:{}", ObjectGuid::Create<HighGuid::Player>(auction->owner).GetRawValue(),
             auction->bid, auction->buyout))
             .AddItem(pItem)
@@ -200,7 +200,7 @@ void AuctionHouseMgr::SendAuctionSalePendingMail(AuctionEntry* auction, Characte
         if (owner)
             eta += owner->GetSession()->GetTimezoneOffset();
 
-        MailDraft(auction->BuildAuctionMailSubject(auction, AUCTION_SALE_PENDING),
+        MailDraft(BuildAuctionMailSubject(auction, AUCTION_SALE_PENDING),
             Trinity::StringFormat("{:X}:{}:{}:{}:{}:{}:{}", ObjectGuid::Create<HighGuid::Player>(auction->bidder).GetRawValue(),
             auction->bid, auction->buyout, auction->deposit, auction->GetAuctionCut(), sWorld->getIntConfig(CONFIG_MAIL_DELIVERY_DELAY), eta.GetPackedTime()))
             .SendMailTo(trans, MailReceiver(owner, auction->owner), auction, MAIL_CHECK_MASK_COPIED);
@@ -227,7 +227,7 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, Character
             owner->GetSession()->SendAuctionOwnerNotification(auction);
         }
 
-        MailDraft(auction->BuildAuctionMailSubject(auction, AUCTION_SUCCESSFUL),
+        MailDraft(BuildAuctionMailSubject(auction, AUCTION_SUCCESSFUL),
             Trinity::StringFormat("{:X}:{}:{}:{}:{}", ObjectGuid::Create<HighGuid::Player>(auction->bidder).GetRawValue(),
             auction->bid, auction->buyout, auction->deposit, auction->GetAuctionCut()))
             .AddMoney(profit)
@@ -252,7 +252,7 @@ void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry* auction, CharacterDat
         if (owner)
             owner->GetSession()->SendAuctionOwnerNotification(auction);
 
-        MailDraft(auction->BuildAuctionMailSubject(auction, AUCTION_EXPIRED), "")
+        MailDraft(BuildAuctionMailSubject(auction, AUCTION_EXPIRED), "")
             .AddItem(pItem)
             .SendMailTo(trans, MailReceiver(owner, auction->owner), auction, MAIL_CHECK_MASK_COPIED, 0);
     }
@@ -279,7 +279,7 @@ void AuctionHouseMgr::SendAuctionOutbiddedMail(AuctionEntry* auction, uint32 new
         if (oldBidder && newBidder)
             oldBidder->GetSession()->SendAuctionBidderNotification(auction->houseId, auction->Id, newBidder->GetGUID(), newPrice, auction->GetAuctionOutBid(), auction->itemEntry);
 
-        MailDraft(auction->BuildAuctionMailSubject(auction, AUCTION_OUTBIDDED), "")
+        MailDraft(BuildAuctionMailSubject(auction, AUCTION_OUTBIDDED), "")
             .AddMoney(auction->bid)
             .SendMailTo(trans, MailReceiver(oldBidder, auction->bidder), auction, MAIL_CHECK_MASK_COPIED);
     }
@@ -297,7 +297,7 @@ void AuctionHouseMgr::SendAuctionCancelledToBidderMail(AuctionEntry* auction, Ch
 
     // bidder exist
     if ((bidder || bidder_accId) && !sAuctionBotConfig->IsBotChar(auction->bidder))
-        MailDraft(auction->BuildAuctionMailSubject(auction, AUCTION_CANCELLED_TO_BIDDER), "")
+        MailDraft(BuildAuctionMailSubject(auction, AUCTION_CANCELLED_TO_BIDDER), "")
             .AddMoney(auction->bid)
             .SendMailTo(trans, MailReceiver(bidder, auction->bidder), auction, MAIL_CHECK_MASK_COPIED);
 }
