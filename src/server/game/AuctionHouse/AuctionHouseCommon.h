@@ -233,7 +233,7 @@ public:
         for (AuctionEntryMap::iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); ++itr)
             delete itr->second;
     }
-    uint32 Getcount() const { return AuctionsMap.size(); }
+    uint32 GetAuctionsCount() const { return AuctionsMap.size(); }
     AuctionEntryMap::iterator GetAuctionsBegin() { return AuctionsMap.begin(); }
     AuctionEntryMap::iterator GetAuctionsEnd() { return AuctionsMap.end(); }
     AuctionEntry* GetAuction(uint32 id) const
