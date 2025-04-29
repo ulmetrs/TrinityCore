@@ -457,6 +457,7 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
 
 void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 {
+    TC_LOG_DEBUG("auctionHouse", "Add Auction Called {}", GameTime::GetGameTimeMS());
     ASSERT(auction);
 
     Item* item = GetAItem(auction->itemGUIDLow);
@@ -464,8 +465,11 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 
     // Add the auction to the correct auction house synchronously
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
+    TC_LOG_DEBUG("auctionHouse", "Got Auction House to Add Auction {}", GameTime::GetGameTimeMS());
     auctionHouse->AddAuction(auction);
+    TC_LOG_DEBUG("auctionHouse", "Added Auction to map {}", GameTime::GetGameTimeMS());
     sScriptMgr->OnAuctionAdd(auctionHouse, auction);
+    TC_LOG_DEBUG("auctionHouse", "Added Auction to script manager {}", GameTime::GetGameTimeMS());
 
     // SearchableAuctionEntry is a shared_ptr as it will be shared among all the worker threads and needs to be self-managed
     std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry = std::make_shared<SearchableAuctionEntry>();
@@ -500,9 +504,11 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 
     searchableAuctionEntry->SetItemNames();
 
+    TC_LOG_DEBUG("auctionHouse", "Queuing Auction Event {}", GameTime::GetGameTimeMS());
     // Queue the searchable auction entry to be added asynchronously
     auto message = std::make_unique<AddAuctionMessage>(searchableAuctionEntry);
     messageQueue_.send(std::move(message));
+    TC_LOG_DEBUG("auctionHouse", "Finished Queuing Auction Event {}", GameTime::GetGameTimeMS());
 }
 
 bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)

@@ -124,6 +124,7 @@ void WorldSession::SendAuctionOwnerNotification(AuctionEntry* auction)
 //this void creates new auction and adds auction to some auctionhouse
 void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctionHouse", "HandleAuctionSellItem Called {}", GameTime::GetGameTimeMS());
     ObjectGuid auctioneer;
     uint32 itemsCount, etime, bid, buyout;
     recvData >> auctioneer;
@@ -330,7 +331,9 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         }
 
         sAuctionMgr->AddAItem(item);
+        TC_LOG_DEBUG("auctionHouse", "Adding Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
         sAuctionMgr->AddAuction(AH);
+        TC_LOG_DEBUG("auctionHouse", "Added Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
         _player->MoveItemFromInventory(item->GetBagSlot(), item->GetSlot(), true);
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
@@ -388,7 +391,9 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         }
 
         sAuctionMgr->AddAItem(newItem);
+        TC_LOG_DEBUG("auctionHouse", "Adding Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
         sAuctionMgr->AddAuction(AH);
+        TC_LOG_DEBUG("auctionHouse", "Added Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
         for (uint32 j = 0; j < itemsCount; ++j)
         {
             Item* item2 = items[j];
