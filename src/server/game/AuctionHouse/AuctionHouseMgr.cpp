@@ -407,7 +407,7 @@ void AuctionHouseMgr::LoadAuctions()
         if (moveToNeutralAH)
         {
             aItem->houseId = AUCTIONHOUSE_NEUTRAL;
-            aItem->auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId)
+            aItem->auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId);
         }
 
         if (!AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId))
