@@ -292,8 +292,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
             return;
         }
 
-        AuctionHouseEntry const* AHEntry = sAuctionMgr->GetAuctionHouseEntry(auctioneerInfo->faction);
-        AH->houseId = AHEntry->ID;
+        AH->houseId = auctionHouseEntry->ID;
     }
 
     // Required stack size of auction matches to current item stack size, just move item to auctionhouse
@@ -304,6 +303,8 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
             sLog->OutCommand(GetAccountId(), "GM {} (Account: {}) create auction: {} (Entry: {} Count: {})",
                 GetPlayerName(), GetAccountId(), item->GetTemplate()->Name1, item->GetEntry(), item->GetCount());
         }
+
+        TC_LOG_DEBUG("auctionHouse", "Building Auction from handler {}", GameTime::GetGameTimeMS());
 
         AH->Id = sObjectMgr->GenerateAuctionID();
         AH->itemGUIDLow = item->GetGUID().GetCounter();
@@ -323,6 +324,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         TC_LOG_INFO("network", "CMSG_AUCTION_SELL_ITEM: Player {} {} is selling item {} entry {} {} with count {} with initial bid {} with buyout {} and with time {} (in sec) in auctionhouse {}",
             _player->GetName(), _player->GetGUID().ToString(), item->GetTemplate()->Name1, item->GetEntry(), item->GetGUID().ToString(), item->GetCount(), bid, buyout, auctionTime, AH->houseId);
 
+        TC_LOG_DEBUG("auctionHouse", "Adding PendingAuction to AuctionHouseMgr from handler {}", GameTime::GetGameTimeMS());
         // Add to pending auctions, or fail with insufficient funds error
         if (!sAuctionMgr->PendingAuctionAdd(_player, AH))
         {
@@ -330,6 +332,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
             return;
         }
 
+        TC_LOG_DEBUG("auctionHouse", "Adding Item to AuctionHouseMgr from handler {}", GameTime::GetGameTimeMS());
         sAuctionMgr->AddAItem(item);
         TC_LOG_DEBUG("auctionHouse", "Adding Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
         sAuctionMgr->AddAuction(AH);
@@ -365,6 +368,8 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
                 GetPlayerName(), GetAccountId(), newItem->GetTemplate()->Name1, newItem->GetEntry(), newItem->GetCount());
         }
 
+        TC_LOG_DEBUG("auctionHouse", "Building Auction from handler {}", GameTime::GetGameTimeMS());
+
         AH->Id = sObjectMgr->GenerateAuctionID();
         AH->itemGUIDLow = newItem->GetGUID().GetCounter();
         AH->itemEntry = newItem->GetEntry();
@@ -383,6 +388,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         TC_LOG_INFO("network", "CMSG_AUCTION_SELL_ITEM: Player {} {} is selling item {} entry {} {} with count {} with initial bid {} with buyout {} and with time {} (in sec) in auctionhouse {}",
             _player->GetName(), _player->GetGUID().ToString(), newItem->GetTemplate()->Name1, newItem->GetEntry(), newItem->GetGUID().ToString(), newItem->GetCount(), bid, buyout, auctionTime, AH->houseId);
 
+        TC_LOG_DEBUG("auctionHouse", "Adding PendingAuction to AuctionHouseMgr from handler {}", GameTime::GetGameTimeMS());
         // Add to pending auctions, or fail with insufficient funds error
         if (!sAuctionMgr->PendingAuctionAdd(_player, AH))
         {
@@ -390,10 +396,11 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
             return;
         }
 
+        TC_LOG_DEBUG("auctionHouse", "Adding Item to AuctionHouseMgr from handler {}", GameTime::GetGameTimeMS());
         sAuctionMgr->AddAItem(newItem);
-        TC_LOG_DEBUG("auctionHouse", "Adding Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
+        TC_LOG_DEBUG("auctionHouse", "Adding Auction to AuctionHouseMgr from handler {}", GameTime::GetGameTimeMS());
         sAuctionMgr->AddAuction(AH);
-        TC_LOG_DEBUG("auctionHouse", "Added Auction to AuctionHouseObject from handler {}", GameTime::GetGameTimeMS());
+        TC_LOG_DEBUG("auctionHouse", "Added Auction to AuctionHouseMgr from handler {}", GameTime::GetGameTimeMS());
         for (uint32 j = 0; j < itemsCount; ++j)
         {
             Item* item2 = items[j];
