@@ -656,7 +656,7 @@ void AuctionHouseMgr::Update()
         AuctionHouseObject* auctionHouse = pair.second.get();
 
         // If storage is empty, no need to update. next == NULL in this case
-        if (!auctionHouse || auctionHouse->GetAuctionsCount() == 0)
+        if (!auctionHouse || auctionHouse->Getcount() == 0)
             continue;
 
         time_t curTime = GameTime::GetGameTime();
