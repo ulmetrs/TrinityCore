@@ -103,7 +103,6 @@ struct TC_GAME_API AuctionEntry
     // helpers
     uint32 GetAuctionCut() const;
     uint32 GetAuctionOutBid() const;
-    bool BuildAuctionInfo(WorldPacket & data, Item* sourceItem = nullptr) const;
     void DeleteFromDB(CharacterDatabaseTransaction trans) const;
     void SaveToDB(CharacterDatabaseTransaction trans) const;
     bool LoadFromDB(Field* fields, bool moveToNeutralAH = false);
