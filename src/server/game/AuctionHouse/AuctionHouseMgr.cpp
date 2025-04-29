@@ -45,9 +45,8 @@ enum eAuctionHouse
 
 AuctionHouseMgr::AuctionHouseMgr()
 {
-    auctionHouseMap_[AUCTIONHOUSE_ALLIANCE] = std::make_unique<AuctionHouseObject>();
-    auctionHouseMap_[AUCTIONHOUSE_HORDE]    = std::make_unique<AuctionHouseObject>();
-    auctionHouseMap_[AUCTIONHOUSE_NEUTRAL]  = std::make_unique<AuctionHouseObject>();
+    for (AuctionHouseId houseId : EnumUtils::Iterate<AuctionHouseId>())
+        auctionHouseMap_[houseId] = std::make_unique<AuctionHouseObject>();
 
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTION_WORKER_THREADS); ++i)
     {
@@ -69,12 +68,10 @@ AuctionHouseObject* AuctionHouseMgr::GetAuctionHouseByFactionTemplateId(uint32 f
 
 AuctionHouseObject* AuctionHouseMgr::GetAuctionHouse(uint8 houseId)
 {
-    switch(houseId)
-    {
-        case AUCTIONHOUSE_ALLIANCE : return auctionHouseMap_[AUCTIONHOUSE_ALLIANCE].get();
-        case AUCTIONHOUSE_HORDE : return auctionHouseMap_[AUCTIONHOUSE_HORDE].get();
-        default : return auctionHouseMap_[AUCTIONHOUSE_NEUTRAL].get();
-    }
+    auto it = auctionHouseMap_.find(houseId);
+    if (it != auctionHouseMap_.end())
+        return it->second.get();
+    return auctionHouseMap_[AUCTIONHOUSE_NEUTRAL].get();
 }
 
 uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count)
