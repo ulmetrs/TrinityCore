@@ -45,8 +45,9 @@ enum eAuctionHouse
 
 AuctionHouseMgr::AuctionHouseMgr()
 {
-    for (AuctionHouseId houseId : EnumUtils::Iterate<AuctionHouseId>())
-        auctionHouseMap_[houseId] = std::make_unique<AuctionHouseObject>();
+    auctionHouseMap_[AUCTIONHOUSE_ALLIANCE] = std::make_unique<AuctionHouseObject>();
+    auctionHouseMap_[AUCTIONHOUSE_HORDE]    = std::make_unique<AuctionHouseObject>();
+    auctionHouseMap_[AUCTIONHOUSE_NEUTRAL]  = std::make_unique<AuctionHouseObject>();
 
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTION_WORKER_THREADS); ++i)
     {
