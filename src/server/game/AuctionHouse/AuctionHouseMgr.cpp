@@ -653,7 +653,7 @@ void AuctionHouseMgr::Update()
 {
     for (auto& pair : auctionHouseMap_)
     {
-        AuctionHouseObject* auctionHouse = pair.second;
+        AuctionHouseObject* auctionHouse = pair.second.get();
 
         // If storage is empty, no need to update. next == NULL in this case
         if (!auctionHouse || auctionHouse->GetAuctionsCount() == 0)
