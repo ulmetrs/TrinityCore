@@ -653,17 +653,17 @@ void AuctionHouseMgr::Update()
 {
     for (auto& pair : auctionHouseMap_)
     {
-        AuctionHouseObject* house = pair.second;
+        AuctionHouseObject* auctionHouse = pair.second;
 
-        // If storage is empty, no need to update. next == NULL in this case.
-        if (!house || house.GetCount() == 0)
+        // If storage is empty, no need to update. next == NULL in this case
+        if (!auctionHouse || auctionHouse->GetCount() == 0)
             continue;
 
         time_t curTime = GameTime::GetGameTime();
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
-        for (AuctionEntryMap::const_iterator itr = house->GetAuctionsBegin(); itr != house->GetAuctionsEnd(); ++itr)
+        for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
             // from auctionhousehandler.cpp, creates auction pointer & player pointer
             AuctionEntry* auction = itr->second;
@@ -678,7 +678,7 @@ void AuctionHouseMgr::Update()
             if (auction->bidder == 0 && auction->bid == 0)
             {
                 SendAuctionExpiredMail(auction, trans);
-                sScriptMgr->OnAuctionExpire(this, auction);
+                sScriptMgr->OnAuctionExpire(auctionHouse, auction);
             }
             ///- Or perform the transaction
             else
@@ -688,7 +688,7 @@ void AuctionHouseMgr::Update()
                 //we send the money to the seller
                 SendAuctionSuccessfulMail(auction, trans);
                 SendAuctionWonMail(auction, trans);
-                sScriptMgr->OnAuctionSuccessful(this, auction);
+                sScriptMgr->OnAuctionSuccessful(auctionHouse, auction);
             }
 
             ///- In any case clear the auction
