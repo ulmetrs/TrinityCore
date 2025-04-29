@@ -71,7 +71,7 @@ void WorldSession::SendAuctionHello(ObjectGuid guid, Unit const* unit)
         return;
     }
 
-    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseByFactionTemplateId(unit->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateId(unit->GetFaction());
     if (!ahEntry)
         return;
 

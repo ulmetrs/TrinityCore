@@ -400,8 +400,7 @@ void AuctionHouseMgr::LoadAuctions()
         if (moveToNeutralAH)
             aItem->houseId = AUCTIONHOUSE_NEUTRAL;
 
-        auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId);
-        if (!auctionHouseEntry)
+        if (!AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId))
         {
             TC_LOG_ERROR("misc", "Auction {} has invalid house id {}", aItem->Id, aItem->houseId);
             aItem->DeleteFromDB(trans);
@@ -411,7 +410,7 @@ void AuctionHouseMgr::LoadAuctions()
 
         // check if sold item exists for guid
         // and itemEntry in fact (GetAItem will fail if problematic in result check in AuctionHouseMgr::LoadAuctionItems)
-        if (!sAuctionMgr->GetAItem(itemGUIDLow))
+        if (!GetAItem(aItem->itemGUIDLow))
         {
             TC_LOG_ERROR("misc", "Auction {} has not a existing item : {}", aItem->Id, aItem->itemGUIDLow);
             aItem->DeleteFromDB(trans);
@@ -475,7 +474,7 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 
     // Auction info
     ObjectGuid ownerGuid = ObjectGuid(HighGuid::Player, auction->owner);
-    searchableAuctionEntry->owner = auction->owner;
+    searchableAuctionEntry->ownerGuid = ownerGuid;
     sCharacterCache->GetCharacterNameByGuid(ownerGuid, searchableAuctionEntry->ownerName);
     searchableAuctionEntry->startbid = auction->startbid;
     searchableAuctionEntry->buyout = auction->buyout;
