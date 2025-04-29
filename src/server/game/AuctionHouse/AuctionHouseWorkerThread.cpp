@@ -123,15 +123,10 @@ void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> me
 
 void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& message)
 {
-    TC_LOG_DEBUG("auctionHouse", "Got AddAuctionMessage on WorkerThread {}", GameTime::GetGameTimeMS());
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
-    TC_LOG_DEBUG("auctionHouse", "Got Auction House {}", GameTime::GetGameTimeMS());
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
-    TC_LOG_DEBUG("auctionHouse", "Got Auction Map {}", GameTime::GetGameTimeMS());
     std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
-    TC_LOG_DEBUG("auctionHouse", "Got Map Mutex {}", GameTime::GetGameTimeMS());
     searchableAuctionMap.insert(std::make_pair(message.searchableAuctionEntry->Id, message.searchableAuctionEntry));
-    TC_LOG_DEBUG("auctionHouse", "Added Auction to Map {}", GameTime::GetGameTimeMS());
 }
 
 void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& message)
