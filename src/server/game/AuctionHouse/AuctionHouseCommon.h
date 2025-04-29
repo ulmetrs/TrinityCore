@@ -214,6 +214,17 @@ typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
 typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
 typedef std::vector<SearchableAuctionEntry*> SortableAuctionEntriesList;
 
+class AuctionSorter
+{
+public:
+    AuctionSorter(AuctionSortOrderVector const* sort, int loc_idx) : _sort(sort), _loc_idx(loc_idx) {}
+    bool operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const;
+
+private:
+    AuctionSortOrderVector const* _sort;
+    int _loc_idx;
+};
+
 class TC_GAME_API AuctionHouseObject
 {
 public:
@@ -235,7 +246,6 @@ public:
 
     void AddAuction(AuctionEntry* auction);
     bool RemoveAuction(AuctionEntry* auction);
-    void Update();
 
 private:
     AuctionEntryMap AuctionsMap;

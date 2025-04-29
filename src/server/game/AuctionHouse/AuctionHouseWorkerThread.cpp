@@ -17,7 +17,6 @@
 
 #include "AuctionHouseWorkerThread.h"
 #include "AuctionHouseCommon.h"
-#include "AuctionSorter.h"
 #include "GameTime.h"
 #include "World.h"
 

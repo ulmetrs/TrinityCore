@@ -21,72 +21,8 @@
 #include "GameTime.h"
 #include "Item.h"
 #include "ObjectMgr.h"
-#include "ScriptMgr.h"
 #include "Util.h"
 #include "WorldPacket.h"
-
-void AuctionHouseObject::AddAuction(AuctionEntry* auction)
-{
-    AuctionsMap[auction->Id] = auction;
-    sScriptMgr->OnAuctionAdd(this, auction);
-}
-
-bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
-{
-    bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
-    sScriptMgr->OnAuctionRemove(this, auction);
-    return wasInMap;
-}
-
-void AuctionHouseObject::Update()
-{
-    time_t curTime = GameTime::GetGameTime();
-    ///- Handle expired auctions
-
-    // If storage is empty, no need to update. next == NULL in this case.
-    if (AuctionsMap.empty())
-        return;
-
-    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-
-    for (AuctionEntryMap::iterator it = AuctionsMap.begin(); it != AuctionsMap.end();)
-    {
-        // from auctionhousehandler.cpp, creates auction pointer & player pointer
-        AuctionEntry* auction = it->second;
-        // Increment iterator due to AuctionEntry deletion
-        ++it;
-
-        ///- filter auctions expired on next update
-        if (auction->expire_time > curTime + 60)
-            continue;
-
-        ///- Either cancel the auction if there was no bidder
-        if (auction->bidder == 0 && auction->bid == 0)
-        {
-            sAuctionMgr->SendAuctionExpiredMail(auction, trans);
-            sScriptMgr->OnAuctionExpire(this, auction);
-        }
-        ///- Or perform the transaction
-        else
-        {
-            //we should send an "item sold" message if the seller is online
-            //we send the item to the winner
-            //we send the money to the seller
-            sAuctionMgr->SendAuctionSuccessfulMail(auction, trans);
-            sAuctionMgr->SendAuctionWonMail(auction, trans);
-            sScriptMgr->OnAuctionSuccessful(this, auction);
-        }
-
-        ///- In any case clear the auction
-        auction->DeleteFromDB(trans);
-
-        sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
-        sAuctionMgr->RemoveAuction(auction);
-    }
-
-    // Run DB changes
-    CharacterDatabase.CommitTransaction(trans);
-}
 
 uint32 AuctionEntry::GetAuctionCut() const
 {
@@ -161,6 +97,67 @@ bool AuctionEntry::LoadFromDB(Field* fields, bool moveToNeutralAH)
     }
 
     return true;
+}
+
+bool AuctionHouseUsablePlayerInfo::PlayerCanUseItem(ItemTemplate const* proto) const
+{
+    uint32 itemSkill = proto->GetSkill();
+    if (itemSkill != 0)
+    {
+        if (GetSkillValue(itemSkill) == 0)
+            return false;
+    }
+
+    if ((proto->AllowableClass & classMask) == 0 || (proto->AllowableRace & raceMask) == 0)
+        return false;
+
+    if (proto->RequiredSkill != 0)
+    {
+        if (GetSkillValue(proto->RequiredSkill) == 0)
+            return false;
+        else if (GetSkillValue(proto->RequiredSkill) < proto->RequiredSkillRank)
+            return false;
+    }
+
+    if (proto->RequiredSpell != 0 && !HasSpell(proto->RequiredSpell))
+        return false;
+
+    if (level < proto->RequiredLevel)
+        return false;
+
+    if (proto->Spells[0].SpellId)
+    {
+        // this check is for vanilla recipies. Spells are learned through individual learning spells instead of spell 483 and 55884
+        SpellEntry const* spellEntry = sSpellStore.LookupEntry(proto->Spells[0].SpellId);
+        if (spellEntry && spellEntry->Effect[0] == SPELL_EFFECT_LEARN_SPELL && spellEntry->EffectTriggerSpell[0])
+            if (HasSpell(spellEntry->EffectTriggerSpell[0]))
+                return false;
+
+        // this check is for tbc/wotlk recipies. Spells are learned through 483 and 55884, the second spell in the item will be the actual spell learned.
+        if (proto->Spells[0].SpellId == 483 || proto->Spells[0].SpellId == 55884)
+            if (HasSpell(proto->Spells[1].SpellId))
+                return false;
+    }
+
+    return true;
+}
+
+uint16 AuctionHouseUsablePlayerInfo::GetSkillValue(uint32 skill) const
+{
+    if (!skill)
+        return 0;
+
+    AuctionPlayerSkills::const_iterator itr = skills.find(skill);
+    if (itr == skills.end())
+        return 0;
+
+    return itr->second;
+}
+
+bool AuctionHouseUsablePlayerInfo::HasSpell(uint32 spell) const
+{
+    AuctionPlayerSpells::const_iterator itr = spells.find(spell);
+    return (itr != spells.end());
 }
 
 void SearchableAuctionEntry::BuildAuctionInfo(WorldPacket& data) const
@@ -248,65 +245,146 @@ void SearchableAuctionEntry::SetItemNames()
     }
 }
 
-bool AuctionHouseUsablePlayerInfo::PlayerCanUseItem(ItemTemplate const* proto) const
+bool AuctionSorter::operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const
 {
-    uint32 itemSkill = proto->GetSkill();
-    if (itemSkill != 0)
+    if (_sort->empty()) return false;
+
+    for (AuctionSortOrderVector::const_iterator itr = _sort->begin(); itr != _sort->end(); ++itr)
     {
-        if (GetSkillValue(itemSkill) == 0)
-            return false;
+        int res = auc1->CompareAuctionEntry(itr->sortOrder, *auc2, _loc_idx);
+        if (res == 0) continue;
+        return (res < 0) == itr->isDesc;
     }
 
-    if ((proto->AllowableClass & classMask) == 0 || (proto->AllowableRace & raceMask) == 0)
-        return false;
-
-    if (proto->RequiredSkill != 0)
-    {
-        if (GetSkillValue(proto->RequiredSkill) == 0)
-            return false;
-        else if (GetSkillValue(proto->RequiredSkill) < proto->RequiredSkillRank)
-            return false;
-    }
-
-    if (proto->RequiredSpell != 0 && !HasSpell(proto->RequiredSpell))
-        return false;
-
-    if (level < proto->RequiredLevel)
-        return false;
-
-    if (proto->Spells[0].SpellId)
-    {
-        // this check is for vanilla recipies. Spells are learned through individual learning spells instead of spell 483 and 55884
-        SpellEntry const* spellEntry = sSpellStore.LookupEntry(proto->Spells[0].SpellId);
-        if (spellEntry && spellEntry->Effect[0] == SPELL_EFFECT_LEARN_SPELL && spellEntry->EffectTriggerSpell[0])
-            if (HasSpell(spellEntry->EffectTriggerSpell[0]))
-                return false;
-
-        // this check is for tbc/wotlk recipies. Spells are learned through 483 and 55884, the second spell in the item will be the actual spell learned.
-        if (proto->Spells[0].SpellId == 483 || proto->Spells[0].SpellId == 55884)
-            if (HasSpell(proto->Spells[1].SpellId))
-                return false;
-    }
-
-    return true;
+    return false;
 }
 
-uint16 AuctionHouseUsablePlayerInfo::GetSkillValue(uint32 skill) const
+int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuctionEntry const& auc, int loc_idx) const
 {
-    if (!skill)
-        return 0;
-
-    AuctionPlayerSkills::const_iterator itr = skills.find(skill);
-    if (itr == skills.end())
-        return 0;
-
-    return itr->second;
+    switch (column)
+    {
+        case AUCTION_SORT_MINLEVEL:
+        {
+            ItemTemplate const* itemProto1 = item.itemTemplate;
+            ItemTemplate const* itemProto2 = auc.item.itemTemplate;
+            if (itemProto1->RequiredLevel > itemProto2->RequiredLevel)
+                return -1;
+            else if (itemProto1->RequiredLevel < itemProto2->RequiredLevel)
+                return +1;
+            break;
+        }
+        case AUCTION_SORT_RARITY:
+        {
+            ItemTemplate const* itemProto1 = item.itemTemplate;
+            ItemTemplate const* itemProto2 = auc.item.itemTemplate;
+            if (itemProto1->Quality < itemProto2->Quality)
+                return -1;
+            else if (itemProto1->Quality > itemProto2->Quality)
+                return +1;
+            break;
+        }
+        case AUCTION_SORT_BUYOUT:
+            if (buyout != auc.buyout)
+            {
+                if (buyout < auc.buyout)
+                    return -1;
+                else if (buyout > auc.buyout)
+                    return +1;
+            }
+            else
+            {
+                if (bid < auc.bid)
+                    return -1;
+                else if (bid > auc.bid)
+                    return +1;
+            }
+            break;
+        case AUCTION_SORT_TIMELEFT:
+            if (expire_time < auc.expire_time)
+                return -1;
+            else if (expire_time > auc.expire_time)
+                return +1;
+            break;
+        case AUCTION_SORT_UNK4:
+            if (bidderGuid.GetCounter() < auc.bidderGuid.GetCounter())
+                return -1;
+            else if (bidderGuid.GetCounter() > auc.bidderGuid.GetCounter())
+                return +1;
+            break;
+        case AUCTION_SORT_ITEM:
+        {
+            int comparison = item.itemName[loc_idx].compare(auc.item.itemName[loc_idx]);
+            if (comparison > 0)
+                return -1;
+            else if (comparison < 0)
+                return +1;
+            break;
+        }
+        case AUCTION_SORT_MINBIDBUY:
+        {
+            if (buyout != auc.buyout)
+            {
+                if (buyout > auc.buyout)
+                    return -1;
+                else if (buyout < auc.buyout)
+                    return +1;
+            }
+            else
+            {
+                if (bid < auc.bid)
+                    return -1;
+                else if (bid > auc.bid)
+                    return +1;
+            }
+            break;
+        }
+        case AUCTION_SORT_OWNER:
+        {
+            int comparison = ownerName.compare(auc.ownerName);
+            if (comparison > 0)
+                return -1;
+            else if (comparison < 0)
+                return +1;
+            break;
+        }
+        case AUCTION_SORT_BID:
+        {
+            uint32 bid1 = bid ? bid : startbid;
+            uint32 bid2 = auc.bid ? auc.bid : auc.startbid;
+            if (bid1 > bid2)
+                return -1;
+            else if (bid1 < bid2)
+                return +1;
+            break;
+        }
+        case AUCTION_SORT_STACK:
+        {
+            if (item.count < auc.item.count)
+                return -1;
+            else if (item.count > auc.item.count)
+                return +1;
+            break;
+        }
+        case AUCTION_SORT_BUYOUT_2:
+            if (buyout < auc.buyout)
+                return -1;
+            else if (buyout > auc.buyout)
+                return +1;
+            break;
+        default:
+            break;
+    }
+    return 0;
 }
 
-bool AuctionHouseUsablePlayerInfo::HasSpell(uint32 spell) const
+void AuctionHouseObject::AddAuction(AuctionEntry* auction)
 {
-    AuctionPlayerSpells::const_iterator itr = spells.find(spell);
-    return (itr != spells.end());
+    AuctionsMap[auction->Id] = auction;
+}
+
+bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction)
+{
+    return AuctionsMap.erase(auction->Id) ? true : false;
 }
 
 // the sum of outbid is (1% from current bid)*5, if bid is very small, it is 1c
