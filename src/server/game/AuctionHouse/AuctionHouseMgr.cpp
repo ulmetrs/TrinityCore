@@ -405,7 +405,10 @@ void AuctionHouseMgr::LoadAuctions()
         aItem->LoadFromDB(fields);
 
         if (moveToNeutralAH)
+        {
             aItem->houseId = AUCTIONHOUSE_NEUTRAL;
+            aItem->auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId)
+        }
 
         if (!AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId))
         {
@@ -731,7 +734,7 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateI
 
 AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint8 houseId)
 {
-    return sAuctionHouseStore.LookupEntry(static_cast<uint32>(houseId));
+    return sAuctionHouseStore.LookupEntry(uint32(houseId));
 }
 
 uint8 AuctionHouseMgr::GetAuctionHouseId(uint32 factionTemplateId)
