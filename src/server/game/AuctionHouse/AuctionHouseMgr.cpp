@@ -77,7 +77,6 @@ AuctionHouseObject* AuctionHouseMgr::GetAuctionHouse(uint8 houseId)
     }
 }
 
-// TODO test changing this to AuctionHouseEntry method
 uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count)
 {
     uint32 MSV = pItem->GetTemplate()->SellPrice;
@@ -361,7 +360,6 @@ void AuctionHouseMgr::LoadAuctionItems()
 void AuctionHouseMgr::LoadAuctions()
 {
     uint32 oldMSTime = getMSTime();
-    bool moveToNeutralAH = sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION);
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_AUCTIONS);
     PreparedQueryResult resultAuctions = CharacterDatabase.Query(stmt);
@@ -391,14 +389,31 @@ void AuctionHouseMgr::LoadAuctions()
 
     // parse auctions from db
     uint32 countAuctions = 0;
+    bool moveToNeutralAH = sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION);
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
     do
     {
         Field* fields = resultAuctions->Fetch();
-
         AuctionEntry* aItem = new AuctionEntry();
-        if (!aItem->LoadFromDB(fields, moveToNeutralAH))
+        aItem->LoadFromDB(fields);
+
+        if (moveToNeutralAH)
+            aItem->houseId = AUCTIONHOUSE_NEUTRAL;
+
+        auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId);
+        if (!auctionHouseEntry)
         {
+            TC_LOG_ERROR("misc", "Auction {} has invalid house id {}", aItem->Id, aItem->houseId);
+            aItem->DeleteFromDB(trans);
+            delete aItem;
+            continue;
+        }
+
+        // check if sold item exists for guid
+        // and itemEntry in fact (GetAItem will fail if problematic in result check in AuctionHouseMgr::LoadAuctionItems)
+        if (!sAuctionMgr->GetAItem(itemGUIDLow))
+        {
+            TC_LOG_ERROR("misc", "Auction {} has not a existing item : {}", aItem->Id, aItem->itemGUIDLow);
             aItem->DeleteFromDB(trans);
             delete aItem;
             continue;
@@ -460,7 +475,7 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 
     // Auction info
     ObjectGuid ownerGuid = ObjectGuid(HighGuid::Player, auction->owner);
-    searchableAuctionEntry->ownerGuid = ownerGuid;
+    searchableAuctionEntry->owner = auction->owner;
     sCharacterCache->GetCharacterNameByGuid(ownerGuid, searchableAuctionEntry->ownerName);
     searchableAuctionEntry->startbid = auction->startbid;
     searchableAuctionEntry->buyout = auction->buyout;
@@ -703,13 +718,13 @@ void AuctionHouseMgr::Update()
     }
 }
 
-AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTemplateId)
+AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateId(uint32 factionTemplateId)
 {
     uint8 houseId = GetAuctionHouseId(factionTemplateId);
-    return sAuctionHouseStore.LookupEntry(static_cast<uint32>(houseId));
+    return GetAuctionHouseEntry(houseId);
 }
 
-AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntryFromHouse(uint8 houseId)
+AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint8 houseId)
 {
     return sAuctionHouseStore.LookupEntry(static_cast<uint32>(houseId));
 }

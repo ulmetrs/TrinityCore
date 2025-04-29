@@ -71,7 +71,7 @@ void WorldSession::SendAuctionHello(ObjectGuid guid, Unit const* unit)
         return;
     }
 
-    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(unit->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseByFactionTemplateId(unit->GetFaction());
     if (!ahEntry)
         return;
 
@@ -174,7 +174,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         return;
     }
 
-    AuctionHouseEntry const* auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
+    AuctionHouseEntry const* auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateId(creature->GetFaction());
     if (!auctionHouseEntry)
     {
         TC_LOG_DEBUG("network", "WORLD: HandleAuctionSellItem - Unit ({}) has wrong faction.", auctioneer.ToString());
@@ -694,7 +694,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
     // verifies the warehouse entry exists
-    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateId(creature->GetFaction());
     if (!ahEntry)
         return;
 
@@ -736,7 +736,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
     // verifies the warehouse entry exists
-    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateId(creature->GetFaction());
     if (!ahEntry)
         return;
 
@@ -806,7 +806,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         guid.ToString(), listfrom, searchedname, levelmin, levelmax, auctionSlotID, auctionMainCategory, auctionSubCategory, quality, usable);
 
     // verifies the warehouse entry exists
-    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(creature->GetFaction());
+    AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryByFactionTemplateId(creature->GetFaction());
     if (!ahEntry)
         return;
 

@@ -16,7 +16,6 @@
  */
 
 #include "AuctionHouseCommon.h"
-#include "AuctionHouseMgr.h" // TODO refactor some of the AuctionHouseObject methods if we want to remove circular deps
 #include "DBCStores.h"
 #include "GameTime.h"
 #include "Item.h"
@@ -65,10 +64,10 @@ void AuctionEntry::SaveToDB(CharacterDatabaseTransaction trans) const
     trans->Append(stmt);
 }
 
-bool AuctionEntry::LoadFromDB(Field* fields, bool moveToNeutralAH)
+void AuctionEntry::LoadFromDB(Field* fields)
 {
     Id = fields[0].GetUInt32();
-    houseId = moveToNeutralAH ? AUCTIONHOUSE_NEUTRAL : fields[1].GetUInt8();
+    houseId = fields[1].GetUInt8();
     itemGUIDLow = fields[2].GetUInt32();
     itemEntry = fields[3].GetUInt32();
     itemCount = fields[4].GetUInt32();
@@ -80,23 +79,6 @@ bool AuctionEntry::LoadFromDB(Field* fields, bool moveToNeutralAH)
     startbid = fields[10].GetUInt32();
     deposit = fields[11].GetUInt32();
     Flags = AuctionEntryFlag(fields[12].GetUInt8());
-
-    auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntryFromHouse(houseId);
-    if (!auctionHouseEntry)
-    {
-        TC_LOG_ERROR("misc", "Auction {} has invalid house id {}", Id, houseId);
-        return false;
-    }
-
-    // check if sold item exists for guid
-    // and itemEntry in fact (GetAItem will fail if problematic in result check in AuctionHouseMgr::LoadAuctionItems)
-    if (!sAuctionMgr->GetAItem(itemGUIDLow))
-    {
-        TC_LOG_ERROR("misc", "Auction {} has not a existing item : {}", Id, itemGUIDLow);
-        return false;
-    }
-
-    return true;
 }
 
 bool AuctionHouseUsablePlayerInfo::PlayerCanUseItem(ItemTemplate const* proto) const

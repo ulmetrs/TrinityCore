@@ -38,8 +38,8 @@ public:
 
     static AuctionHouseMgr* instance();
     static uint32 GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count);
-    static AuctionHouseEntry const* GetAuctionHouseEntry(uint32 factionTemplateId);
-    static AuctionHouseEntry const* GetAuctionHouseEntryFromHouse(uint8 houseId);
+    static AuctionHouseEntry const* GetAuctionHouseEntryByFactionTemplateId(uint32 factionTemplateId);
+    static AuctionHouseEntry const* GetAuctionHouseEntry(uint8 houseId);
     static uint8 GetAuctionHouseId(uint32 factionTemplateId);
 
     AuctionHouseObject* GetAuctionHouseByFactionTemplateId(uint32 factionTemplateId);

@@ -105,7 +105,7 @@ struct TC_GAME_API AuctionEntry
     uint32 GetAuctionOutBid() const;
     void DeleteFromDB(CharacterDatabaseTransaction trans) const;
     void SaveToDB(CharacterDatabaseTransaction trans) const;
-    bool LoadFromDB(Field* fields, bool moveToNeutralAH = false);
+    void LoadFromDB(Field* fields);
 };
 
 enum AuctionSortOrder
