@@ -81,7 +81,7 @@ void AuctionEntry::LoadFromDB(Field* fields)
     Flags = AuctionEntryFlag(fields[12].GetUInt8());
 }
 
-std::string AuctionEntry::BuildAuctionMailSubject(Item* item, MailAuctionAnswers response) const
+std::string AuctionEntry::BuildAuctionMailSubject(Item* item, MailAuctionAnswers response)
 {
     return Trinity::StringFormat("{}:{}:{}:{}:{}", itemEntry, item ? item->GetItemRandomPropertyId() : 0, response, Id, itemCount);
 }
