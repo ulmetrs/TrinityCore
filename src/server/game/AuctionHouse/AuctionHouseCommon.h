@@ -101,17 +101,12 @@ struct TC_GAME_API AuctionEntry
     AuctionEntryFlag Flags;
 
     // helpers
-    uint8 GetHouseId() const { return houseId; }
     uint32 GetAuctionCut() const;
     uint32 GetAuctionOutBid() const;
     bool BuildAuctionInfo(WorldPacket & data, Item* sourceItem = nullptr) const;
     void DeleteFromDB(CharacterDatabaseTransaction trans) const;
     void SaveToDB(CharacterDatabaseTransaction trans) const;
     bool LoadFromDB(Field* fields, bool moveToNeutralAH = false);
-    std::string BuildAuctionMailSubject(MailAuctionAnswers response) const;
-    static std::string BuildAuctionWonMailBody(ObjectGuid guid, uint32 bid, uint32 buyout);
-    static std::string BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment);
-    static std::string BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta);
 };
 
 enum AuctionSortOrder

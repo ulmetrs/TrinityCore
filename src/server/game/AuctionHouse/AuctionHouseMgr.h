@@ -57,6 +57,7 @@ public:
     }
 
     //auction messages
+    std::string BuildAuctionMailSubject(AuctionEntry* auction, MailAuctionAnswers response) const;
     void SendAuctionWonMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
     void SendAuctionSalePendingMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
     void SendAuctionSuccessfulMail(AuctionEntry* auction, CharacterDatabaseTransaction trans);
@@ -67,10 +68,8 @@ public:
     //load first auction items, because of check if item exists, when loading
     void LoadAuctionItems();
     void LoadAuctions();
-
     void AddAItem(Item* it);
     bool RemoveAItem(ObjectGuid::LowType id, bool deleteItem = false, CharacterDatabaseTransaction* trans = nullptr);
-
     void AddAuction(AuctionEntry* auctionEntry);
     bool RemoveAuction(AuctionEntry* auctionEntry);
     void UpdateBid(AuctionEntry* auctionEntry);

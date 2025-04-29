@@ -163,27 +163,6 @@ bool AuctionEntry::LoadFromDB(Field* fields, bool moveToNeutralAH)
     return true;
 }
 
-std::string AuctionEntry::BuildAuctionMailSubject(MailAuctionAnswers response) const
-{
-    Item* item = sAuctionMgr->GetAItem(itemGUIDLow);
-    return Trinity::StringFormat("{}:{}:{}:{}:{}", itemEntry, item ? item->GetItemRandomPropertyId() : 0, response, Id, itemCount);
-}
-
-std::string AuctionEntry::BuildAuctionWonMailBody(ObjectGuid guid, uint32 bid, uint32 buyout)
-{
-    return Trinity::StringFormat("{:X}:{}:{}", guid.GetRawValue(), bid, buyout);
-}
-
-std::string AuctionEntry::BuildAuctionSoldMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment)
-{
-    return Trinity::StringFormat("{:X}:{}:{}:{}:{}", guid.GetRawValue(), bid, buyout, deposit, consignment);
-}
-
-std::string AuctionEntry::BuildAuctionInvoiceMailBody(ObjectGuid guid, uint32 bid, uint32 buyout, uint32 deposit, uint32 consignment, uint32 moneyDelay, uint32 eta)
-{
-    return Trinity::StringFormat("{:X}:{}:{}:{}:{}:{}:{}", guid.GetRawValue(), bid, buyout, deposit, consignment, moneyDelay, eta);
-}
-
 void SearchableAuctionEntry::BuildAuctionInfo(WorldPacket& data) const
 {
     data << uint32(Id);
