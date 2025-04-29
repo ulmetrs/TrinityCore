@@ -16,7 +16,6 @@
  */
 
 #include "AuctionHouseBotBuyer.h"
-#include "AuctionHouseCommon.h"
 #include "GameTime.h"
 #include "DatabaseEnv.h"
 #include "Item.h"

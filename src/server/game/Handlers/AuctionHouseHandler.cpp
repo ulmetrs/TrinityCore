@@ -17,7 +17,6 @@
 
 #include "WorldSession.h"
 #include "AccountMgr.h"
-#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "CharacterCache.h"
 #include "Creature.h"

@@ -16,7 +16,6 @@
  */
 
 #include "AuctionHouseBotSeller.h"
-#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "Containers.h"
 #include "DatabaseEnv.h"

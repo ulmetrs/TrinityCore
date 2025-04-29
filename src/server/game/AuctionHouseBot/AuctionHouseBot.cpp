@@ -19,7 +19,6 @@
 #include "AccountMgr.h"
 #include "AuctionHouseBotBuyer.h"
 #include "AuctionHouseBotSeller.h"
-#include "AuctionHouseCommon.h"
 #include "AuctionHouseMgr.h"
 #include "Config.h"
 #include "Containers.h"
