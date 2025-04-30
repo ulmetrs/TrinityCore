@@ -20,12 +20,9 @@
 
 #include "AuctionHouseWorkerThread.h"
 #include "Define.h"
-#include "DatabaseEnvFwd.h"
 #include "ObjectGuid.h"
 #include <map>
 #include <memory>
-#include <set>
-#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
