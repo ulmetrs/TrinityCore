@@ -71,13 +71,12 @@ public:
     bool RemoveAuction(AuctionEntry* auctionEntry);
     void UpdateBid(AuctionEntry* auctionEntry);
     void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
-    void ProcessListResponses();
-
+    void UpdateLists();
+    void UpdateExpiredAuctions();
     bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
     uint32 PendingAuctionCount(Player const* player) const;
     void PendingAuctionProcess(Player* player);
     void UpdatePendingAuctions();
-    void Update();
 
 private:
     AuctionHouseMgr();
