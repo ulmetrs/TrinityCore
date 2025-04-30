@@ -472,7 +472,6 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 
     // Add the auction to the correct auction house synchronously
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
-    TC_LOG_DEBUG("auctionHouse", "Add Auction {} to AuctionHouse {}", auction->Id, auction->houseId);
     auctionHouse->AddAuction(auction);
     sScriptMgr->OnAuctionAdd(auctionHouse, auction);
 
@@ -508,7 +507,6 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
     searchableAuctionEntry->item.itemTemplate = item->GetTemplate();
     searchableAuctionEntry->SetItemNames();
 
-    TC_LOG_DEBUG("auctionHouse", "Send AddAuctionMessage {}", searchableAuctionEntry->Id);
     // Queue the searchable auction entry to be added asynchronously
     auto message = std::make_unique<AddAuctionMessage>(searchableAuctionEntry);
     messageQueue_.send(std::move(message));
@@ -517,11 +515,9 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
-    TC_LOG_DEBUG("auctionHouse", "Remove Auction {} from AuctionHouse {}", auction->Id, auction->houseId);
     bool wasInMap = auctionHouse->RemoveAuction(auction);
     sScriptMgr->OnAuctionRemove(auctionHouse, auction);
 
-    TC_LOG_DEBUG("auctionHouse", "Send RemoveAuctionMessage {}", auction->Id);
     // Queue the searchable auction entry to be removed asynchronously
     auto message = std::make_unique<RemoveAuctionMessage>(auction->Id, auction->houseId);
     messageQueue_.send(std::move(message));
@@ -544,7 +540,7 @@ void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> messag
     messageQueue_.send(std::move(message));
 }
 
-void AuctionHouseMgr::Update()
+void AuctionHouseMgr::UpdateExpiredAuctions()
 {
     TC_LOG_DEBUG("auctionHouse", "UpdateExpiredAuctions");
     for (auto& pair : auctionHouseMap_)
@@ -565,8 +561,6 @@ void AuctionHouseMgr::Update()
             // Increment iterator due to AuctionEntry deletion
             ++itr;
 
-            TC_LOG_DEBUG("auctionHouse", "UpdateExpiredAuctions {}", auction->Id);
-
             ///- filter auctions expired on next update
             if (auction->expire_time > curTime + 60)
                 continue;
@@ -574,7 +568,6 @@ void AuctionHouseMgr::Update()
             ///- Either cancel the auction if there was no bidder
             if (auction->bidder == 0 && auction->bid == 0)
             {
-                TC_LOG_DEBUG("auctionHouse", "UpdateExpiredAuctions {} - No bidder", auction->Id);
                 SendAuctionExpiredMail(auction, trans);
                 sScriptMgr->OnAuctionExpire(auctionHouse, auction);
             }

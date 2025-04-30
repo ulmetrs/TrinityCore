@@ -71,7 +71,7 @@ public:
     bool RemoveAuction(AuctionEntry* auctionEntry);
     void UpdateBid(AuctionEntry* auctionEntry);
     void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
-    void Update();
+    void UpdateExpiredAuctions();
     bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
     uint32 PendingAuctionCount(Player const* player) const;
     void PendingAuctionProcess(Player* player);

@@ -2576,7 +2576,7 @@ void World::Update(uint32 diff)
         }
 
         ///- Handle expired auctions
-        sAuctionMgr->Update();
+        sAuctionMgr->UpdateExpiredAuctions();
     }
 
     if (m_timers[WUPDATE_AUCTIONS_PENDING].Passed())
