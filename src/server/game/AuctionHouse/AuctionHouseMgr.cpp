@@ -544,7 +544,7 @@ void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> messag
     messageQueue_.send(std::move(message));
 }
 
-void AuctionHouseMgr::UpdateExpiredAuctions()
+void AuctionHouseMgr::Update()
 {
     TC_LOG_DEBUG("auctionHouse", "UpdateExpiredAuctions");
     for (auto& pair : auctionHouseMap_)

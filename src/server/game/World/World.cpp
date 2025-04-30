@@ -2575,7 +2575,8 @@ void World::Update(uint32 diff)
             sObjectMgr->ReturnOrDeleteOldMails(true);
         }
 
-        sAuctionMgr->UpdateExpiredAuctions();
+        ///- Handle expired auctions
+        sAuctionMgr->Update();
     }
 
     if (m_timers[WUPDATE_AUCTIONS_PENDING].Passed())
