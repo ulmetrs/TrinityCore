@@ -17,6 +17,7 @@
 
 #include "AuctionHouseWorkerThread.h"
 #include "AuctionHouseCommon.h"
+#include "GameTime.h"
 #include "World.h"
 #include "WorldPacket.h"
 
@@ -87,6 +88,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
     {
         if (auto message = messageQueue_->receive(stop))
         {
+            TC_LOG_DEBUG("auctionHouse", "Processing Message {}", GameTime::GetGameTime());
             ProcessMessage(std::move(*message));
         }
     }
@@ -121,35 +123,43 @@ void AuctionHouseWorkerThread::ProcessMessage(std::unique_ptr<AuctionMessage> me
 
 void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctionHouse", "AddAuction {}", GameTime::GetGameTime());
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
     std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
     searchableAuctionMap.insert(std::make_pair(message.searchableAuctionEntry->Id, message.searchableAuctionEntry));
+    TC_LOG_DEBUG("auctionHouse", "Finished AddAuction {}", GameTime::GetGameTime());
 }
 
 void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctionHouse", "RemoveAuction {}", GameTime::GetGameTime());
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
     std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
     searchableAuctionMap.erase(message.auctionId);
+    TC_LOG_DEBUG("auctionHouse", "Finished RemoveAuction {}", GameTime::GetGameTime());
 }
 
 void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& message)
 {
+    TC_LOG_DEBUG("auctionHouse", "UpdateAuctionBid {}", GameTime::GetGameTime());
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
     std::unique_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
     SearchableAuctionEntriesMap::const_iterator itr = searchableAuctionMap.find(message.auctionId);
     if (itr != searchableAuctionMap.end())
     {
+
         itr->second->bid = message.bid;
         itr->second->bidderGuid = message.bidderGuid;
     }
+    TC_LOG_DEBUG("auctionHouse", "Finished UpdateAuctionBid{}", GameTime::GetGameTime());
 }
 
 void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctionHouse", "ListAuctions {}", GameTime::GetGameTime());
     AuctionHouseObject* auctionHouse = GetAuctionHouse(message.houseId);
     SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
     std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
@@ -204,10 +214,14 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
     packet << totalCount;
     packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
+    TC_LOG_DEBUG("auctionHouse", "Send Back List Packet {}", GameTime::GetGameTime());
     if (Player* player = ObjectAccessor::FindConnectedPlayer(message.playerInfo.playerGuid))
     {
+        TC_LOG_DEBUG("auctionHouse", "Send Back List Packet ACTUALLY SENT START {}", GameTime::GetGameTime());
         player->GetSession()->SendPacket(&packet);
+        TC_LOG_DEBUG("auctionHouse", "Send Back List Packet ACTUALLY SENT END {}", GameTime::GetGameTime());
     }
+    TC_LOG_DEBUG("auctionHouse", "Finished Send Back List Packet {}", GameTime::GetGameTime());
 }
 
 void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& message, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
@@ -308,10 +322,14 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
     packet << totalcount;
     packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
+    TC_LOG_DEBUG("auctionHouse", "Send Back List Bidder Packet {}", GameTime::GetGameTime());
     if (Player* player = ObjectAccessor::FindConnectedPlayer(message.ownerGuid))
     {
+        TC_LOG_DEBUG("auctionHouse", "Send Back Bidder List Packet ACTUALLY SENT START {}", GameTime::GetGameTime());
         player->GetSession()->SendPacket(&packet);
+        TC_LOG_DEBUG("auctionHouse", "Send Back Bidder List Packet ACTUALLY SENT END {}", GameTime::GetGameTime());
     }
+    TC_LOG_DEBUG("auctionHouse", "Finished Send Back List Bidder Packet {}", GameTime::GetGameTime());
 }
 
 void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
@@ -342,8 +360,12 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
     packet << (uint32)totalcount;
     packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
+    TC_LOG_DEBUG("auctionHouse", "Send Back List Owner Packet {}", GameTime::GetGameTime());
     if (Player* player = ObjectAccessor::FindConnectedPlayer(message.ownerGuid))
     {
+        TC_LOG_DEBUG("auctionHouse", "Send Back Owner List Packet ACTUALLY SENT START {}", GameTime::GetGameTime());
         player->GetSession()->SendPacket(&packet);
+        TC_LOG_DEBUG("auctionHouse", "Send Back Owner List Packet ACTUALLY SENT END {}", GameTime::GetGameTime());
     }
+    TC_LOG_DEBUG("auctionHouse", "Finished Send Back List Owner Packet {}", GameTime::GetGameTime());
 }

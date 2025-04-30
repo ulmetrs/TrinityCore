@@ -328,8 +328,10 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
             return;
         }
 
+        TC_LOG_DEBUG("auctionHouse", "AuctionHouseHandler Add Auction {} to AuctionHouse {}", AH->Id, AH->houseId);
         sAuctionMgr->AddAItem(item);
         sAuctionMgr->AddAuction(AH);
+        TC_LOG_DEBUG("auctionHouse", "AuctionHouseHandler Finished Add Auction {} to AuctionHouse {}", AH->Id, AH->houseId);
         _player->MoveItemFromInventory(item->GetBagSlot(), item->GetSlot(), true);
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
@@ -386,8 +388,10 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
             return;
         }
 
+        TC_LOG_DEBUG("auctionHouse", "AuctionHouseHandler Add Auction {} to AuctionHouse {}", AH->Id, AH->houseId);
         sAuctionMgr->AddAItem(newItem);
         sAuctionMgr->AddAuction(AH);
+        TC_LOG_DEBUG("auctionHouse", "AuctionHouseHandler Finished Add Auction {} to AuctionHouse {}", AH->Id, AH->houseId);
 
         for (uint32 j = 0; j < itemsCount; ++j)
         {
@@ -575,8 +579,10 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
 
         auction->DeleteFromDB(trans);
 
+        TC_LOG_DEBUG("auctionHouse", "AuctionHouseHandler Remove Auction {} from AuctionHouse {}", auction->Id, auction->houseId);
         sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
         sAuctionMgr->RemoveAuction(auction);
+        TC_LOG_DEBUG("auctionHouse", "Finished AuctionHouseHandler Remove Auction {} from AuctionHouse {}", auction->Id, auction->houseId);
     }
     player->SaveInventoryAndGoldToDB(trans);
     CharacterDatabase.CommitTransaction(trans);
@@ -709,6 +715,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListBidderAuctionMessage>(ahEntry->ID, std::move(auctionIds), GetPlayer()->GetGUID());
+    TC_LOG_DEBUG("auctionHouse", "Queue List Bidder Message {}", GameTime::GetGameTime());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
@@ -740,6 +747,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
         return;
 
     auto message = std::make_unique<ListOwnerAuctionMessage>(ahEntry->ID, GetPlayer()->GetGUID());
+    TC_LOG_DEBUG("auctionHouse", "Queue List Owner Message {}", GameTime::GetGameTime());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
@@ -850,6 +858,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListAuctionMessage>(ahEntry->ID, std::move(ahSearchInfo), std::move(ahPlayerInfo));
+    TC_LOG_DEBUG("auctionHouse", "Queue List Message {}", GameTime::GetGameTime());
     sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
