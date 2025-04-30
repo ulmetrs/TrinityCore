@@ -51,7 +51,7 @@ AuctionHouseMgr::AuctionHouseMgr()
 
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTION_WORKER_THREADS); ++i)
     {
-        workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&messageQueue_, &responseQueue_, auctionHouseMap_));
+        workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&messageQueue_, auctionHouseMap_));
     }
 }
 
@@ -538,17 +538,6 @@ void AuctionHouseMgr::UpdateBid(AuctionEntry* auction)
 void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> message)
 {
     messageQueue_.send(std::move(message));
-}
-
-void AuctionHouseMgr::UpdateLists()
-{
-    while (auto response = responseQueue_.try_receive())
-    {
-        if (Player* player = ObjectAccessor::FindConnectedPlayer((*response)->playerGuid))
-        {
-            player->GetSession()->SendPacket(&(*response)->packet);
-        }
-    }
 }
 
 void AuctionHouseMgr::UpdateExpiredAuctions()
