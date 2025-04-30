@@ -204,7 +204,7 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
     packet << totalCount;
     packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    if (Player* player = ObjectAccessor::FindConnectedPlayer(message.playerInfo.playerGuid))
+    if (Player* player = ObjectAccessor::FindConnectedPlayer(message.ownerGuid))
     {
         player->GetSession()->SendPacket(&packet);
     }
