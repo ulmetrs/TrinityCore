@@ -558,8 +558,7 @@ void AuctionHouseMgr::Update()
         time_t curTime = GameTime::GetGameTime();
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-
-        for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+        for (AuctionEntryMap::iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd();)
         {
             // from auctionhousehandler.cpp, creates auction pointer & player pointer
             AuctionEntry* auction = itr->second;
@@ -592,11 +591,9 @@ void AuctionHouseMgr::Update()
 
             ///- In any case clear the auction
             auction->DeleteFromDB(trans);
-            TC_LOG_DEBUG("auctionHouse", "UpdateExpiredAuctions {} - Deleted from DB", auction->Id);
 
             RemoveAItem(auction->itemGUIDLow);
             RemoveAuction(auction);
-            TC_LOG_DEBUG("auctionHouse", "UpdateExpiredAuctions {} - Removed from AuctionHouse", auction->Id);
         }
 
         // Run DB changes
