@@ -17,8 +17,8 @@
 
 #include "AuctionHouseWorkerThread.h"
 #include "AuctionHouseCommon.h"
-#include "GameTime.h"
 #include "World.h"
+#include "WorldPacket.h"
 
 template<typename T>
 void SignalQueue<T>::send(T value, std::stop_token stop) {
@@ -64,13 +64,11 @@ void SignalQueue<T>::close() {
 
 // Explicit template instantiations
 template class SignalQueue<std::unique_ptr<AuctionMessage>>;
-template class SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>;
 
 AuctionHouseWorkerThread::AuctionHouseWorkerThread(
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
-    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
     AuctionHouseMap& auctionHouseMap)
-    : messageQueue_(messageQueue), responseQueue_(responseQueue), auctionHouseMap_(auctionHouseMap)
+    : messageQueue_(messageQueue), auctionHouseMap_(auctionHouseMap)
 {
     workerThread_ = std::jthread([this](std::stop_token stop) { Run(stop); });
 }
@@ -157,10 +155,9 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
     std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
     uint32 count = 0, totalCount = 0;
 
-    auto response = std::make_unique<ListAuctionMessageResponse>();
-    response->playerGuid = message.playerInfo.playerGuid;
-    response->packet.Initialize(SMSG_AUCTION_LIST_RESULT, (4 + 4 + 4));
-    response->packet << (uint32)0;
+    WorldPacket packet;
+    packet.Initialize(SMSG_AUCTION_LIST_RESULT, (4 + 4 + 4));
+    packet << (uint32)0;
 
     if (!message.searchInfo.getAll)
     {
@@ -184,7 +181,7 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
 
         for (; itr != auctionEntries.end(); ++itr)
         {
-            (*itr)->BuildAuctionInfo(response->packet);
+            (*itr)->BuildAuctionInfo(packet);
             if (++count >= MAX_AUCTIONS_PER_PAGE)
                 break;
         }
@@ -196,18 +193,21 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
         {
             std::shared_ptr<SearchableAuctionEntry> const& Aentry = pair.second;
             ++count;
-            Aentry->BuildAuctionInfo(response->packet);
+            Aentry->BuildAuctionInfo(packet);
             if (count >= MAX_GETALL_RETURN)
                 break;
         }
         totalCount = searchableAuctionMap.size();
     }
 
-    response->packet.put<uint32>(0, count);
-    response->packet << totalCount;
-    response->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
+    packet.put<uint32>(0, count);
+    packet << totalCount;
+    packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    responseQueue_->send(std::move(response));
+    if (Player* player = ObjectAccessor::FindConnectedPlayer(message.ownerGuid))
+    {
+        player->GetSession()->SendPacket(&packet);
+    }
 }
 
 void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& message, SortableAuctionEntriesList& auctionEntries, SearchableAuctionEntriesMap const& auctionMap) const
@@ -274,10 +274,9 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
     SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
     std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
 
-    auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
-    searchResponse->playerGuid = message.ownerGuid;
-    searchResponse->packet.Initialize(SMSG_AUCTION_BIDDER_LIST_RESULT, (4 + 4 + 4));
-    searchResponse->packet << (uint32)0;                                     //add 0 as count
+    WorldPacket packet;
+    packet.Initialize(SMSG_AUCTION_BIDDER_LIST_RESULT, (4 + 4 + 4));
+    packet << (uint32)0;                                     //add 0 as count
 
     uint32 count = 0;
     uint32 totalcount = 0;
@@ -289,7 +288,7 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
             continue;
 
         std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = itr->second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        auctionEntry->BuildAuctionInfo(packet);
         ++count;
         ++totalcount;
     }
@@ -300,16 +299,19 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
             continue;
 
         std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        auctionEntry->BuildAuctionInfo(packet);
         ++count;
         ++totalcount;
     }
 
-    searchResponse->packet.put<uint32>(0, count);
-    searchResponse->packet << totalcount;
-    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
+    packet.put<uint32>(0, count);
+    packet << totalcount;
+    packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    responseQueue_->send(std::move(searchResponse));
+    if (Player* player = ObjectAccessor::FindConnectedPlayer(message.ownerGuid))
+    {
+        player->GetSession()->SendPacket(&packet);
+    }
 }
 
 void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
@@ -318,10 +320,9 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
     SearchableAuctionEntriesMap const& searchableAuctionMap = auctionHouse->GetSearchableAuctionMap();
     std::shared_lock<std::shared_mutex> lock(auctionHouse->GetMapMutex());
 
-    auto searchResponse = std::make_unique<ListAuctionMessageResponse>();
-    searchResponse->playerGuid = message.ownerGuid;
-    searchResponse->packet.Initialize(SMSG_AUCTION_OWNER_LIST_RESULT, (4 + 4 + 4));
-    searchResponse->packet << (uint32)0;
+    WorldPacket packet;
+    packet.Initialize(SMSG_AUCTION_OWNER_LIST_RESULT, (4 + 4 + 4));
+    packet << (uint32)0;
 
     uint32 count = 0;
     uint32 totalcount = 0;
@@ -332,14 +333,17 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
             continue;
 
         std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        auctionEntry->BuildAuctionInfo(packet);
         ++count;
         ++totalcount;
     }
 
-    searchResponse->packet.put<uint32>(0, count);
-    searchResponse->packet << (uint32)totalcount;
-    searchResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
+    packet.put<uint32>(0, count);
+    packet << (uint32)totalcount;
+    packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    responseQueue_->send(std::move(searchResponse));
+    if (Player* player = ObjectAccessor::FindConnectedPlayer(message.ownerGuid))
+    {
+        player->GetSession()->SendPacket(&packet);
+    }
 }

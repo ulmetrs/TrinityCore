@@ -71,7 +71,6 @@ public:
     bool RemoveAuction(AuctionEntry* auctionEntry);
     void UpdateBid(AuctionEntry* auctionEntry);
     void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
-    void UpdateLists();
     void UpdateExpiredAuctions();
     bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
     uint32 PendingAuctionCount(Player const* player) const;
@@ -86,7 +85,6 @@ private:
             delete itr->second;
 
         messageQueue_.close();
-        responseQueue_.close();
     }
 
     AuctionHouseMap auctionHouseMap_;
@@ -95,7 +93,6 @@ private:
     ItemMap mAitems;
 
     SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
-    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>> responseQueue_;
     std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
 };
 

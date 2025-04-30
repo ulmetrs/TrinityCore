@@ -98,12 +98,6 @@ struct ListBidderAuctionMessage : AuctionMessage
     ObjectGuid ownerGuid;
 };
 
-struct ListAuctionMessageResponse
-{
-    ObjectGuid playerGuid;
-    WorldPacket packet;
-};
-
 template<typename T>
 class SignalQueue {
 public:
@@ -126,7 +120,6 @@ class AuctionHouseWorkerThread
 public:
     AuctionHouseWorkerThread(
         SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
-        SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue,
         AuctionHouseMap& auctionHouseMap);
     ~AuctionHouseWorkerThread();
 
@@ -147,7 +140,6 @@ private:
     }
 
     SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue_;
-    SignalQueue<std::unique_ptr<ListAuctionMessageResponse>>* responseQueue_;
     AuctionHouseMap& auctionHouseMap_;
     std::jthread workerThread_;
 };
