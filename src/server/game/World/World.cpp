@@ -2560,6 +2560,12 @@ void World::Update(uint32 diff)
         ResetGuildCap();
     }
 
+    {
+        ZoneScopedNC("World::UpdateLists", WORLD_UPDATE_COLOR)
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update list responses"));
+        sAuctionMgr->UpdateLists();
+    }
+
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
