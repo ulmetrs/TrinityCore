@@ -516,7 +516,7 @@ int32 AuraEffect::CalculateAmount(Unit* caster)
                 break;
             case SPELL_AURA_PERIODIC_HEAL:
                 if (GetBase()->GetType() == UNIT_AURA_TYPE)
-                    amount = caster->SpellHealingBonusDone(GetBase()->GetUnitOwner(), GetSpellInfo(), GetSpellInfo()->GetSchoolMask(), amount, DOT, GetSpellEffectInfo(), GetBase()->GetDonePct());
+                    amount = caster->SpellHealingBonusDone(GetBase()->GetUnitOwner(), GetSpellInfo(), amount, DOT, GetSpellEffectInfo(), GetBase()->GetDonePct());
                 break;
             default:
                 break;
