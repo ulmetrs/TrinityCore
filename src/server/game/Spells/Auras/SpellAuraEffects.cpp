@@ -5767,8 +5767,8 @@ void AuraEffect::HandleProcTriggerDamageAuraProc(AuraApplication* aurApp, ProcEv
     }
 
     SpellNonMeleeDamage damageInfo(target, triggerTarget, GetId(), GetSpellInfo()->SchoolMask);
-    uint32 damage = target->SpellDamageBonusDone(triggerTarget, GetSpellInfo(), GetSpellInfo()->SchoolMask, GetAmount(), SPELL_DIRECT_DAMAGE, GetSpellEffectInfo(), { });
-    damage = triggerTarget->SpellDamageBonusTaken(target, GetSpellInfo(), GetSpellInfo()->SchoolMask, damage, SPELL_DIRECT_DAMAGE);
+    uint32 damage = target->SpellDamageBonusDone(triggerTarget, GetSpellInfo(), GetSpellInfo()->GetSchoolMask(), GetAmount(), SPELL_DIRECT_DAMAGE, GetSpellEffectInfo(), { });
+    damage = triggerTarget->SpellDamageBonusTaken(target, GetSpellInfo(), GetSpellInfo()->GetSchoolMask(), damage, SPELL_DIRECT_DAMAGE);
     // @tswow-begin effect mask
     target->CalculateSpellDamageTaken(&damageInfo, damage, GetSpellInfo(), BASE_ATTACK, false, false, nullptr, 1 << GetSpellEffectInfo().EffectIndex);
     // @tswow-end
