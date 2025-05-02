@@ -514,7 +514,7 @@ void Aura::SaveCasterInfo(Unit* caster)
                     break;
                 case SPELL_AURA_PERIODIC_DAMAGE:
                 case SPELL_AURA_PERIODIC_LEECH:
-                    _casterInfo.BonusDonePct = caster->SpellDamagePctDone(GetUnitOwner(), GetSpellInfo(), DOT);
+                    _casterInfo.BonusDonePct = caster->SpellDamagePctDone(GetUnitOwner(), GetSpellInfo(), GetSpellInfo()->GetSchoolMask(), DOT);
                     break;
                 default:
                     break;
@@ -1435,7 +1435,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 3790, 1))
                     {
                         int32 damage = devouringPlague->GetAmount();
-                        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
+                        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), GetSpellInfo()->GetSchoolMask(), damage, DOT);
 
                         CastSpellExtraArgs args(devouringPlague), args2(devouringPlague);
                         int32 basepoints0 = CalculatePct(devouringPlague->GetTotalTicks() * static_cast<int32>(damage), aurEff->GetAmount());
