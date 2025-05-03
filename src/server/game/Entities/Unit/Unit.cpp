@@ -8324,6 +8324,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
 
     /** @epoch-start */
     // for wands, use the weapon damage type instead of the shooting spell school
+    // TODO: look into this, this seems odd?
     if (spellProto)
     {
         if (spellProto->EquippedItemSubClassMask == (1 << ITEM_SUBCLASS_WEAPON_WAND))
