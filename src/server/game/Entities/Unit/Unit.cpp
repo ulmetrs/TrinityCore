@@ -7002,9 +7002,15 @@ float Unit::SpellDamagePctDone(Unit* victim, SpellInfo const* spellProto, SpellS
     float maxModDamagePercentSchool = 0.0f;
     if (GetTypeId() == TYPEID_PLAYER)
     {
-        for (uint32 i = 0; i < MAX_SPELL_SCHOOL; ++i)
-            if (schoolMask & (1 << i))
-                maxModDamagePercentSchool = std::max(maxModDamagePercentSchool, GetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i));
+        // Get the SPELL_AURA_MOD_DAMAGE_PERCENT_DONE as it pertains to the spell being cast (wand spec)
+        maxModDamagePercentSchool = GetTotalAuraMultiplier(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, [spellProto->GetAttackType(), schoolMask, this](AuraEffect const* aurEff) -> bool
+        {
+            if (!(aurEff->GetMiscValue() & schoolMask))
+                return false;
+
+            // This actually checks the item in the slot and not spell's item subclass, but they should be the same and this already exists.
+            return CheckAttackFitToAuraRequirement(attackType, aurEff);
+        });
     }
     else
         maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, schoolMask);

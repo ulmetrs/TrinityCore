@@ -4269,6 +4269,11 @@ void AuraEffect::HandleModDamagePercentDone(AuraApplication const* aurApp, uint8
     if (GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
         target->UpdateAllDamagePctDoneMods();
 
+    // similar to the above, damage percent will be calculated on the fly in Unit::SpellDamageBonusDone
+    // This is so that we can check that the spell used is eligible for the aura (wand specialization)
+    // (This handler can't differentiate what attack will be used, so we can't just calculate a total multiplier
+    // here and naively use it for any spell)
+    // This information for client side use only
     if (target->GetTypeId() == TYPEID_PLAYER)
     {
         for (uint8 i = 0; i < MAX_SPELL_SCHOOL; ++i)
