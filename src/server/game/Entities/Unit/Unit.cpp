@@ -7003,13 +7003,14 @@ float Unit::SpellDamagePctDone(Unit* victim, SpellInfo const* spellProto, SpellS
     if (GetTypeId() == TYPEID_PLAYER)
     {
         // Get the SPELL_AURA_MOD_DAMAGE_PERCENT_DONE as it pertains to the spell being cast (wand spec)
-        maxModDamagePercentSchool = GetTotalAuraMultiplier(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, [spellProto->GetAttackType(), schoolMask, this](AuraEffect const* aurEff) -> bool
+        maxModDamagePercentSchool = GetTotalAuraMultiplier(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, [spellProto, schoolMask](AuraEffect const* aurEff) -> bool
         {
             if (!(aurEff->GetMiscValue() & schoolMask))
                 return false;
 
-            // This actually checks the item in the slot and not spell's item subclass, but they should be the same and this already exists.
-            return CheckAttackFitToAuraRequirement(attackType, aurEff);
+            // If the aura expects a subclassmask then the spell must match it
+            return aurEff->GetSpellInfo()->EquippedItemSubClassMask <= 0 ||
+                aurEff->GetSpellInfo()->EquippedItemSubClassMask == spellProto->EquippedItemSubClassMask;
         });
     }
     else
