@@ -9226,6 +9226,7 @@ void Unit::setDeathState(DeathState s)
 
     if (s != ALIVE && s != JUST_RESPAWNED)
     {
+        RemoveUnitFlag(UNIT_FLAG_STUNNED);
         CombatStop();
         ClearComboPointHolders();                           // any combo points pointed to unit lost at it death
 
