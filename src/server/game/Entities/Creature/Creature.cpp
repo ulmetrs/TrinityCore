@@ -3460,8 +3460,8 @@ void Creature::SetSpellFocus(Spell const* focusSpell, WorldObject const* target)
         SetGuidValue(UNIT_FIELD_TARGET, newTargetGUID);
 
     // face the target
-    if (newTargetGUID != ObjectGuid::Empty)
-        SetFacingToObject(target, false);
+    //if (newTargetGUID != ObjectGuid::Empty)
+    //    SetFacingToObject(target, false);
 
     if (spellInfo->HasAttribute(SPELL_ATTR5_DONT_TURN_DURING_CAST))
         AddUnitState(UNIT_STATE_FOCUSING);
