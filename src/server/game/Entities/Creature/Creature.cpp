@@ -3459,12 +3459,14 @@ void Creature::SetSpellFocus(Spell const* focusSpell, WorldObject const* target)
     if (GetGuidValue(UNIT_FIELD_TARGET) != newTargetGUID)
         SetGuidValue(UNIT_FIELD_TARGET, newTargetGUID);
 
-    // face the target
-    //if (newTargetGUID != ObjectGuid::Empty)
-    //    SetFacingToObject(target, false);
-
     if (spellInfo->HasAttribute(SPELL_ATTR5_DONT_TURN_DURING_CAST))
+    {
+        // If we are not allowed to turn during cast but have a focus target, face the target
+        if (newTargetGUID != ObjectGuid::Empty)
+            SetFacingToObject(target, false);
+
         AddUnitState(UNIT_STATE_FOCUSING);
+    }
 }
 
 bool Creature::HasSpellFocus(Spell const* focusSpell) const
