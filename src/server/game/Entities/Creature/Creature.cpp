@@ -3454,18 +3454,16 @@ void Creature::SetSpellFocus(Spell const* focusSpell, WorldObject const* target)
 
     _spellFocusInfo.Spell = focusSpell;
 
-    bool const noTurnDuringCast = spellInfo->HasAttribute(SPELL_ATTR5_DONT_TURN_DURING_CAST);
-    bool const turnDisabled = HasUnitFlag2(UNIT_FLAG2_CANNOT_TURN);
     // set target, then force send update packet to players if it changed to provide appropriate facing
-    ObjectGuid newTarget = (target && !noTurnDuringCast && !turnDisabled) ? target->GetGUID() : ObjectGuid::Empty;
+    ObjectGuid newTarget = (target && !HasUnitFlag2(UNIT_FLAG2_CANNOT_TURN)) ? target->GetGUID() : ObjectGuid::Empty;
     if (GetGuidValue(UNIT_FIELD_TARGET) != newTarget)
         SetGuidValue(UNIT_FIELD_TARGET, newTarget);
 
-    // If we are not allowed to turn during cast but have a focus target, face the target
-    if (!turnDisabled && noTurnDuringCast && target)
+    // face the target
+    if (newTarget)
         SetFacingToObject(target, false);
 
-    if (noTurnDuringCast)
+    if (spellInfo->HasAttribute(SPELL_ATTR5_DONT_TURN_DURING_CAST))
         AddUnitState(UNIT_STATE_FOCUSING);
 }
 
