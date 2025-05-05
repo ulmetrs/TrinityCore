@@ -708,16 +708,11 @@ void Spell::EffectSchoolDMG()
 
         if (unitCaster && damage > 0 && apply_direct_bonus)
         {
-
-            DamageEffectType damageEffectType = SPELL_DIRECT_DAMAGE;
             uint32 totalTicks = 1;
             if (m_triggeredByAuraIsPeriodic)
-            {
-                damageEffectType = DOT;
                 totalTicks = m_triggeredByAuraTotalTicks;
-            }
-            damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, damageEffectType, totalTicks, *effectInfo, { });
-            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, damageEffectType);
+            damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo, { });
+            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE);
         }
 
         m_damage += damage;
@@ -1462,14 +1457,10 @@ void Spell::EffectHeal()
         addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, int32(unitCaster->CountPctFromMaxHealth(damage)), HEAL, 1, *effectInfo, { });
     else
     {
-        DamageEffectType damageEffectType = HEAL;
         uint32 totalTicks = 1;
         if (m_triggeredByAuraIsPeriodic)
-        {
-            damageEffectType = DOT;
             totalTicks = m_triggeredByAuraTotalTicks;
-        }
-        addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, damageEffectType, totalTicks, *effectInfo, { });
+        addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL, totalTicks, *effectInfo, { });
     }
 
     addhealth = unitTarget->SpellHealingBonusTaken(unitCaster, m_spellInfo, addhealth, HEAL);
