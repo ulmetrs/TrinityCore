@@ -736,6 +736,21 @@ bool Map::IsGridLoaded(GridCoord const& p) const
     return grid && grid->isGridObjectDataLoaded();
 }
 
+void Map::VisitAllCells(TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)
+{
+    for (uint32 x = 0; x < TOTAL_NUMBER_OF_CELLS_PER_MAP; ++x)
+    {
+        for (uint32 y = 0; y < TOTAL_NUMBER_OF_CELLS_PER_MAP; ++y)
+        {
+            CellCoord pair(x, y);
+            Cell cell(pair);
+            cell.SetNoCreate();
+            Visit(cell, gridVisitor);
+            Visit(cell, worldVisitor);
+        }
+    }
+}
+
 void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)
 {
     // Check for valid position
@@ -868,6 +883,9 @@ void Map::Update(uint32 t_diff)
                 // update players at tick
                 player->Update(t_diff);
 
+                if (sWorld->getBoolConfig(CONFIG_ECS_EXPERIMENT))
+                    continue;
+
                 VisitNearbyCellsOf(player, grid_object_update, world_object_update);
 
                 // If player is using far sight or mind vision, visit that object too
@@ -925,8 +943,17 @@ void Map::Update(uint32 t_diff)
                 if (!obj || !obj->IsInWorld())
                     continue;
 
+                if (sWorld->getBoolConfig(CONFIG_ECS_EXPERIMENT))
+                    continue;
+
                 VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
             }
+        }
+
+        if (sWorld->getBoolConfig(CONFIG_ECS_EXPERIMENT))
+        {
+            ZoneScopedNC("EntityUpdates(ECS)", MAP_UPDATE_COLOR);
+            VisitAllCells(grid_object_update, world_object_update);
         }
     }
 

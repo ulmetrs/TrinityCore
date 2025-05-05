@@ -826,6 +826,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND]    = sConfigMgr->GetBoolDefault("AllowTwoSide.AddFriend", false);
     m_bool_configs[CONFIG_NAME_RESERVATION] = sConfigMgr->GetBoolDefault("NameReservation", false);
     m_bool_configs[CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS] = sConfigMgr->GetBoolDefault("DontCacheRandomMovementPaths", false);
+    m_bool_configs[CONFIG_ECS_EXPERIMENT] = sConfigMgr->GetBoolDefault("ECSExperiment", false);
     /** @epoch-end */
 
     m_int_configs[CONFIG_MIN_PLAYER_NAME]                     = sConfigMgr->GetIntDefault ("MinPlayerName",  2);

@@ -4499,6 +4499,15 @@ NameReservation = 0
 DontCacheRandomMovementPaths = 0
 
 #
+#
+#     ECSExperiment
+#       Description: Experiment using ECS instead of the current object system.
+#       Default:    0 - (Disabled)
+#                   1 - (Enabled)
+
+ECSExperiment = 0
+
+#
 ###################################################################################################
 
 ###################################################################################################
