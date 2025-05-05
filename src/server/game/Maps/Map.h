@@ -329,6 +329,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> bool AddToMap(T *);
         template<class T> void RemoveFromMap(T *, bool);
 
+        void VisitAllCells(TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
         void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
         virtual void Update(uint32);
 
