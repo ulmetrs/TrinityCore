@@ -736,6 +736,8 @@ private:
         // we can't store original aura link to prevent access to deleted auras
         // and in same time need aura data and after aura deleting.
         SpellInfo const* m_triggeredByAuraSpell;
+        bool m_triggeredByAuraIsPeriodic;
+        uint32 m_triggeredByAuraTotalTicks;
 
         uint8 m_auraScaleMask;
         std::unique_ptr<PathGenerator> m_preGeneratedPath;

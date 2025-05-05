@@ -975,7 +975,7 @@ class spell_warl_seed_of_corruption_dummy : public AuraScript
             return;
 
         // effect 1 scales with 14% of caster's SP (DBC data)
-        amount = caster->SpellDamageBonusDone(GetUnitOwner(), GetSpellInfo(), amount, SPELL_DIRECT_DAMAGE, aurEff->GetSpellEffectInfo(), GetAura()->GetDonePct());
+        amount = caster->SpellDamageBonusDone(GetUnitOwner(), GetSpellInfo(), amount, SPELL_DIRECT_DAMAGE, 1, aurEff->GetSpellEffectInfo(), GetAura()->GetDonePct());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
