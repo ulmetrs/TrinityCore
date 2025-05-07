@@ -29,7 +29,7 @@ class TC_GAME_API MapInstanced : public Map
     public:
         typedef std::unordered_map<uint32, Trinity::unique_trackable_ptr<Map>> InstancedMaps;
 
-        MapInstanced(uint32 id, time_t expiry);
+        MapInstanced(uint32 id);
         ~MapInstanced() { }
 
         // functions overwrite Map versions

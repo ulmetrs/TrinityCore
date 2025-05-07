@@ -229,7 +229,7 @@ void Transport::Update(uint32 diff)
               3. transport moves from active to inactive grid
               4. the grid that transport is currently in unloads
             */
-            bool gridActive = GetMap()->IsGridLoaded(GetPositionX(), GetPositionY());
+            bool gridActive = true;
 
             if (_staticPassengers.empty() && gridActive) // 2.
                 LoadStaticPassengers();
@@ -547,7 +547,7 @@ TempSummon* Transport::SummonPassenger(uint32 entry, Position const& pos, TempSu
 
 void GenericTransport::UpdatePosition(float x, float y, float z, float o)
 {
-    bool newActive = GetMap()->IsGridLoaded(x, y);
+    bool newActive = true;
     Cell oldCell(GetPositionX(), GetPositionY());
 
     Relocate(x, y, z, o);

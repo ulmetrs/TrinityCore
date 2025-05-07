@@ -293,11 +293,11 @@ inline bool CompareRespawnInfo::operator()(RespawnInfo const* a, RespawnInfo con
 extern template class TypeUnorderedMapContainer<AllMapStoredObjectTypes, ObjectGuid>;
 typedef TypeUnorderedMapContainer<AllMapStoredObjectTypes, ObjectGuid> MapStoredObjectTypesContainer;
 
-class TC_GAME_API Map : public GridRefManager<NGridType>
+class TC_GAME_API Map
 {
     friend class MapReference;
     public:
-        Map(uint32 id, time_t, uint32 InstanceId, uint8 SpawnMode, Map* _parent = nullptr);
+        Map(uint32 id, uint32 InstanceId, uint8 SpawnMode, Map* _parent = nullptr);
         virtual ~Map();
 
         MapEntry const* GetEntry() const { return i_mapEntry; }
@@ -329,8 +329,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> bool AddToMap(T *);
         template<class T> void RemoveFromMap(T *, bool);
 
-        void VisitAllCells(TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
-        void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
         virtual void Update(uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
@@ -342,42 +340,12 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation, bool respawnRelocationOnFail = true);
         void DynamicObjectRelocation(DynamicObject* go, float x, float y, float z, float orientation);
 
-        template<class T, class CONTAINER>
-        void Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor);
-
-        bool IsRemovalGrid(float x, float y) const
-        {
-            GridCoord p = Trinity::ComputeGridCoord(x, y);
-            return !getNGrid(p.x_coord, p.y_coord) || getNGrid(p.x_coord, p.y_coord)->GetGridState() == GRID_STATE_REMOVAL;
-        }
-        bool IsRemovalGrid(Position const& pos) const { return IsRemovalGrid(pos.GetPositionX(), pos.GetPositionY()); }
-
-        bool IsGridLoaded(uint32 gridId) const { return IsGridLoaded(GridCoord(gridId % MAX_NUMBER_OF_GRIDS, gridId / MAX_NUMBER_OF_GRIDS)); }
-        bool IsGridLoaded(float x, float y) const { return IsGridLoaded(Trinity::ComputeGridCoord(x, y)); }
-        bool IsGridLoaded(Position const& pos) const { return IsGridLoaded(pos.GetPositionX(), pos.GetPositionY()); }
-
-        bool GetUnloadLock(GridCoord const& p) const { return getNGrid(p.x_coord, p.y_coord)->getUnloadLock(); }
-        void SetUnloadLock(GridCoord const& p, bool on) { getNGrid(p.x_coord, p.y_coord)->setUnloadExplicitLock(on); }
-        void LoadGrid(float x, float y);
-        void LoadAllCells();
-        bool UnloadGrid(NGridType& ngrid, bool pForce);
-        void GridMarkNoUnload(uint32 x, uint32 y);
-        void GridUnmarkNoUnload(uint32 x, uint32 y);
         virtual void UnloadAll();
 
-        void ResetGridExpiry(NGridType &grid, float factor = 1) const
-        {
-            grid.ResetTimeTracker(time_t(float(i_gridExpiry)*factor));
-        }
-
-        time_t GetGridExpiry(void) const { return i_gridExpiry; }
         uint32 GetId() const;
 
         static bool ExistMap(uint32 mapid, int gx, int gy);
         static bool ExistVMap(uint32 mapid, int gx, int gy);
-
-        static void InitStateMachine();
-        static void DeleteStateMachine();
 
         Map const* GetParent() const { return m_parentMap; }
 
@@ -452,7 +420,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         bool GetEntrancePos(int32& mapid, float& x, float& y) const;
 
         void AddObjectToRemoveList(WorldObject* obj);
-        void AddObjectToSwitchList(WorldObject* obj, bool on);
         virtual void DelayedUpdate(uint32 diff);
 
         void resetMarkedCells() { marked_cells.reset(); }
@@ -461,7 +428,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
         uint32 GetPlayersCountExceptGMs() const;
-        bool ActiveObjectsNearGrid(NGridType const& ngrid) const;
 
         void AddWorldObject(WorldObject* obj) { i_worldObjects.insert(obj); }
         void RemoveWorldObject(WorldObject* obj) { i_worldObjects.erase(obj); }
@@ -482,7 +448,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         // must called with RemoveFromWorld
         void RemoveFromActive(WorldObject* obj);
 
-        template<class T> void SwitchGridContainers(T* obj, bool on);
         std::unordered_map<ObjectGuid::LowType /*leaderSpawnId*/, CreatureGroup*> CreatureGroupHolder;
 
         void UpdateIteratorBack(Player* player);
@@ -648,13 +613,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         virtual std::string GetDebugInfo() const;
 
     private:
-        void LoadMapAndVMap(int gx, int gy);
-        void LoadVMap(int gx, int gy);
-        void LoadMap(int gx, int gy, bool reload = false);
+        void LoadMapData(int gx, int gy);
         void LoadMMap(int gx, int gy);
+        void LoadVMap(int gx, int gy);
+        void LoadMap(int gx, int gy);
         GridMap* GetGrid(float x, float y);
-
-        void SetTimer(uint32 t) { i_gridExpiry = t < MIN_GRID_DELAY ? MIN_GRID_DELAY : t; }
 
         void SendInitSelf(Player* player);
 
@@ -679,21 +642,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         bool _dynamicObjectsToMoveLock;
         std::vector<DynamicObject*> _dynamicObjectsToMove;
 
-        bool IsGridLoaded(GridCoord const&) const;
-        void EnsureGridCreated(GridCoord const&);
-        void EnsureGridCreated_i(GridCoord const&);
-        bool EnsureGridLoaded(Cell const&);
-        void EnsureGridLoadedForActiveObject(Cell const&, WorldObject* object);
-
         void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
 
-        NGridType* getNGrid(uint32 x, uint32 y) const
-        {
-            ASSERT(x < MAX_NUMBER_OF_GRIDS && y < MAX_NUMBER_OF_GRIDS, "x = %u, y = %u", x, y);
-            return i_grids[x][y];
-        }
-
-        void setNGrid(NGridType* grid, uint32 x, uint32 y);
         void ScriptsProcess();
 
         void SendObjectUpdates();
@@ -815,10 +765,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void AddFarSpellCallback(FarSpellCallback&& callback);
 
     private:
-        // Type specific code for add/remove to/from grid
-        template<class T>
-        void AddToGrid(T* object, Cell const& cell);
-
         template<class T>
         void DeleteFromWorld(T*);
 
@@ -947,7 +893,7 @@ class TC_GAME_API InstanceMap : public Map
 class TC_GAME_API BattlegroundMap : public Map
 {
     public:
-        BattlegroundMap(uint32 id, time_t, uint32 InstanceId, Map* _parent, uint8 spawnMode);
+        BattlegroundMap(uint32 id, uint32 InstanceId, Map* _parent, uint8 spawnMode);
         ~BattlegroundMap();
 
         bool AddPlayerToMap(Player*) override;
@@ -963,20 +909,4 @@ class TC_GAME_API BattlegroundMap : public Map
     private:
         Battleground* m_bg;
 };
-
-template<class T, class CONTAINER>
-inline void Map::Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor)
-{
-    const uint32 x = cell.GridX();
-    const uint32 y = cell.GridY();
-    const uint32 cell_x = cell.CellX();
-    const uint32 cell_y = cell.CellY();
-
-    if (!cell.NoCreate())
-        EnsureGridLoaded(cell);
-
-    NGridType* grid = getNGrid(x, y);
-    if (grid && grid->isGridObjectDataLoaded())
-        grid->VisitGrid(cell_x, cell_y, visitor);
-}
 #endif

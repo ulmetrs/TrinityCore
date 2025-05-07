@@ -60,11 +60,11 @@ typedef TYPELIST_4(Player, Creature/*pets*/, Corpse/*resurrectable*/, DynamicObj
 typedef TYPELIST_4(GameObject, Creature/*except pets*/, DynamicObject, Corpse/*Bones*/) AllGridObjectTypes;
 typedef TYPELIST_5(Creature, GameObject, DynamicObject, Pet, Corpse) AllMapStoredObjectTypes;
 
-typedef GridRefManager<Corpse>          CorpseMapType;
-typedef GridRefManager<Creature>        CreatureMapType;
-typedef GridRefManager<DynamicObject>   DynamicObjectMapType;
-typedef GridRefManager<GameObject>      GameObjectMapType;
-typedef GridRefManager<Player>          PlayerMapType;
+// typedef GridRefManager<Corpse>          CorpseMapType;
+// typedef GridRefManager<Creature>        CreatureMapType;
+// typedef GridRefManager<DynamicObject>   DynamicObjectMapType;
+// typedef GridRefManager<GameObject>      GameObjectMapType;
+// typedef GridRefManager<Player>          PlayerMapType;
 
 enum GridMapTypeMask
 {
@@ -76,17 +76,17 @@ enum GridMapTypeMask
     GRID_MAP_TYPE_MASK_ALL              = 0x1F
 };
 
-extern template class Grid<Player, AllWorldObjectTypes, AllGridObjectTypes>;
-extern template class NGrid<MAX_NUMBER_OF_CELLS, Player, AllWorldObjectTypes, AllGridObjectTypes>;
+// extern template class Grid<Player, AllWorldObjectTypes, AllGridObjectTypes>;
+// extern template class NGrid<MAX_NUMBER_OF_CELLS, Player, AllWorldObjectTypes, AllGridObjectTypes>;
 
-extern template class TypeMapContainer<AllGridObjectTypes>;
-extern template class TypeMapContainer<AllWorldObjectTypes>;
+// extern template class TypeMapContainer<AllGridObjectTypes>;
+// extern template class TypeMapContainer<AllWorldObjectTypes>;
 
-typedef Grid<Player, AllWorldObjectTypes, AllGridObjectTypes> GridType;
-typedef NGrid<MAX_NUMBER_OF_CELLS, Player, AllWorldObjectTypes, AllGridObjectTypes> NGridType;
+// typedef Grid<Player, AllWorldObjectTypes, AllGridObjectTypes> GridType;
+// typedef NGrid<MAX_NUMBER_OF_CELLS, Player, AllWorldObjectTypes, AllGridObjectTypes> NGridType;
 
-typedef TypeMapContainer<AllGridObjectTypes> GridTypeMapContainer;
-typedef TypeMapContainer<AllWorldObjectTypes> WorldTypeMapContainer;
+// typedef TypeMapContainer<AllGridObjectTypes> GridTypeMapContainer;
+// typedef TypeMapContainer<AllWorldObjectTypes> WorldTypeMapContainer;
 
 template<uint32 LIMIT>
 struct CoordPair

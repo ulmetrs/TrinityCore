@@ -48,8 +48,6 @@ MapManager::~MapManager() { }
 
 void MapManager::Initialize()
 {
-    Map::InitStateMachine();
-
     int num_threads(sWorld->getIntConfig(CONFIG_NUMTHREADS));
     // Start mtmaps if needed.
     if (num_threads > 0)
@@ -279,8 +277,6 @@ void MapManager::UnloadAll()
 
     if (m_updater.activated())
         m_updater.deactivate();
-
-    Map::DeleteStateMachine();
 }
 
 uint32 MapManager::GetNumInstances()

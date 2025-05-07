@@ -960,7 +960,7 @@ void MovementInfo::OutDebug()
 }
 
 WorldObject::WorldObject(bool isWorldObject) : Object(), WorldLocation(), LastUsedScriptID(0),
-m_movementInfo(), m_name(), m_isActive(false), m_isFarVisible(false), m_isStoredInWorldObjectGridContainer(isWorldObject), m_zoneScript(nullptr),
+m_movementInfo(), m_name(), m_isActive(false), m_isFarVisible(false), m_zoneScript(nullptr),
 m_transport(nullptr), m_zoneId(0), m_areaId(0), m_staticFloorZ(VMAP_INVALID_HEIGHT), m_outdoors(false), m_liquidStatus(LIQUID_MAP_NO_WATER),
 m_currMap(nullptr), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL), m_notifyflags(0)
 {
@@ -971,7 +971,7 @@ m_currMap(nullptr), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL), m_notifyflag
 WorldObject::~WorldObject()
 {
     // this may happen because there are many !create/delete
-    if (IsStoredInWorldObjectGridContainer() && m_currMap)
+    if (m_currMap)
     {
         if (GetTypeId() == TYPEID_CORPSE)
         {
@@ -981,25 +981,6 @@ WorldObject::~WorldObject()
         }
         ResetMap();
     }
-}
-
-void WorldObject::SetIsStoredInWorldObjectGridContainer(bool on)
-{
-    if (!IsInWorld())
-        return;
-
-    GetMap()->AddObjectToSwitchList(this, on);
-}
-
-bool WorldObject::IsStoredInWorldObjectGridContainer() const
-{
-    if (m_isStoredInWorldObjectGridContainer)
-        return true;
-
-    if (ToCreature() && ToCreature()->m_isTempWorldObject)
-        return true;
-
-    return false;
 }
 
 void WorldObject::setActive(bool on)
@@ -1911,16 +1892,12 @@ void WorldObject::SetMap(Map* map)
     m_currMap = map;
     m_mapId = map->GetId();
     m_InstanceId = map->GetInstanceId();
-    if (IsStoredInWorldObjectGridContainer())
-        m_currMap->AddWorldObject(this);
 }
 
 void WorldObject::ResetMap()
 {
     ASSERT(m_currMap);
     ASSERT(!IsInWorld());
-    if (IsStoredInWorldObjectGridContainer())
-        m_currMap->RemoveWorldObject(this);
     m_currMap = nullptr;
     //maybe not for corpse
     //m_mapId = 0;

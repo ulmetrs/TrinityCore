@@ -81,7 +81,6 @@ class TC_GAME_API MapManager
             i_timer.Reset();
         }
 
-        //void LoadGrid(int mapid, int instId, float x, float y, WorldObject const* obj, bool no_unload = false);
         void UnloadAll();
 
         static bool ExistMapAndVMap(uint32 mapid, float x, float y);

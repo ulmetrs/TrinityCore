@@ -550,9 +550,6 @@ struct npc_crok_scourgebane : public EscortAI
             _isEventActive = true;
             _isEventDone = true;
 
-            // Load Grid with Sister Svalna
-            me->GetMap()->LoadGrid(4356.71f, 2484.33f);
-
             if (Creature* svalna = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_SISTER_SVALNA)))
                 svalna->AI()->DoAction(ACTION_START_GAUNTLET);
 
