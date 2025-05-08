@@ -1,0 +1,1 @@
+INSERT INTO spell_script_names (spell_id,ScriptName) VALUES (13006,'spell_item_gnomish_shrink_ray');

@@ -1,0 +1,1 @@
+ALTER TABLE spell_custom_attr ADD COLUMN attributes1 int(10) unsigned NOT NULL DEFAULT 0;
