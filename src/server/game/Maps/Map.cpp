@@ -19,6 +19,7 @@
 #include "Battleground.h"
 #include "CellImpl.h"
 #include "Chat.h"
+#include "CreatureGroups.h"
 #include "DatabaseEnv.h"
 #include "DisableMgr.h"
 #include "DynamicTree.h"
