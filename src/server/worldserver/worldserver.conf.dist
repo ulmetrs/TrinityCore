@@ -515,6 +515,13 @@ CleanCharacterDB = 0
 PersistentCharacterCleanFlags = 0
 
 #
+#    Auction.WorkerThreads
+#        Description: Count of auction house worker threads to spawn
+#        Default:     1
+
+Auction.WorkerThreads = 1
+
+#
 #    Auction.GetAllScanDelay
 #        Description: Sets the minimum time in seconds, a single player character can perform a GetAll scan.
 #                     The value is only held in memory so a server restart will clear it.

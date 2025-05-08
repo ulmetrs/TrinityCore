@@ -490,8 +490,9 @@ void AuctionHouseBot::PrepareStatusInfos(std::unordered_map<AuctionHouseType, Au
         for (AuctionQuality quality : EnumUtils::Iterate<AuctionQuality>())
             statusInfo[ahType].QualityInfo[quality] = 0;
 
-        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(ahType);
-        for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+        uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
+        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
+        for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
             AuctionEntry* auctionEntry = itr->second;
             if (Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow))
@@ -511,10 +512,11 @@ void AuctionHouseBot::PrepareStatusInfos(std::unordered_map<AuctionHouseType, Au
 
 void AuctionHouseBot::Rebuild(bool all)
 {
-    for (uint32 i = 0; i < MAX_AUCTION_HOUSE_TYPE; ++i)
+    for (AuctionHouseType ahType : EnumUtils::Iterate<AuctionHouseType>())
     {
-        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(AuctionHouseType(i));
-        for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+        uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
+        AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
+        for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
             if (!itr->second->owner || sAuctionBotConfig->IsBotChar(itr->second->owner)) // ahbot auction
                 if (all || itr->second->bid == 0)           // expire now auction if no bid or forced
                     itr->second->expire_time = GameTime::GetGameTime();
