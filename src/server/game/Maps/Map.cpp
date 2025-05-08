@@ -958,7 +958,8 @@ void Map::Update(uint32 t_diff)
                         itr->first->Update(t_diff);
                     }
                 }
-                else
+                // Don't update formation members, they are updated by the leader
+                else if (!creature->GetFormation())
                 {
                     creature->Update(t_diff);
                 }
