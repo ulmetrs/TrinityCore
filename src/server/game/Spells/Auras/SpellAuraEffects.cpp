@@ -4839,6 +4839,15 @@ void AuraEffect::HandleForceReaction(AuraApplication const* aurApp, uint8 mode, 
     ReputationRank factionRank = ReputationRank(GetAmount());
 
     player->GetReputationMgr().ApplyForceReaction(factionId, factionRank, apply);
+
+    // If factionId is a parent faction, add/remove child factions as well
+    SimpleFactionsList const* flist = GetFactionTeamList(factionId);
+    if (flist)
+    {
+        for (SimpleFactionsList::const_iterator itr = flist->begin(); itr != flist->end(); ++itr)
+            player->GetReputationMgr().ApplyForceReaction(*itr, factionRank, apply);
+    }
+
     player->GetReputationMgr().SendForceReactions();
 
     // stop fighting at apply (if forced rank friendly) or at remove (if real rank friendly)

@@ -526,8 +526,10 @@ uint32 AuctionBotSeller::SetStat(SellerConfiguration& config)
 {
     AllItemsArray itemsSaved(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
 
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(config.GetHouseType());
-    for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+    int ahType = config.GetHouseType();
+    uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
+    for (AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
     {
         AuctionEntry* auctionEntry = itr->second;
         Item* item = sAuctionMgr->GetAItem(auctionEntry->itemGUIDLow);
@@ -832,23 +834,9 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
     else
         items = sAuctionBotConfig->GetItemPerCycleNormal();
 
-    uint32 houseid = 0;
-    switch (config.GetHouseType())
-    {
-        case AUCTION_HOUSE_ALLIANCE:
-            houseid = AUCTIONHOUSE_ALLIANCE;
-            break;
-        case AUCTION_HOUSE_HORDE:
-            houseid = AUCTIONHOUSE_HORDE;
-            break;
-        default:
-            houseid = AUCTIONHOUSE_NEUTRAL;
-            break;
-    }
-
+    int ahType = config.GetHouseType();
+    uint8 houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AUCTIONHOUSE_ALLIANCE : ahType == AUCTION_HOUSE_HORDE ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
     AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(houseid);
-
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(config.GetHouseType());
 
     ItemsToSellArray itemsToSell;
     AllItemsArray allItems(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));
@@ -932,10 +920,8 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
 
         item->SaveToDB(trans);
         sAuctionMgr->AddAItem(item);
-        auctionHouse->AddAuction(auctionEntry);
+        sAuctionMgr->AddAuction(auctionEntry);
         auctionEntry->SaveToDB(trans);
-
-        auctionHouse->AddAuction(auctionEntry);
 
         ++count;
     }
