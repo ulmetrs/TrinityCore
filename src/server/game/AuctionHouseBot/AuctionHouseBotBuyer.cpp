@@ -101,8 +101,10 @@ uint32 AuctionBotBuyer::GetItemInformation(BuyerConfiguration& config)
     time_t now = GameTime::GetGameTime();
     uint32 count = 0;
 
-    AuctionHouseObject* house = sAuctionMgr->GetAuctionsMap(config.GetHouseType());
-    for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = house->GetAuctionsBegin(); itr != house->GetAuctionsEnd(); ++itr)
+    int ahType = config.GetHouseType();
+    uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
+    AuctionHouseObject* house = sAuctionMgr->GetAuctionHouse(houseId);
+    for (AuctionEntryMap::const_iterator itr = house->GetAuctionsBegin(); itr != house->GetAuctionsEnd(); ++itr)
     {
         AuctionEntry* entry = itr->second;
 
@@ -255,7 +257,9 @@ void AuctionBotBuyer::PrepareListOfEntry(BuyerConfiguration& config)
 void AuctionBotBuyer::BuyAndBidItems(BuyerConfiguration& config)
 {
     time_t now = GameTime::GetGameTime();
-    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionsMap(config.GetHouseType());
+    int ahType = config.GetHouseType();
+    uint8 houseId = (ahType == AUCTION_HOUSE_ALLIANCE) ? AUCTIONHOUSE_ALLIANCE : (ahType == AUCTION_HOUSE_HORDE) ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
+    AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouse(houseId);
     CheckEntryMap& items = config.EligibleItems;
 
     // Max amount of items to buy or bid
@@ -411,7 +415,7 @@ void AuctionBotBuyer::BuyEntry(AuctionEntry* auction, AuctionHouseObject* auctio
 
     // Remove auction item and auction from memory
     sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
-    auctionHouse->RemoveAuction(auction);
+    sAuctionMgr->RemoveAuction(auction);
 
     // Run SQLs
     CharacterDatabase.CommitTransaction(trans);
