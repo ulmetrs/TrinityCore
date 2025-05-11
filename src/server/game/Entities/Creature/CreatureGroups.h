@@ -77,12 +77,16 @@ class TC_GAME_API CreatureGroup
         bool _engaging;
 
     public:
+        typedef std::unordered_map<Creature*, FormationInfo*> FormationMap;
+
         //Group cannot be created empty
         explicit CreatureGroup(ObjectGuid::LowType leaderSpawnId);
         ~CreatureGroup();
 
         Creature* GetLeader() const { return _leader; }
         ObjectGuid::LowType GetLeaderSpawnId() const { return _leaderSpawnId; }
+        FormationMap::iterator GetMembersBegin() { return _members.begin(); }
+        FormationMap::iterator GetMembersEnd() { return _members.end(); }
         bool IsEmpty() const { return _members.empty(); }
         bool IsFormed() const { return _formed; }
         bool IsLeader(Creature const* creature) const { return _leader == creature; }

@@ -19,6 +19,7 @@
 #include "Battleground.h"
 #include "CellImpl.h"
 #include "Chat.h"
+#include "CreatureGroups.h"
 #include "DatabaseEnv.h"
 #include "DisableMgr.h"
 #include "DynamicTree.h"
@@ -283,7 +284,7 @@ _creatureToMoveLock(false), _gameObjectsToMoveLock(false), _dynamicObjectsToMove
 i_mapEntry(sMapStore.LookupEntry(id)), i_spawnMode(SpawnMode), i_InstanceId(InstanceId),
 m_unloadTimer(0), m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
 m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
-m_activeNonPlayersIter(m_activeNonPlayers.end()), _transportsUpdateIter(_transports.end()),
+m_activeNonPlayersIter(m_activeNonPlayers.end()), m_waypointCreaturesIter(m_waypointCreatures.end()), _transportsUpdateIter(_transports.end()),
 i_gridExpiry(expiry),
 i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _respawnCheckTimer(0)
 {
@@ -686,6 +687,9 @@ bool Map::AddToMap(T* obj)
     if (obj->isActiveObject())
         AddToActive(obj);
 
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
+        AddToWaypointCreatures(obj->ToCreature());
+
     //something, such as vehicle, needs to be update immediately
     //also, trigger needs to cast spell, if not update, cannot see visual
     obj->SetIsNewObject(true);
@@ -853,7 +857,7 @@ void Map::Update(uint32 t_diff)
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
     {
-            ZoneScopedNC("EntityUpdates", MAP_UPDATE_COLOR);
+        ZoneScopedNC("EntityUpdates", MAP_UPDATE_COLOR);
         {
             ZoneScopedNC("EntityUpdates(Source:Players)", MAP_UPDATE_COLOR);
             // the player iterator is stored in the map object
@@ -926,6 +930,39 @@ void Map::Update(uint32 t_diff)
                     continue;
 
                 VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
+            }
+        }
+
+        if (sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
+        {
+            ZoneScopedNC("EntityUpdates(Source:Waypoint Creatures)", MAP_UPDATE_COLOR);
+            // waypoint creatures, increasing iterator in the loop in case of object removal
+            for (m_waypointCreaturesIter = m_waypointCreatures.begin(); m_waypointCreaturesIter != m_waypointCreatures.end();)
+            {
+                Creature* creature = *m_waypointCreaturesIter;
+                ++m_waypointCreaturesIter;
+
+                if (!creature || !creature->IsInWorld() || !creature->IsPositionValid())
+                    continue;
+
+                CellCoord cellCoord = Trinity::ComputeCellCoord(creature->GetPositionX(), creature->GetPositionY());
+                // The waypoint creature has already ticked its update from the above if the cell its in is marked
+                if (isCellMarked(cellCoord.GetId()))
+                    continue;
+
+                // Manually update the creature and its formation members
+                if (creature->IsFormationLeader())
+                {
+                    for (auto itr = creature->GetFormation()->GetMembersBegin(); itr != creature->GetFormation()->GetMembersEnd(); ++itr)
+                    {
+                        itr->first->Update(t_diff);
+                    }
+                }
+                // Don't update formation members, they are updated by the leader
+                else if (!creature->GetFormation())
+                {
+                    creature->Update(t_diff);
+                }
             }
         }
     }
@@ -1125,6 +1162,9 @@ void Map::RemoveFromMap(T *obj, bool remove)
 
     if (obj->isActiveObject())
         RemoveFromActive(obj);
+
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
+        RemoveFromWaypointCreatures(obj->ToCreature());
 
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
@@ -1540,6 +1580,9 @@ bool Map::CreatureCellRelocation(Creature* c, Cell new_cell)
 
         return true;
     }
+
+    if (c->GetWaypointPath() != 0 && sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
+        EnsureGridLoaded(new_cell);
 
     if (c->GetCharmerOrOwnerGUID().IsPlayer())
         EnsureGridLoaded(new_cell);

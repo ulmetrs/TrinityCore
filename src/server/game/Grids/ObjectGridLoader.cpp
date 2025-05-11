@@ -93,6 +93,8 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
     obj->AddToWorld();
     if (obj->isActiveObject())
         map->AddToActive(obj);
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
+        map->AddToWaypointCreatures(obj->ToCreature());
 
     ++count;
 }
