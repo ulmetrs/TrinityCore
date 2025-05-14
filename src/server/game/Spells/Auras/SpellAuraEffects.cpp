@@ -34,6 +34,7 @@
 #include "Player.h"
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
+#include "SharedDefines.h"
 #include "Spell.h"
 #include "SpellHistory.h"
 #include "SpellMgr.h"
@@ -1570,7 +1571,11 @@ void AuraEffect::HandleSpiritOfRedemption(AuraApplication const* aurApp, uint8 m
         }
 
         target->SetHealth(1);
-        target->SetImmuneToAll(true, true);
+        // Copied from sanctuary to fix in flight spells stun/sleep/killing priest
+        target->InterruptSpellsCastedOnMe(true);
+        target->InterruptAttacksOnMe(0.0f);
+        // makes spells cast before this time fizzle
+        target->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
     }
     // die at aura end
     else if (target->IsAlive())
