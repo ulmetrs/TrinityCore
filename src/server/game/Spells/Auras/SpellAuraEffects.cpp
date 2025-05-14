@@ -34,7 +34,6 @@
 #include "Player.h"
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
-#include "SharedDefines.h"
 #include "Spell.h"
 #include "SpellHistory.h"
 #include "SpellMgr.h"
