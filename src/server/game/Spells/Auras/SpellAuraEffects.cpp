@@ -1570,6 +1570,7 @@ void AuraEffect::HandleSpiritOfRedemption(AuraApplication const* aurApp, uint8 m
         }
 
         target->SetHealth(1);
+        target->SetImmuneToAll(true, true);
     }
     // die at aura end
     else if (target->IsAlive())
