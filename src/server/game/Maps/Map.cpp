@@ -1582,7 +1582,7 @@ bool Map::CreatureCellRelocation(Creature* c, Cell new_cell)
         return true;
     }
 
-    if (c->IsWaypointAlwaysUpdate())
+    if (c->GetWaypointPath() != 0 && sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
         EnsureGridLoaded(new_cell);
 
     if (c->GetCharmerOrOwnerGUID().IsPlayer())
