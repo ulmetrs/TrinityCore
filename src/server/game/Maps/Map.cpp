@@ -687,7 +687,7 @@ bool Map::AddToMap(T* obj)
     if (obj->isActiveObject())
         AddToActive(obj);
 
-    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0 && sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         AddToWaypointCreatures(obj->ToCreature());
 
     //something, such as vehicle, needs to be update immediately
@@ -933,6 +933,7 @@ void Map::Update(uint32 t_diff)
             }
         }
 
+        if (sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
         {
             ZoneScopedNC("EntityUpdates(Source:Waypoint Creatures)", MAP_UPDATE_COLOR);
             // waypoint creatures, increasing iterator in the loop in case of object removal
@@ -1163,7 +1164,7 @@ void Map::RemoveFromMap(T *obj, bool remove)
     if (obj->isActiveObject())
         RemoveFromActive(obj);
 
-    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0 && sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         RemoveFromWaypointCreatures(obj->ToCreature());
 
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
