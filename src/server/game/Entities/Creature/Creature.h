@@ -328,6 +328,8 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         uint32 GetWaypointPath() const { return _waypointPathId; }
         void LoadPath(uint32 pathid) { _waypointPathId = pathid; }
+        bool IsWaypointAlwaysUpdate() const { return _waypointAlwaysUpdate; }
+        void SetWaypointAlwaysUpdate(bool update) { _waypointAlwaysUpdate = update; }
 
         // nodeId, pathId
         std::pair<uint32, uint32> GetCurrentWaypointInfo() const { return _currentWaypointNodeInfo; }
@@ -482,6 +484,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         // Waypoint path
         uint32 _waypointPathId;
+        bool _waypointAlwaysUpdate;
         std::pair<uint32/*nodeId*/, uint32/*pathId*/> _currentWaypointNodeInfo;
 
         // Formation var
