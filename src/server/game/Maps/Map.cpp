@@ -687,7 +687,7 @@ bool Map::AddToMap(T* obj)
     if (obj->isActiveObject())
         AddToActive(obj);
 
-    if (obj->IsCreature() && obj->ToCreature()->IsWaypointAlwaysUpdate())
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0 && sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
         AddToWaypointCreatures(obj->ToCreature());
 
     //something, such as vehicle, needs to be update immediately
@@ -949,7 +949,20 @@ void Map::Update(uint32 t_diff)
                 if (isCellMarked(cellCoord.GetId()))
                     continue;
 
-                creature->Update(t_diff);
+                // Manually update the creature and its formation members
+                if (creature->IsFormationLeader())
+                {
+                    for (auto itr = creature->GetFormation()->GetMembersBegin(); itr != creature->GetFormation()->GetMembersEnd(); ++itr)
+                    {
+                        if (itr->first)
+                            itr->first->Update(t_diff);
+                    }
+                }
+                // Don't update formation members, they are updated by the leader
+                else if (!creature->GetFormation())
+                {
+                    creature->Update(t_diff);
+                }
             }
         }
     }
@@ -1150,7 +1163,7 @@ void Map::RemoveFromMap(T *obj, bool remove)
     if (obj->isActiveObject())
         RemoveFromActive(obj);
 
-    if (obj->IsCreature() && obj->ToCreature()->IsWaypointAlwaysUpdate())
+    if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0 && sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
         RemoveFromWaypointCreatures(obj->ToCreature());
 
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
