@@ -951,16 +951,24 @@ void Map::Update(uint32 t_diff)
                     continue;
 
                 // Manually update the creature and its formation members
-                if (creature->IsFormationLeader())
+                auto formation = creature->GetFormation();
+                if (formation && creature->IsFormationLeader())
                 {
-                    for (auto itr = creature->GetFormation()->GetMembersBegin(); itr != creature->GetFormation()->GetMembersEnd(); ++itr)
+                    // Copy the members to handle both members removing themselves from the formation,
+                    // and removing others from the formation
+                    std::vector<Creature*> members;
+                    for (auto itr = formation->GetMembersBegin(); itr != formation->GetMembersEnd(); ++itr)
                     {
                         if (itr->first)
-                            itr->first->Update(t_diff);
+                            members.push_back(itr->first);
                     }
+                    // Update all members this tick, even if they are removed from the formation during the tick
+                    for (Creature* member : members)
+                        member->Update(t_diff);
                 }
-                // Don't update formation members, they are updated by the leader
-                else if (!creature->GetFormation())
+                // Don't update members of formations individually, do it via the leader above
+                // Update the creature if it is not in a formation
+                else if (!formation)
                 {
                     creature->Update(t_diff);
                 }
