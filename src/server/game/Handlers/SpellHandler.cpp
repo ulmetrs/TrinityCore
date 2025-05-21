@@ -503,7 +503,7 @@ void WorldSession::HandleCancelCastOpcode(WorldPackets::Spells::CancelCast& canc
         _player->InterruptNonMeleeSpells(false, cancelCast.SpellID, false);
 
     /** @epoch-start */
-    if (_player->IsNextSwingSpellCasted())
+    if (_player->GetCurrentSpell(CURRENT_MELEE_SPELL))
         _player->InterruptSpell(CURRENT_MELEE_SPELL);
     /** @epoch-end */
 }

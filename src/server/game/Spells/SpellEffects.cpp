@@ -3245,9 +3245,9 @@ void Spell::EffectWeaponDmg()
             //     if (Aura* aur = unitTarget->GetAura(58567, unitCaster->GetGUID()))
             //         fixed_bonus += (aur->GetStackAmount() - 1) * CalculateDamage(m_spellInfo->GetEffect(EFFECT_2)); // subtract 1 so fixed bonus is not applied twice
             // }
+            /** @epoch-end */
             if (m_spellInfo->SpellFamilyFlags[0] & 0x8000000) // Mocking Blow
             {
-            /** @epoch-end */
                 if (unitTarget->IsImmunedToSpellEffect(m_spellInfo, m_spellInfo->GetEffect(EFFECT_1), unitCaster) || unitTarget->GetTypeId() == TYPEID_PLAYER)
                 {
                     m_damage = 0;
@@ -3488,11 +3488,16 @@ void Spell::EffectWeaponDmg()
     // prevent negative damage
     weaponDamage = std::max(weaponDamage, 0);
 
-    // Add melee damage bonuses (also check for negative)
     /** @epoch-start */
-    weaponDamage = unitCaster->MeleeDamageBonusDone(unitTarget, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
-    m_damage += unitTarget->MeleeDamageBonusTaken(unitCaster, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
+    // Physical bonuses are built in to the weaponDamage, if this spell is not a physical spell, apply the spell bonuses (e.g. Seal of Command)
+    if (!(m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
+    {
+        weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, m_spellSchoolMask, uint32(weaponDamage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
+        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, m_spellSchoolMask, uint32(weaponDamage), SPELL_DIRECT_DAMAGE);
+    }
     /** @epoch-end */
+
+    m_damage += std::max(weaponDamage, 0);
 }
 
 void Spell::EffectThreat()

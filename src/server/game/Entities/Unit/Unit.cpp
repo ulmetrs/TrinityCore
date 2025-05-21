@@ -1186,7 +1186,7 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage const* damageInfo, bool durabilit
     Unit::DealDamage(this, victim, damageInfo->damage, &cleanDamage, SPELL_DIRECT_DAMAGE, SpellSchoolMask(damageInfo->schoolMask), spellProto, durabilityLoss);
 }
 
-/// @todo for melee need create structure as in
+// Builds CalcDamageInfo for melee auto attack
 void Unit::CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, WeaponAttackType attackType)
 {
     damageInfo->Attacker         = this;
@@ -1256,11 +1256,13 @@ void Unit::CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, Weapon
             continue;
 
         SpellSchoolMask schoolMask = SpellSchoolMask(damageInfo->Damages[i].DamageSchoolMask);
+
         bool const addPctMods = (schoolMask & SPELL_SCHOOL_MASK_NORMAL);
 
-        uint32 damage = 0;
         uint8 itemDamagesMask = (GetTypeId() == TYPEID_PLAYER) ? (1 << i) : 0;
-        damage += CalculateDamage(damageInfo->AttackType, false, addPctMods, itemDamagesMask);
+
+        uint32 damage = CalculateDamage(damageInfo->AttackType, false, addPctMods, itemDamagesMask);
+
         // Add melee damage bonus
         damage = MeleeDamageBonusDone(damageInfo->Target, damage, damageInfo->AttackType, nullptr, schoolMask);
         damage = damageInfo->Target->MeleeDamageBonusTaken(this, damage, damageInfo->AttackType, nullptr, schoolMask);
@@ -2179,6 +2181,7 @@ void Unit::HandleEmoteCommand(Emote emoteId)
         healInfo.AbsorbHeal(absorbAmount);
 }
 
+// Attempts to perform a melee auto attack on the given victim
 void Unit::AttackerStateUpdate(Unit* victim, WeaponAttackType attType, bool extra)
 {
     if (HasUnitFlag(UNIT_FLAG_PACIFIED))
@@ -2202,39 +2205,43 @@ void Unit::AttackerStateUpdate(Unit* victim, WeaponAttackType attType, bool extr
     if (!extra && _lastExtraAttackSpell)
         _lastExtraAttackSpell = 0;
 
-    // melee attack spell cast at main hand attack only - no normal melee dmg dealt
+    // attempt to cast when CURRENT_MELEE_SPELL is set, if unsuccessful continue with auto attack
     if (attType == BASE_ATTACK && m_currentSpells[CURRENT_MELEE_SPELL] && !extra)
     {
-        m_currentSpells[CURRENT_MELEE_SPELL]->cast();
         Spell* spell = m_currentSpells[CURRENT_MELEE_SPELL];
-        if (!spell || !spell->m_spellInfo->IsNextMeleeSwingSpell() || spell->isSuccessCast())
+        spell->cast();
+        if (spell->isSuccessCast())
             return;
     }
 
-        // attack can be redirected to another target
-        victim = GetMeleeHitRedirectTarget(victim);
+    // attack can be redirected to another target
+    victim = GetMeleeHitRedirectTarget(victim);
 
-        CalcDamageInfo damageInfo;
-        CalculateMeleeDamage(victim, &damageInfo, attType);
-        // Send log damage message to client
+    // This is the struct we build out for the client to update the attack state
+    CalcDamageInfo damageInfo;
+    // Build out the struct with all the damage info
+    CalculateMeleeDamage(victim, &damageInfo, attType);
 
-        for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
-            Unit::DealDamageMods(victim, damageInfo.Damages[i].Damage, &damageInfo.Damages[i].Absorb);
-        SendAttackStateUpdate(&damageInfo);
+    // Last step to negate damage for no victim, dead victim, in flight, or evading - adds to absorb totals
+    for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
+        Unit::DealDamageMods(victim, damageInfo.Damages[i].Damage, &damageInfo.Damages[i].Absorb);
 
-        _lastDamagedTargetGuid = victim->GetGUID();
+    SendAttackStateUpdate(&damageInfo);
 
-        DealMeleeDamage(&damageInfo, true);
+    _lastDamagedTargetGuid = victim->GetGUID();
 
-        DamageInfo dmgInfo(damageInfo);
-        Unit::ProcSkillsAndAuras(damageInfo.Attacker, damageInfo.Target, damageInfo.ProcAttacker, damageInfo.ProcVictim, PROC_SPELL_TYPE_NONE, PROC_SPELL_PHASE_NONE, dmgInfo.GetHitMask(), nullptr, &dmgInfo, nullptr);
+    // Apply the damage
+    DealMeleeDamage(&damageInfo, true);
 
-        if (GetTypeId() == TYPEID_PLAYER)
-            TC_LOG_DEBUG("entities.unit", "AttackerStateUpdate: (Player) {} attacked {} for {} dmg, absorbed {}, blocked {}, resisted {}.",
-                GetGUID().ToString(), victim->GetGUID().ToString(), dmgInfo.GetDamage(), dmgInfo.GetAbsorb(), dmgInfo.GetBlock(), dmgInfo.GetResist());
-        else
-            TC_LOG_DEBUG("entities.unit", "AttackerStateUpdate: (NPC)    {} attacked {} for {} dmg, absorbed {}, blocked {}, resisted {}.",
-                GetGUID().ToString(), victim->GetGUID().ToString(), dmgInfo.GetDamage(), dmgInfo.GetAbsorb(), dmgInfo.GetBlock(), dmgInfo.GetResist());
+    DamageInfo dmgInfo(damageInfo);
+    Unit::ProcSkillsAndAuras(damageInfo.Attacker, damageInfo.Target, damageInfo.ProcAttacker, damageInfo.ProcVictim, PROC_SPELL_TYPE_NONE, PROC_SPELL_PHASE_NONE, dmgInfo.GetHitMask(), nullptr, &dmgInfo, nullptr);
+
+    if (GetTypeId() == TYPEID_PLAYER)
+        TC_LOG_DEBUG("entities.unit", "AttackerStateUpdate: (Player) {} attacked {} for {} dmg, absorbed {}, blocked {}, resisted {}.",
+            GetGUID().ToString(), victim->GetGUID().ToString(), dmgInfo.GetDamage(), dmgInfo.GetAbsorb(), dmgInfo.GetBlock(), dmgInfo.GetResist());
+    else
+        TC_LOG_DEBUG("entities.unit", "AttackerStateUpdate: (NPC)    {} attacked {} for {} dmg, absorbed {}, blocked {}, resisted {}.",
+            GetGUID().ToString(), victim->GetGUID().ToString(), dmgInfo.GetDamage(), dmgInfo.GetAbsorb(), dmgInfo.GetBlock(), dmgInfo.GetResist());
 }
 
 void Unit::HandleProcExtraAttackFor(Unit* victim, uint32 count)
@@ -3331,16 +3338,6 @@ void Unit::FinishSpell(CurrentSpellTypes spellType, bool ok /*= true*/)
 
     spell->finish(ok);
 }
-
-/** @epoch-start */
-bool Unit::IsNextSwingSpellCasted() const
-{
-    if (m_currentSpells[CURRENT_MELEE_SPELL] && m_currentSpells[CURRENT_MELEE_SPELL]->m_spellInfo->IsNextMeleeSwingSpell())
-        return (true);
-
-    return (false);
-}
-/** @epoch-end */
 
 bool Unit::IsNonMeleeSpellCast(bool withDelayed, bool skipChanneled, bool skipAutorepeat, bool isAutoshoot, bool skipInstant) const
 {
@@ -8299,6 +8296,8 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo co
     return false;
 }
 
+// Calculate the melee damage bonus for AutoAttack Unit::CalculateMeleeDamage
+// TODO come back and remove spellProto and all logic pertaining to it if we decide we will no longer call this from Spell::EffectWeaponDmg
 uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
 {
     if (!victim || pdamage == 0)
@@ -8342,22 +8341,8 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Done total percent damage auras
     float DoneTotalMod = 1.0f;
 
-    SpellSchoolMask schoolMask = spellProto ? spellProto->GetSchoolMask() : damageSchoolMask;
-
-    /** @epoch-start */
-    // for wands, use the weapon damage type instead of the shooting spell school
-    // TODO: look into this, this seems odd?
-    if (spellProto)
-    {
-        if (spellProto->EquippedItemSubClassMask == (1 << ITEM_SUBCLASS_WEAPON_WAND))
-        {
-            schoolMask = damageSchoolMask;
-        }
-    }
-    /** @epoch-end */
-
     // mods for SPELL_SCHOOL_MASK_NORMAL are already factored in base melee damage calculation
-    if (!(schoolMask & SPELL_SCHOOL_MASK_NORMAL))
+    if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
     {
         // Some spells don't benefit from pct done mods
         if (!spellProto || !spellProto->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS))
@@ -8366,11 +8351,11 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
             if (GetTypeId() == TYPEID_PLAYER)
             {
                 for (uint32 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
-                    if (schoolMask & (1 << i))
+                    if (damageSchoolMask & (1 << i))
                         maxModDamagePercentSchool = std::max(maxModDamagePercentSchool, GetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i));
             }
             else
-                maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, schoolMask);
+                maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, damageSchoolMask);
 
             DoneTotalMod *= maxModDamagePercentSchool;
         }
@@ -8469,14 +8454,13 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     return uint32(std::max(tmpDamage, 0.0f));
 }
 
+// Calculates the MeleeDamageBonusTaken for Auto Attacks (school mask is taken from the weapon proto)
 uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
 {
     if (pdamage == 0)
         return 0;
 
     int32 TakenFlatBenefit = 0;
-
-    uint32 meleeDamageSchoolMask = spellProto ? spellProto->SchoolMask : attacker->GetMeleeDamageSchoolMask();
 
     // ..taken
     /** @epoch-start */

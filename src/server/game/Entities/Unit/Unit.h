@@ -1562,9 +1562,6 @@ class TC_GAME_API Unit : public WorldObject
         // delayed+channeled spells are always accounted as cast
         // we can skip channeled or delayed checks using flags
         bool IsNonMeleeSpellCast(bool withDelayed, bool skipChanneled = false, bool skipAutorepeat = false, bool isAutoshoot = false, bool skipInstant = true) const;
-        /** @epoch-start */
-        bool IsNextSwingSpellCasted() const;
-        /** @epoch-end */
 
         // set withDelayed to true to interrupt delayed spells too
         // delayed+channeled spells are always interrupted
