@@ -8365,10 +8365,9 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Done total percent damage auras
     float DoneTotalMod = 1.0f;
 
-    // TODO: This was removed as we use the weapon's damage type in Spell::EffectWeaponDmg which should account for these
-    // We can remove this when its stable
-    // TODO: Add non-physical attack mod pct to support non-physical primary weapon damage
-    // mods for SPELL_SCHOOL_MASK_NORMAL are already factored in base melee damage calculation
+    // TODO: This was removed as we use the weapon's damage type in Spell::EffectWeaponDmg, which for all current weapons will apply
+    // the attack mod pct to the base weapon damage, and we don't want to apply it twice
+    // TODO: Add non-physical attack mod pct to the base weapon damage to support non-physical primary weapon flat/pct damage mods
     // if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
     // {
     //     // Some spells don't benefit from pct done mods
