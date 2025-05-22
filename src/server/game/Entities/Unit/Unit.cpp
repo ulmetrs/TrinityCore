@@ -8296,7 +8296,7 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo co
     return false;
 }
 
-// Calculate the melee damage bonus for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
+// Calculate the melee damage bonus done for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
 // This method assumes the primary damage mods are already factored into pdamage
 uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
 {
@@ -8365,26 +8365,28 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Done total percent damage auras
     float DoneTotalMod = 1.0f;
 
+    // TODO: This was removed as we use the weapon's damage type in Spell::EffectWeaponDmg which should account for these
+    // We can remove this when its stable
+    // TODO: Add non-physical attack mod pct to support non-physical primary weapon damage
     // mods for SPELL_SCHOOL_MASK_NORMAL are already factored in base melee damage calculation
-    // TODO lets allow elemental damage to factor in as well!
-    if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
-    {
-        // Some spells don't benefit from pct done mods
-        if (!spellProto || !spellProto->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS))
-        {
-            float maxModDamagePercentSchool = 0.0f;
-            if (GetTypeId() == TYPEID_PLAYER)
-            {
-                for (uint32 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
-                    if (damageSchoolMask & (1 << i))
-                        maxModDamagePercentSchool = std::max(maxModDamagePercentSchool, GetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i));
-            }
-            else
-                maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, damageSchoolMask);
+    // if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
+    // {
+    //     // Some spells don't benefit from pct done mods
+    //     if (!spellProto || !spellProto->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS))
+    //     {
+    //         float maxModDamagePercentSchool = 0.0f;
+    //         if (GetTypeId() == TYPEID_PLAYER)
+    //         {
+    //             for (uint32 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
+    //                 if (damageSchoolMask & (1 << i))
+    //                     maxModDamagePercentSchool = std::max(maxModDamagePercentSchool, GetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i));
+    //         }
+    //         else
+    //             maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, damageSchoolMask);
 
-            DoneTotalMod *= maxModDamagePercentSchool;
-        }
-    }
+    //         DoneTotalMod *= maxModDamagePercentSchool;
+    //     }
+    // }
 
     DoneTotalMod *= GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_DONE_VERSUS, creatureTypeMask);
 
@@ -8480,7 +8482,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     return uint32(std::max(tmpDamage, 0.0f));
 }
 
-// Calculates the MeleeDamageBonusTaken for Auto Attacks (school mask is taken from the weapon proto)
+// Calculate the melee damage bonus taken for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
 uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
 {
     if (pdamage == 0)
