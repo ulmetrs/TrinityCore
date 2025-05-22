@@ -1723,7 +1723,7 @@ public:
                     ((Guardian*)pet)->SetBonusDamage(owner->GetTotalAttackPowerValue(BASE_ATTACK));
 
                 for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
-                    amount += owner->CalculateDamage(BASE_ATTACK, true, true, i);
+                    amount += owner->CalculateDamage(BASE_ATTACK, true, i);
             }
         }
 
