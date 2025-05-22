@@ -8296,8 +8296,8 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo co
     return false;
 }
 
-// Calculate the melee damage bonus for AutoAttack Unit::CalculateMeleeDamage
-// TODO come back and remove spellProto and all logic pertaining to it if we decide we will no longer call this from Spell::EffectWeaponDmg
+// Calculate the melee damage bonus for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
+// This method assumes the primary damage mods are already factored into pdamage
 uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
 {
     if (!victim || pdamage == 0)
@@ -8308,11 +8308,8 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Done fixed damage bonus auras
     int32 DoneFlatBenefit = 0;
 
-    // ..done
+    // e.g.Beast/Elemental Slayer Enchant
     DoneFlatBenefit += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_DONE_CREATURE, creatureTypeMask);
-
-    // ..done
-    // SPELL_AURA_MOD_DAMAGE_DONE included in weapon damage
 
     // ..done (base at attack power for marked target and base at attack power for creature type)
     int32 APbonus = 0;
@@ -8338,10 +8335,38 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
         DoneFlatBenefit += int32(APbonus / 14.0f * GetAPMultiplier(attType, normalized));
     }
 
+    float coeff = 1.0f;
+    if (spellProto)
+    {
+        // For EffectWeaponDmg spells we generally treat bonus damages/AP bonuses the same as we do auto-attacks
+        // The caveat here is these are generally balanced around physical damage, so spells that convert damage to
+        // other schools (e.g. Seal of Command) can become overpowered with respect to flat bonuses.  For normal spells
+        // this is usually counteracted with a spell coefficient being applied to the flat bonus.  There is some ambiguity here
+        // of whether we should be using the spell coefficient for all spells, or using the coefficent to modify the bonus
+        // AP calculation, or only using a coefficient for non-physical spells, etc.  The Seal of Command coefficent is 0 in the
+        // DBC in any case, and its reported it should be 29%.  The cautious approach I am taking here:
+        // 1. Leave physical spells with 1.0 coefficient (which is most of them)
+        // 2. Set magic spells to 0.0 coefficient as default
+        // 3. Override specific spells we can identify
+        if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
+            coeff = 0.0f;
+
+        switch(spellProto->Id)
+        {
+            // Seal of Command
+            case 20424:
+                coeff = 0.29f;
+                break;
+        }
+    }
+
+    DoneFlatBenefit = int32(DoneFlatBenefit * coeff);
+
     // Done total percent damage auras
     float DoneTotalMod = 1.0f;
 
     // mods for SPELL_SCHOOL_MASK_NORMAL are already factored in base melee damage calculation
+    // TODO lets allow elemental damage to factor in as well!
     if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
     {
         // Some spells don't benefit from pct done mods
@@ -8436,6 +8461,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Custom scripted damage
     if (spellProto)
     {
+        
         switch (spellProto->SpellFamilyName)
         {
             case SPELLFAMILY_DEATHKNIGHT:
@@ -8462,7 +8488,6 @@ uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackT
 
     int32 TakenFlatBenefit = 0;
 
-    // ..taken
     /** @epoch-start */
     TakenFlatBenefit += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_TAKEN, damageSchoolMask);
     /** @epoch-end */
@@ -8472,13 +8497,30 @@ uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackT
     else
         TakenFlatBenefit += GetTotalAuraModifier(SPELL_AURA_MOD_RANGED_DAMAGE_TAKEN);
 
+    float coeff = 1.0f;
+    if (spellProto)
+    {
+        // See MeleeDamageBonusDone above for explanation
+        if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
+            coeff = 0.0f;
+
+        switch(spellProto->Id)
+        {
+            // Seal of Command
+            case 20424:
+                coeff = 0.29f;
+                break;
+        }
+    }
+
+    TakenFlatBenefit = int32(TakenFlatBenefit * coeff);
+
     if ((TakenFlatBenefit < 0) && (pdamage < static_cast<uint32>(-TakenFlatBenefit)))
         return 0;
 
     // Taken total percent damage auras
     float TakenTotalMod = 1.0f;
 
-    // ..taken
     /** @epoch-start */
     TakenTotalMod *= GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, damageSchoolMask);
     /** @epoch-end */

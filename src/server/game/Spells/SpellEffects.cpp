@@ -3435,10 +3435,11 @@ void Spell::EffectWeaponDmg()
         }
     }
     
-    // For spell effects derived from weapon damage we should use the weapons damage school when modifying the weapon bonuses.
-    // Since all weapons do at least normal damage as their primary damage school, it goes that we should always apply the ATTACK TOTAL_PCT modifier
-    // to the fixed bonus.  TODO consider whether this is true for spell_bonus as well.
+    // For spell effects derived from weapon damage we should use the weapon's damage school when modifying the fixed bonuses.
+    // The caveat here is weapons can have multiple damage schools, so how do we determine which part of the weapon damage
+    // should be used to determine the bonus?  Here we just apply the physical modifier to the fixed bonus for simplicity.
 
+    // TODO remove when confident this is correct
     // bool const addPctMods = !m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS) && (m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL);
     // if (addPctMods)
     {
@@ -3458,11 +3459,11 @@ void Spell::EffectWeaponDmg()
             spell_bonus = int32(spell_bonus * weapon_total_pct);
     }
 
-    // This is a simplification by combining the weapon damages together (like windury adding its nature damage)
-    // to use as the base for the effect.  TODO we can separate these damages out to ensure we don't apply
-    // the percent mods to the secondary damage types if necessary.
+    // for weapons with multiple damage schools this will combine both calculated damages
+    // this is our starting point for the spell effect
     int32 weaponDamage = unitCaster->CalculateDamage(m_attackType, normalized, true);
 
+    // TODO remove when confident this is correct
     // // Sequence is important
     // for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     // {
@@ -3491,6 +3492,10 @@ void Spell::EffectWeaponDmg()
     weaponDamage += spell_bonus;
     weaponDamage = int32(weaponDamage * totalDamagePercentMod);
 
+    // We want to apply the remaining spell damage modifiers to the weapon damage using the spell's damage school
+    weaponDamage = unitCaster->MeleeDamageBonusDone(unitTarget, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
+    weaponDamage = unitTarget->MeleeDamageBonusTaken(unitCaster, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
+
     // apply spellmod to Done damage
     if (Player* modOwner = unitCaster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, weaponDamage);
@@ -3498,15 +3503,7 @@ void Spell::EffectWeaponDmg()
     // prevent negative damage
     weaponDamage = std::max(weaponDamage, 0);
 
-    // Now that the spell damage derived from weapon damage is calculated, if the spell converts this into damage into non-physical
-    // we want to treat it like a spell damage effect.
-    if (!(m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
-    {
-        weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, m_spellSchoolMask, uint32(weaponDamage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, m_spellSchoolMask, uint32(weaponDamage), SPELL_DIRECT_DAMAGE);
-    }
-
-    m_damage += std::max(weaponDamage, 0);
+    m_damage += weaponDamage;
 }
 
 void Spell::EffectThreat()
