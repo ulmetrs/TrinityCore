@@ -809,7 +809,8 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
     float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
 
-    TC_LOG_DEBUG("damagetypes", "CalculateMinMaxDamage attType: {}, normalized: {}, damageIndex: {}, weaponMinDamage: {}, weaponMaxDamage: {}", attType, normalized, damageIndex, weaponMinDamage, weaponMaxDamage);
+    if (attType == BASE_ATTACK)
+        TC_LOG_DEBUG("damagetypes", "INDEX {} CalculateMinMaxDamage normalized: {}, weaponMinDamage: {}, weaponMaxDamage: {}", damageIndex, normalized, weaponMinDamage, weaponMaxDamage);
 
     // Try this extra check for secondary damage
     if (damageIndex != 0 && (weaponMinDamage <= 0 || weaponMaxDamage <= 0))
@@ -878,7 +879,8 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     minDamage = ((weaponMinDamage + baseValue) * basePct + totalValue) * totalPct;
     maxDamage = ((weaponMaxDamage + baseValue) * basePct + totalValue) * totalPct;
 
-    TC_LOG_DEBUG("damagetypes", "CalculateMinMaxDamage FINAL attType: {}, normalized: {}, damageIndex: {}, minDamage: {}, maxDamage: {}", attType, normalized, damageIndex, minDamage, maxDamage);
+    if (attType == BASE_ATTACK)
+        TC_LOG_DEBUG("damagetypes", "INDEX {} CalculateMinMaxDamage normalized: {}, minDamage: {}, maxDamage: {}", damageIndex, normalized, minDamage, maxDamage);
 }
 
 void Player::UpdateDefenseBonusesMod()
