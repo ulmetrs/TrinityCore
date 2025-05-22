@@ -4252,8 +4252,7 @@ void AuraEffect::HandleModDamageDone(AuraApplication const* aurApp, uint8 mode, 
 
     Unit* target = aurApp->GetTarget();
 
-    if (GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
-        target->UpdateAllDamageDoneMods();
+    target->UpdateAllDamageDoneMods();
 
     // Magic damage modifiers implemented in Unit::SpellBaseDamageBonusDone
     // This information for client side use only
@@ -4277,8 +4276,7 @@ void AuraEffect::HandleModDamagePercentDone(AuraApplication const* aurApp, uint8
     Unit* target = aurApp->GetTarget();
 
     // also handles spell group stacks
-    if (GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
-        target->UpdateAllDamagePctDoneMods();
+    target->UpdateAllDamagePctDoneMods();
 
     // similar to the above, damage percent will be calculated on the fly in Unit::SpellDamageBonusDone
     // This is so that we can check that the spell used is eligible for the aura (wand specialization)
