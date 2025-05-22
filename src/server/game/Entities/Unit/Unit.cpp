@@ -9725,7 +9725,7 @@ float Unit::GetFlatModifierValue(UnitMods unitMod, UnitModifierFlatType modifier
 float Unit::GetDamageFlatModifierValue(UnitMods unitMod, SpellSchools school) const
 {
     uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
-    if (unitModOffset >= 2 || school >= MAX_SPELL_SCHOOL)
+    if (unitModOffset >= 3 || school >= MAX_SPELL_SCHOOL)
     {
         TC_LOG_ERROR("entities.unit", "attempt to access non-existing modifier value from UnitMods!");
         return 0.0f;
@@ -9748,7 +9748,7 @@ float Unit::GetPctModifierValue(UnitMods unitMod, UnitModifierPctType modifierTy
 float Unit::GetDamagePctModifierValue(UnitMods unitMod, SpellSchools school) const
 {
     uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
-    if (unitModOffset >= 2 || school >= MAX_SPELL_SCHOOL)
+    if (unitModOffset >= 3 || school >= MAX_SPELL_SCHOOL)
     {
         TC_LOG_ERROR("entities.unit", "attempt to access non-existing modifier value from UnitMods!");
         return 0.0f;
