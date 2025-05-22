@@ -5350,7 +5350,8 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
         }
     }
 
-    HandleStatFlatModifier(unitMod, TOTAL_VALUE, amount, true);
+    // TODO handle other damage type enchants
+    HandleDamageFlatModifier(unitMod, SPELL_SCHOOL_NORMAL, amount, true);
 }
 
 void Player::UpdateBaseModGroup(BaseModGroup modGroup)

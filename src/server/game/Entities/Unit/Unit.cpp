@@ -62,6 +62,7 @@
 #include "QuestDef.h"
 #include "ReputationMgr.h"
 #include "ScheduledChangeAI.h"
+#include "SharedDefines.h"
 #include "SpellAuraEffects.h"
 #include "SpellAuras.h"
 #include "Spell.h"
@@ -355,7 +356,18 @@ Unit::Unit(bool isWorldObject) :
         m_auraPctModifiersGroup[i][BASE_PCT] = 1.0f;
         m_auraPctModifiersGroup[i][TOTAL_PCT] = 1.0f;
     }
-                                                            // implement 50% base damage from offhand
+
+    for (uint8 i = 0; i < MAX_SPELL_SCHOOL; ++i)
+    {
+        m_auraDamageFlatModifiersGroup[0][i] = 0.0f;
+        m_auraDamageFlatModifiersGroup[1][i] = 0.0f;
+        m_auraDamageFlatModifiersGroup[2][i] = 0.0f;
+        m_auraDamagePctModifiersGroup[0][i] = 1.0f;
+        m_auraDamagePctModifiersGroup[1][i] = 1.0f;
+        m_auraDamagePctModifiersGroup[2][i] = 1.0f;
+    }
+
+    // implement 50% base damage from offhand
     m_auraPctModifiersGroup[UNIT_MOD_DAMAGE_OFFHAND][TOTAL_PCT] = 0.5f;
 
     for (uint8 i = 0; i < MAX_ATTACK; ++i)
@@ -1257,11 +1269,9 @@ void Unit::CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, Weapon
 
         SpellSchoolMask schoolMask = SpellSchoolMask(damageInfo->Damages[i].DamageSchoolMask);
 
-        bool const addPctMods = (schoolMask & SPELL_SCHOOL_MASK_NORMAL);
-
         uint8 itemDamagesMask = (GetTypeId() == TYPEID_PLAYER) ? (1 << i) : 0;
 
-        uint32 damage = CalculateDamage(damageInfo->AttackType, false, addPctMods, itemDamagesMask);
+        uint32 damage = CalculateDamage(damageInfo->AttackType, false, itemDamagesMask);
 
         // Add melee damage bonus
         damage = MeleeDamageBonusDone(damageInfo->Target, damage, damageInfo->AttackType, nullptr, schoolMask);
@@ -1279,7 +1289,7 @@ void Unit::CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, Weapon
         // @tswow-end
 
         // Calculate armor reduction
-        if (Unit::IsDamageReducedByArmor(SpellSchoolMask(damageInfo->Damages[i].DamageSchoolMask)))
+        if (Unit::IsDamageReducedByArmor(schoolMask))
         {
             damageInfo->Damages[i].Damage = Unit::CalcArmorReducedDamage(damageInfo->Attacker, damageInfo->Target, damage, nullptr, damageInfo->AttackType);
             damageInfo->CleanDamage += damage - damageInfo->Damages[i].Damage;
@@ -2414,12 +2424,12 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(Unit const* victim, WeaponAttackTy
     return MELEE_HIT_NORMAL;
 }
 
-uint32 Unit::CalculateDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, uint8 itemDamagesMask /*= 0*/) const
+uint32 Unit::CalculateDamage(WeaponAttackType attType, bool normalized, uint8 itemDamagesMask /*= 0*/) const
 {
     float minDamage = 0.0f;
     float maxDamage = 0.0f;
 
-    if (normalized || !addTotalPct || itemDamagesMask)
+    if (normalized || itemDamagesMask)
     {
         // get both by default
         if (!itemDamagesMask)
@@ -2430,7 +2440,7 @@ uint32 Unit::CalculateDamage(WeaponAttackType attType, bool normalized, bool add
             if (itemDamagesMask & (1 << i))
             {
                 float minTmp, maxTmp;
-                CalculateMinMaxDamage(attType, normalized, addTotalPct, minTmp, maxTmp, i);
+                CalculateMinMaxDamage(attType, normalized, minTmp, maxTmp, i);
                 minDamage += minTmp;
                 maxDamage += maxTmp;
             }
@@ -8365,28 +8375,6 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Done total percent damage auras
     float DoneTotalMod = 1.0f;
 
-    // TODO: This was removed as we use the weapon's damage type in Spell::EffectWeaponDmg, which for all current weapons will apply
-    // the attack mod pct to the base weapon damage, and we don't want to apply it twice
-    // TODO: Add non-physical attack mod pct to the base weapon damage to support non-physical primary weapon flat/pct damage mods
-    // if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
-    // {
-    //     // Some spells don't benefit from pct done mods
-    //     if (!spellProto || !spellProto->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS))
-    //     {
-    //         float maxModDamagePercentSchool = 0.0f;
-    //         if (GetTypeId() == TYPEID_PLAYER)
-    //         {
-    //             for (uint32 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
-    //                 if (damageSchoolMask & (1 << i))
-    //                     maxModDamagePercentSchool = std::max(maxModDamagePercentSchool, GetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i));
-    //         }
-    //         else
-    //             maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, damageSchoolMask);
-
-    //         DoneTotalMod *= maxModDamagePercentSchool;
-    //     }
-    // }
-
     DoneTotalMod *= GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_DONE_VERSUS, creatureTypeMask);
 
     // bonus against aurastate
@@ -9600,6 +9588,7 @@ bool Unit::HandleAttackPowerModifier(AttackPowerModIndex index, AttackPowerModTy
         return false;
     UpdateAttackPowerAndDamage(index == RANGED_AP_MODS);
 }
+
 float Unit::GetAttackPowerModifierValue(AttackPowerModIndex index, AttackPowerModType modifierType) const
 {
     if (index >= AP_MODS_COUNT || modifierType >= AP_MOD_TYPE_COUNT)
@@ -9618,6 +9607,7 @@ float Unit::GetAttackPowerModifierValue(AttackPowerModIndex index, AttackPowerMo
     }
     return 0;
 }
+
 void Unit::HandleStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifierType, float amount, bool apply)
 {
     if (unitMod >= UNIT_MOD_END || modifierType >= MODIFIER_TYPE_FLAT_END)
@@ -9638,6 +9628,23 @@ void Unit::HandleStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifie
         default:
             break;
     }
+
+    UpdateUnitMod(unitMod);
+}
+
+void Unit::HandleDamageFlatModifier(UnitMods unitMod, SpellSchools school, float amount, bool apply)
+{
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
+    if (school >= MAX_SPELL_SCHOOL || unitModOffset >= 2)
+    {
+        TC_LOG_ERROR("entities.unit", "ERROR in HandleDamageFlatModifier(): non-existing SpellSchools or wrong UnitModOffset!");
+        return;
+    }
+
+    if (!amount)
+        return;
+
+    m_auraDamageFlatModifiersGroup[unitModOffset][school] += apply ? amount : -amount;
 
     UpdateUnitMod(unitMod);
 }
@@ -9675,12 +9682,32 @@ void Unit::SetStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifierTy
     UpdateUnitMod(unitMod);
 }
 
+void Unit::SetDamageFlatModifier(UnitMods unitMod, SpellSchools school, float val)
+{
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
+    if (m_auraDamageFlatModifiersGroup[unitModOffset][school] == val)
+        return;
+
+    m_auraDamageFlatModifiersGroup[unitModOffset][school] = val;
+    UpdateUnitMod(unitMod);
+}
+
 void Unit::SetStatPctModifier(UnitMods unitMod, UnitModifierPctType modifierType, float val)
 {
     if (m_auraPctModifiersGroup[unitMod][modifierType] == val)
         return;
 
     m_auraPctModifiersGroup[unitMod][modifierType] = val;
+    UpdateUnitMod(unitMod);
+}
+
+void Unit::SetDamagePctModifier(UnitMods unitMod, SpellSchools school, float val)
+{
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
+    if (m_auraDamagePctModifiersGroup[unitModOffset][school] == val)
+        return;
+
+    m_auraDamagePctModifiersGroup[unitModOffset][school] = val;
     UpdateUnitMod(unitMod);
 }
 
@@ -9695,6 +9722,18 @@ float Unit::GetFlatModifierValue(UnitMods unitMod, UnitModifierFlatType modifier
     return m_auraFlatModifiersGroup[unitMod][modifierType];
 }
 
+float Unit::GetDamageFlatModifierValue(UnitMods unitMod, SpellSchools school) const
+{
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
+    if (unitModOffset >= 2 || school >= MAX_SPELL_SCHOOL)
+    {
+        TC_LOG_ERROR("entities.unit", "attempt to access non-existing modifier value from UnitMods!");
+        return 0.0f;
+    }
+
+    return m_auraDamageFlatModifiersGroup[unitModOffset][school];
+}
+
 float Unit::GetPctModifierValue(UnitMods unitMod, UnitModifierPctType modifierType) const
 {
     if (unitMod >= UNIT_MOD_END || modifierType >= MODIFIER_TYPE_PCT_END)
@@ -9704,6 +9743,18 @@ float Unit::GetPctModifierValue(UnitMods unitMod, UnitModifierPctType modifierTy
     }
 
     return m_auraPctModifiersGroup[unitMod][modifierType];
+}
+
+float Unit::GetDamagePctModifierValue(UnitMods unitMod, SpellSchools school) const
+{
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
+    if (unitModOffset >= 2 || school >= MAX_SPELL_SCHOOL)
+    {
+        TC_LOG_ERROR("entities.unit", "attempt to access non-existing modifier value from UnitMods!");
+        return 0.0f;
+    }
+
+    return m_auraDamagePctModifiersGroup[unitModOffset][school];
 }
 
 void Unit::UpdateUnitMod(UnitMods unitMod)
@@ -9765,15 +9816,21 @@ void Unit::UpdateDamageDoneMods(WeaponAttackType attackType, int32 /*skipEnchant
             break;
     }
 
-    float amount = GetTotalAuraModifier(SPELL_AURA_MOD_DAMAGE_DONE, [&](AuraEffect const* aurEff) -> bool
+    for (uint8 school = SPELL_SCHOOL_NORMAL; school < MAX_SPELL_SCHOOL; ++school)
     {
-        if (!(aurEff->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL))
-            return false;
+        float amount = GetTotalAuraModifier(SPELL_AURA_MOD_DAMAGE_DONE, [&](AuraEffect const* aurEff) -> bool
+        {
+            if (!(aurEff->GetMiscValue() & (1 << school)))
+                return false;
 
-        return CheckAttackFitToAuraRequirement(attackType, aurEff);
-    });
+            return CheckAttackFitToAuraRequirement(attackType, aurEff);
+        });
 
-    SetStatFlatModifier(unitMod, TOTAL_VALUE, amount);
+        SetDamageFlatModifier(unitMod, SpellSchools(school), amount);
+        // Set the normal mod here as well
+        if (school == SPELL_SCHOOL_NORMAL)
+            SetStatFlatModifier(unitMod, TOTAL_VALUE, amount);
+    }
 }
 
 void Unit::UpdateAllDamageDoneMods()
@@ -9806,18 +9863,25 @@ void Unit::UpdateDamagePctDoneMods(WeaponAttackType attackType)
             break;
     }
 
-    factor *= GetTotalAuraMultiplier(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, [attackType, this](AuraEffect const* aurEff) -> bool
+    for (uint8 school = SPELL_SCHOOL_NORMAL; school < MAX_SPELL_SCHOOL; ++school)
     {
-        if (!(aurEff->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL))
-            return false;
+        float schoolFactor = factor;
+        schoolFactor *= GetTotalAuraMultiplier(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, [attackType, school, this](AuraEffect const* aurEff) -> bool
+        {
+            if (!(aurEff->GetMiscValue() & (1 << school)))
+                return false;
 
-        return CheckAttackFitToAuraRequirement(attackType, aurEff);
-    });
+            return CheckAttackFitToAuraRequirement(attackType, aurEff);
+        });
 
-    if (attackType == OFF_ATTACK)
-        factor *= GetTotalAuraMultiplier(SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT, std::bind(&Unit::CheckAttackFitToAuraRequirement, this, attackType, std::placeholders::_1));
+        if (attackType == OFF_ATTACK)
+            schoolFactor *= GetTotalAuraMultiplier(SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT, std::bind(&Unit::CheckAttackFitToAuraRequirement, this, attackType, std::placeholders::_1));
 
-    SetStatPctModifier(unitMod, TOTAL_PCT, factor);
+        SetDamagePctModifier(unitMod, SpellSchools(school), schoolFactor);
+        // Set the normal mod here as well
+        if (school == SPELL_SCHOOL_NORMAL)
+            SetStatPctModifier(unitMod, TOTAL_PCT, schoolFactor);
+    }
 }
 
 void Unit::UpdateAllDamagePctDoneMods()

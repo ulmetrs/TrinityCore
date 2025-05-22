@@ -667,7 +667,7 @@ void Spell::EffectSchoolDMG()
                     float tmpMin, tmpMax;
                     for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
                     {
-                        unitCaster->CalculateMinMaxDamage(BASE_ATTACK, false, false, tmpMin, tmpMax, i);
+                        unitCaster->CalculateMinMaxDamage(BASE_ATTACK, false, tmpMin, tmpMax, i);
                         minTotal += tmpMin;
                         maxTotal += tmpMax;
                     }
@@ -3459,9 +3459,9 @@ void Spell::EffectWeaponDmg()
             spell_bonus = int32(spell_bonus * weapon_total_pct);
     }
 
-    // for weapons with multiple damage schools this will combine both calculated damages
-    // this is our starting point for the spell effect
-    int32 weaponDamage = unitCaster->CalculateDamage(m_attackType, normalized, true);
+    // For weapons with multiple damage schools this will combine both calculated damages
+    // This is our starting point for the spell effect
+    int32 weaponDamage = unitCaster->CalculateDamage(m_attackType, normalized);
 
     // TODO remove when confident this is correct
     // // Sequence is important

@@ -149,6 +149,7 @@ void Unit::UpdateAllResistances()
         UpdateResistances(i);
 }
 
+// Not physical damage, more accurately 'combined damage'
 void Unit::UpdateDamagePhysical(WeaponAttackType attType)
 {
     float totalMin = 0.f;
@@ -157,7 +158,7 @@ void Unit::UpdateDamagePhysical(WeaponAttackType attType)
     float tmpMin, tmpMax;
     for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
     {
-        CalculateMinMaxDamage(attType, false, true, tmpMin, tmpMax, i);
+        CalculateMinMaxDamage(attType, false, tmpMin, tmpMax, i);
         totalMin += tmpMin;
         totalMax += tmpMax;
     }
@@ -802,22 +803,8 @@ void Player::UpdateShieldBlockValue()
     // @tswow-end
 }
 
-void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& minDamage, float& maxDamage, uint8 damageIndex) const
+void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& minDamage, float& maxDamage, uint8 damageIndex) const
 {
-    // Only proto damage, not affected by any mods
-    if (damageIndex != 0)
-    {
-        minDamage = 0.0f;
-        maxDamage = 0.0f;
-
-        if (!IsInFeralForm() && CanUseAttackType(attType))
-        {
-            minDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
-            maxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
-        }
-        return;
-    }
-
     UnitMods unitMod;
 
     switch (attType)
@@ -839,12 +826,15 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bo
     float baseValue  = GetFlatModifierValue(unitMod, BASE_VALUE);
     baseValue += GetTotalAttackPowerValue(attType) / 14.0f * attackPowerMod;
 
-    float basePct    = GetPctModifierValue(unitMod, BASE_PCT);
-    float totalValue = GetFlatModifierValue(unitMod, TOTAL_VALUE);
-    float totalPct   = addTotalPct ? GetPctModifierValue(unitMod, TOTAL_PCT) : 1.0f;
+    SpellSchools school = GetFirstSchoolInMask(GetMeleeDamageSchoolMask(attType, damageIndex));
 
-    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE);
-    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE);
+    float basePct    = GetPctModifierValue(unitMod, BASE_PCT);
+    // Players have their mod damage auras per school
+    float totalValue = GetDamageFlatModifierValue(unitMod, school);
+    float totalPct   = GetDamagePctModifierValue(unitMod, school);
+
+    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
+    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
 
     // check if player is druid and in cat or bear forms
     if (IsInFeralForm())
@@ -1532,7 +1522,7 @@ void Creature::UpdateAttackPowerAndDamage(bool ranged)
     }
 }
 
-void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& minDamage, float& maxDamage, uint8 damageIndex /*= 0*/) const
+void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& minDamage, float& maxDamage, uint8 damageIndex /*= 0*/) const
 {
     // creatures only have one damage
     if (damageIndex != 0)
@@ -1582,7 +1572,7 @@ void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, 
     float baseValue        = GetFlatModifierValue(unitMod, BASE_VALUE) + (attackPower / 14.0f) * variance;
     float basePct          = GetPctModifierValue(unitMod, BASE_PCT) * attackSpeedMulti;
     float totalValue       = GetFlatModifierValue(unitMod, TOTAL_VALUE);
-    float totalPct         = addTotalPct ? GetPctModifierValue(unitMod, TOTAL_PCT) : 1.0f;
+    float totalPct         = GetPctModifierValue(unitMod, TOTAL_PCT);
     float dmgMultiplier    = GetCreatureTemplate()->ModDamage; // = ModDamage * _GetDamageMod(rank);
 
     minDamage = ((weaponMinDamage + baseValue) * dmgMultiplier * basePct + totalValue) * totalPct;
