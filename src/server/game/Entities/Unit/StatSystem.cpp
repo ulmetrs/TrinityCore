@@ -805,6 +805,20 @@ void Player::UpdateShieldBlockValue()
 
 void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& minDamage, float& maxDamage, uint8 damageIndex) const
 {
+    SpellSchools school = GetFirstSchoolInMask(GetMeleeDamageSchoolMask(attType, damageIndex));
+    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
+    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
+
+    TC_LOG_DEBUG("damagetypes", "CalculateMinMaxDamage attType: {}, normalized: {}, damageIndex: {}, weaponMinDamage: {}, weaponMaxDamage: {}", attType, normalized, damageIndex, weaponMinDamage, weaponMaxDamage);
+
+    // Try this extra check for secondary damage
+    if (damageIndex != 0 && (weaponMinDamage <= 0 || weaponMaxDamage <= 0))
+    {
+        minDamage = 0.f;
+        maxDamage = 0.f;
+        return;
+    }
+
     UnitMods unitMod;
 
     switch (attType)
@@ -826,15 +840,11 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     float baseValue  = GetFlatModifierValue(unitMod, BASE_VALUE);
     baseValue += GetTotalAttackPowerValue(attType) / 14.0f * attackPowerMod;
 
-    SpellSchools school = GetFirstSchoolInMask(GetMeleeDamageSchoolMask(attType, damageIndex));
+    float basePct = GetPctModifierValue(unitMod, BASE_PCT);
 
-    float basePct    = GetPctModifierValue(unitMod, BASE_PCT);
     // Players have their mod damage auras per school
     float totalValue = GetDamageFlatModifierValue(unitMod, school);
-    float totalPct   = GetDamagePctModifierValue(unitMod, school);
-
-    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
-    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
+    float totalPct = GetDamagePctModifierValue(unitMod, school);
 
     // check if player is druid and in cat or bear forms
     if (IsInFeralForm())
@@ -848,8 +858,8 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     }
     else if (!CanUseAttackType(attType)) // check if player not in form but still can't use (disarm case)
     {
-        // cannot use ranged/off attack, set values to 0
-        if (attType != BASE_ATTACK)
+        // when cannot attack for ranged/off attack or secondary damage do no damage.
+        if (attType != BASE_ATTACK || damageIndex != 0)
         {
             minDamage = 0.f;
             maxDamage = 0.f;
@@ -867,6 +877,8 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
 
     minDamage = ((weaponMinDamage + baseValue) * basePct + totalValue) * totalPct;
     maxDamage = ((weaponMaxDamage + baseValue) * basePct + totalValue) * totalPct;
+
+    TC_LOG_DEBUG("damagetypes", "CalculateMinMaxDamage FINAL attType: {}, normalized: {}, damageIndex: {}, minDamage: {}, maxDamage: {}", attType, normalized, damageIndex, minDamage, maxDamage);
 }
 
 void Player::UpdateDefenseBonusesMod()
