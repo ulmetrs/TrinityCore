@@ -9594,8 +9594,6 @@ void Unit::HandleDamageFlatModifier(UnitMods unitMod, SpellSchools school, float
         return;
     }
 
-    TC_LOG_DEBUG("damagetypes", "Unit::HandleDamageFlatModifier: {} {} {} {}", unitMod, school, amount, apply);
-
     if (!amount)
         return;
 
