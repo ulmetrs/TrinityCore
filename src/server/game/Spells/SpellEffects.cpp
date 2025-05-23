@@ -3458,7 +3458,7 @@ void Spell::EffectWeaponDmg()
         if (i > 0 && unitCaster->GetTypeId() != TYPEID_PLAYER)
             break;
 
-        SpellSchoolMask schoolMask = unitCaster->GetMeleeDamageSchoolMask(attackType, i);
+        SpellSchoolMask schoolMask = unitCaster->GetMeleeDamageSchoolMask(m_attackType, i);
 
         uint8 itemDamagesMask = (unitCaster->GetTypeId() == TYPEID_PLAYER) ? (1 << i) : 0;
 
