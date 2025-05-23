@@ -1560,6 +1560,10 @@ void AuraEffect::HandleSpiritOfRedemption(AuraApplication const* aurApp, uint8 m
     if (target->GetTypeId() != TYPEID_PLAYER)
         return;
 
+    // Since these immunities must be missing from the spell itself apply them manually
+    target->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_ALL, apply);
+    target->ApplySpellImmune(0, IMMUNITY_MECHANIC, IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK, apply);
+
     // prepare spirit state
     if (apply)
     {
@@ -1577,10 +1581,6 @@ void AuraEffect::HandleSpiritOfRedemption(AuraApplication const* aurApp, uint8 m
         target->InterruptAttacksOnMe(0.0f);
         // makes spells cast before this time fizzle
         target->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
-
-        // Since these immunities must be missing from the spell itself, we can add them manually
-        target->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_ALL, true);
-        target->ApplySpellImmune(0, IMMUNITY_MECHANIC, IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK, true);
     }
     // die at aura end
     else if (target->IsAlive())
