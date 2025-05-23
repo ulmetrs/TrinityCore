@@ -3435,8 +3435,6 @@ void Spell::EffectWeaponDmg()
         }
     }
 
-    //bool const addPctMods = !m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS) && (m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL);
-    //if (addPctMods)
     // Modify the bonuses by the pct mods for the spells school, if its not limited
     if (!m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS))
     {
