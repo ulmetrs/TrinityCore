@@ -805,17 +805,48 @@ void Player::UpdateShieldBlockValue()
 
 void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& minDamage, float& maxDamage, uint8 damageIndex) const
 {
-    SpellSchools school = GetFirstSchoolInMask(GetMeleeDamageSchoolMask(attType, damageIndex));
-    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
-    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
+    float apFraction = 1.0f;
+    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 1);
+    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 1);
+    float weaponAverageDamage = (weaponMinDamage + weaponMaxDamage) / 2;
 
-    // Try this extra check for secondary damage
-    if (damageIndex != 0 && (weaponMinDamage <= 0 || weaponMaxDamage <= 0))
+    // When no/invalid secondary damage slot
+    if (weaponMinDamage <= 0 || weaponMaxDamage <= 0)
     {
-        minDamage = 0.f;
-        maxDamage = 0.f;
-        return;
+        // If calculating secondary slot return 0 damage, only base/defaults for primary slot
+        if (damageIndex == 1)
+        {
+            minDamage = 0.f;
+            maxDamage = 0.f;
+            return;
+        }
     }
+    // We have secondary damage, so we need to calculate AP fraction depending on the slot we are calculating
+    else
+    {
+        // If calculating the secondary slot
+        if (damageIndex == 1)
+        {
+            float otherWeaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
+            float otherWeaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
+            float otherWeaponAverageDamage = (otherWeaponMinDamage + otherWeaponMaxDamage) / 2;
+        }
+        // If calculating the primary slot
+        else
+        {
+            float otherWeaponMinDamage = weaponMinDamage;
+            float otherWeaponMaxDamage = weaponMaxDamage;
+            float otherWeaponAverageDamage = weaponAverageDamage;
+            weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
+            weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
+            weaponAverageDamage = (weaponMinDamage + weaponMaxDamage) / 2;
+        }
+
+        apFraction = weaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
+    }
+
+    if (attType == BASE_ATTACK)
+        TC_LOG_DEBUG("damagetypes", "INDEX {} CalculateMinMaxDamage normalized: {}, weaponMinDamage: {}, weaponMaxDamage: {}, apFraction: {}", damageIndex, normalized, weaponMinDamage, weaponMaxDamage, apFraction);
 
     UnitMods unitMod;
 
@@ -836,7 +867,7 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     float const attackPowerMod = std::max(GetAPMultiplier(attType, normalized), 0.25f);
 
     float baseValue  = GetFlatModifierValue(unitMod, BASE_VALUE);
-    baseValue += GetTotalAttackPowerValue(attType) / 14.0f * attackPowerMod;
+    baseValue += GetTotalAttackPowerValue(attType) / 14.0f * attackPowerMod * apFraction;
 
     float basePct = GetPctModifierValue(unitMod, BASE_PCT);
 
