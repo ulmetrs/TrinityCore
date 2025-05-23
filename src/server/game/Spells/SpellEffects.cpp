@@ -3449,7 +3449,7 @@ void Spell::EffectWeaponDmg()
             case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
         }
 
-        float weapon_total_pct = unitCaster->GetDamagePctModifierValue(unitMod, m_spellSchoolMask);
+        float weapon_total_pct = unitCaster->GetDamagePctModifierValue(unitMod, GetFirstSchoolInMask(m_spellSchoolMask));
         if (fixed_bonus)
             fixed_bonus = int32(fixed_bonus * weapon_total_pct);
         if (spell_bonus)
