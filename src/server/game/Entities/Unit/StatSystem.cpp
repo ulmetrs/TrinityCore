@@ -809,9 +809,6 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
     float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
 
-    if (attType == BASE_ATTACK)
-        TC_LOG_DEBUG("damagetypes", "INDEX {} CalculateMinMaxDamage normalized: {}, weaponMinDamage: {}, weaponMaxDamage: {}", damageIndex, normalized, weaponMinDamage, weaponMaxDamage);
-
     // Try this extra check for secondary damage
     if (damageIndex != 0 && (weaponMinDamage <= 0 || weaponMaxDamage <= 0))
     {

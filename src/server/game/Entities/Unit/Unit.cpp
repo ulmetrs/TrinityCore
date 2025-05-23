@@ -1273,8 +1273,8 @@ void Unit::CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, Weapon
 
         uint32 damage = CalculateDamage(damageInfo->AttackType, false, itemDamagesMask);
 
-        // Add melee damage bonus
-        damage = MeleeDamageBonusDone(damageInfo->Target, damage, damageInfo->AttackType, nullptr, schoolMask);
+        // Add additional melee damage mods to each damage component
+        damage = MeleeDamageBonusDone(damageInfo->Target, damage, damageInfo->AttackType, nullptr);
         damage = damageInfo->Target->MeleeDamageBonusTaken(this, damage, damageInfo->AttackType, nullptr, schoolMask);
 
         // Script Hook For CalculateMeleeDamage -- Allow scripts to change the Damage pre class mitigation calculations
@@ -8306,9 +8306,8 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo co
     return false;
 }
 
-// Calculate the melee damage bonus done for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
-// This method assumes the primary damage mods are already factored into pdamage
-uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
+// Calculate the additional melee damage mods done for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
+uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/)
 {
     if (!victim || pdamage == 0)
         return 0;
@@ -8344,33 +8343,6 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
         bool const normalized = spellProto && spellProto->HasEffect(SPELL_EFFECT_NORMALIZED_WEAPON_DMG);
         DoneFlatBenefit += int32(APbonus / 14.0f * GetAPMultiplier(attType, normalized));
     }
-
-    float coeff = 1.0f;
-    if (spellProto)
-    {
-        // For EffectWeaponDmg spells we generally treat bonus damages/AP bonuses the same as we do auto-attacks
-        // The caveat here is these are generally balanced around physical damage, so spells that convert damage to
-        // other schools (e.g. Seal of Command) can become overpowered with respect to flat bonuses.  For normal spells
-        // this is usually counteracted with a spell coefficient being applied to the flat bonus.  There is some ambiguity here
-        // of whether we should be using the spell coefficient for all spells, or using the coefficent to modify the bonus
-        // AP calculation, or only using a coefficient for non-physical spells, etc.  The Seal of Command coefficent is 0 in the
-        // DBC in any case, and its reported it should be 29%.  The cautious approach I am taking here:
-        // 1. Leave physical spells with 1.0 coefficient (which is most of them)
-        // 2. Set magic spells to 0.0 coefficient as default
-        // 3. Override specific spells we can identify
-        if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
-            coeff = 0.0f;
-
-        switch(spellProto->Id)
-        {
-            // Seal of Command
-            case 20424:
-                coeff = 0.29f;
-                break;
-        }
-    }
-
-    DoneFlatBenefit = int32(DoneFlatBenefit * coeff);
 
     // Done total percent damage auras
     float DoneTotalMod = 1.0f;
@@ -8469,7 +8441,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     return uint32(std::max(tmpDamage, 0.0f));
 }
 
-// Calculate the melee damage bonus taken for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
+// Calculate the additional melee damage mods taken for AutoAttacks = Unit::CalculateMeleeDamage and Abilities = Spell::EffectWeaponDmg
 uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto /*= nullptr*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NORMAL*/)
 {
     if (pdamage == 0)
@@ -8477,32 +8449,15 @@ uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackT
 
     int32 TakenFlatBenefit = 0;
 
-    /** @epoch-start */
-    TakenFlatBenefit += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_TAKEN, damageSchoolMask);
-    /** @epoch-end */
+    // Similar our base weapon damage, we do not apply non-physical flat mods to our non-physical melee attacks as these
+    // mods are balanced around casted spells and not melee attacks
+    if (damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL)
+        TakenFlatBenefit += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_TAKEN, damageSchoolMask);
 
     if (attType != RANGED_ATTACK)
         TakenFlatBenefit += GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_DAMAGE_TAKEN);
     else
         TakenFlatBenefit += GetTotalAuraModifier(SPELL_AURA_MOD_RANGED_DAMAGE_TAKEN);
-
-    float coeff = 1.0f;
-    if (spellProto)
-    {
-        // See MeleeDamageBonusDone above for explanation
-        if (!(damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
-            coeff = 0.0f;
-
-        switch(spellProto->Id)
-        {
-            // Seal of Command
-            case 20424:
-                coeff = 0.29f;
-                break;
-        }
-    }
-
-    TakenFlatBenefit = int32(TakenFlatBenefit * coeff);
 
     if ((TakenFlatBenefit < 0) && (pdamage < static_cast<uint32>(-TakenFlatBenefit)))
         return 0;
@@ -8510,9 +8465,7 @@ uint32 Unit::MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackT
     // Taken total percent damage auras
     float TakenTotalMod = 1.0f;
 
-    /** @epoch-start */
     TakenTotalMod *= GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, damageSchoolMask);
-    /** @epoch-end */
 
     // .. taken pct (special attacks)
     if (spellProto)
@@ -9821,6 +9774,11 @@ void Unit::UpdateDamageDoneMods(WeaponAttackType attackType, int32 /*skipEnchant
         float amount = GetTotalAuraModifier(SPELL_AURA_MOD_DAMAGE_DONE, [&](AuraEffect const* aurEff) -> bool
         {
             if (!(aurEff->GetMiscValue() & (1 << school)))
+                return false;
+
+            // for now, most spell flat modifiers are far too powerful to add to our weapon damage mods
+            // we still want to create the bucket so we can add enchants to it and make exceptions down the road
+            if (!(aurEff->GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL))
                 return false;
 
             return CheckAttackFitToAuraRequirement(attackType, aurEff);

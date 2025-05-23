@@ -5350,7 +5350,8 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
         }
     }
 
-    // TODO handle other damage type enchants
+    // TODO Adding elemental damage type elements is supported here but would require
+    // additional changes in DBC and likely the client
     HandleDamageFlatModifier(unitMod, SPELL_SCHOOL_NORMAL, amount, true);
 }
 

@@ -3434,14 +3434,11 @@ void Spell::EffectWeaponDmg()
             break;
         }
     }
-    
-    // For spell effects derived from weapon damage we should use the weapon's damage school when modifying the fixed bonuses.
-    // The caveat here is weapons can have multiple damage schools, so how do we determine which part of the weapon damage
-    // should be used to determine the bonus?  Here we just apply the physical modifier to the fixed bonus for simplicity.
 
-    // TODO remove when confident this is correct
-    // bool const addPctMods = !m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS) && (m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL);
-    // if (addPctMods)
+    //bool const addPctMods = !m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS) && (m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL);
+    //if (addPctMods)
+    // Modify the bonuses by the pct mods for the spells school, if its not limited
+    if (!m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS))
     {
         UnitMods unitMod;
         switch (m_attackType)
@@ -3452,57 +3449,55 @@ void Spell::EffectWeaponDmg()
             case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
         }
 
-        float weapon_total_pct = unitCaster->GetPctModifierValue(unitMod, TOTAL_PCT);
+        float weapon_total_pct = unitCaster->GetWeaponPctModifierValue(unitMod, m_spellSchoolMask);
         if (fixed_bonus)
             fixed_bonus = int32(fixed_bonus * weapon_total_pct);
         if (spell_bonus)
             spell_bonus = int32(spell_bonus * weapon_total_pct);
     }
 
-    // For weapons with multiple damage schools this will combine both calculated damages
-    // This is our starting point for the spell effect
+    // For weapons with multiple damage schools this will combine both calculated damages into
+    // a single 'weapon damage' with the damage type of the spell. The individual weapon damages
+    // take into account the pct mods for the spell school.
     int32 weaponDamage = unitCaster->CalculateDamage(m_attackType, normalized);
 
-    // TODO remove when confident this is correct
-    // // Sequence is important
-    // for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
-    // {
-    //     // We assume that a spell have at most one fixed_bonus
-    //     // and at most one weaponDamagePercentMod
-    //     switch (spellEffectInfo.Effect)
-    //     {
-    //         case SPELL_EFFECT_WEAPON_DAMAGE:
-    //         case SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL:
-    //         case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
-    //             weaponDamage += fixed_bonus;
-    //             break;
-    //         case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
-    //             weaponDamage = int32(weaponDamage * weaponDamagePercentMod);
-    //             break;
-    //         default:
-    //             break;                                      // not weapon damage effect, just skip
-    //     }
-    // }
-    
-    // The ordering above relies on the spell effects being ordered a specific way, but I read it as
-    // the weaponDamagePercentMod should be applied to the base swing before adding the fixed bonus.
-    weaponDamage = int32(weaponDamage * weaponDamagePercentMod);
-    weaponDamage += fixed_bonus;
+    // Add the EFFECT_WEAPON_DAMAGE mods
+
+    // Sequence is important
+    for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
+    {
+        // We assume that a spell have at most one fixed_bonus
+        // and at most one weaponDamagePercentMod
+        switch (spellEffectInfo.Effect)
+        {
+            case SPELL_EFFECT_WEAPON_DAMAGE:
+            case SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL:
+            case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
+                weaponDamage += fixed_bonus;
+                break;
+            case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
+                weaponDamage = int32(weaponDamage * weaponDamagePercentMod);
+                break;
+            default:
+                break;                                      // not weapon damage effect, just skip
+        }
+    }
 
     weaponDamage += spell_bonus;
     weaponDamage = int32(weaponDamage * totalDamagePercentMod);
 
-    // We want to apply the remaining spell damage modifiers to the weapon damage using the spell's damage school
-    weaponDamage = unitCaster->MeleeDamageBonusDone(unitTarget, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
+    // Apply the additional melee damage mods to the total weapon damage
+    weaponDamage = unitCaster->MeleeDamageBonusDone(unitTarget, weaponDamage, m_attackType, m_spellInfo);
     weaponDamage = unitTarget->MeleeDamageBonusTaken(unitCaster, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
 
     // apply spellmod to Done damage
     if (Player* modOwner = unitCaster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, weaponDamage);
 
-    // prevent negative damage
+    // prevent negative damage bonus
     weaponDamage = std::max(weaponDamage, 0);
 
+    // add the bonus
     m_damage += weaponDamage;
 }
 

@@ -4252,7 +4252,9 @@ void AuraEffect::HandleModDamageDone(AuraApplication const* aurApp, uint8 mode, 
 
     Unit* target = aurApp->GetTarget();
 
-    target->UpdateAllDamageDoneMods();
+    // for now flat mods do not modify elemental weapon damage, remove this 'if' if we support it in the future
+    if (GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
+        target->UpdateAllDamageDoneMods();
 
     // Magic damage modifiers implemented in Unit::SpellBaseDamageBonusDone
     // This information for client side use only
