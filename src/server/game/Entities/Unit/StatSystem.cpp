@@ -872,6 +872,7 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     float basePct = GetPctModifierValue(unitMod, BASE_PCT);
 
     // Players have their mod damage auras per school
+    SpellSchools school = GetFirstSchoolInMask(GetMeleeDamageSchoolMask(attType, damageIndex));
     float totalValue = GetDamageFlatModifierValue(unitMod, school);
     float totalPct = GetDamagePctModifierValue(unitMod, school);
 
