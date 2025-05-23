@@ -3462,7 +3462,7 @@ void Spell::EffectWeaponDmg()
 
         uint8 itemDamagesMask = (unitCaster->GetTypeId() == TYPEID_PLAYER) ? (1 << i) : 0;
 
-        uint32 damage = CalculateDamage(m_attackType, normalized, itemDamagesMask);
+        uint32 damage = unitCaster->CalculateDamage(m_attackType, normalized, itemDamagesMask);
 
         // Add additional melee damage mods to each damage component
         damage = unitCaster->MeleeDamageBonusDone(unitTarget, damage, m_attackType, m_spellInfo);
