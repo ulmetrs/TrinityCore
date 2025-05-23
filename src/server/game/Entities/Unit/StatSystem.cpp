@@ -830,6 +830,7 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
             float otherWeaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
             float otherWeaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
             float otherWeaponAverageDamage = (otherWeaponMinDamage + otherWeaponMaxDamage) / 2;
+            apFraction = weaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
         }
         // If calculating the primary slot
         else
@@ -840,9 +841,8 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
             weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
             weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
             weaponAverageDamage = (weaponMinDamage + weaponMaxDamage) / 2;
+            apFraction = weaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
         }
-
-        apFraction = weaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
     }
 
     if (attType == BASE_ATTACK)
