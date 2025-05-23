@@ -806,12 +806,15 @@ void Player::UpdateShieldBlockValue()
 void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& minDamage, float& maxDamage, uint8 damageIndex) const
 {
     float apFraction = 1.0f;
-    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 1);
-    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 1);
+    float weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
+    float weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
     float weaponAverageDamage = (weaponMinDamage + weaponMaxDamage) / 2;
+    float otherWeaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 1);
+    float otherWeaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 1);
+    float otherWeaponAverageDamage = (otherWeaponMinDamage + otherWeaponMaxDamage) / 2;
 
     // When no/invalid secondary damage slot
-    if (weaponMinDamage <= 0 || weaponMaxDamage <= 0)
+    if (otherWeaponMinDamage <= 0 || otherWeaponMaxDamage <= 0)
     {
         // If calculating secondary slot return 0 damage, only base/defaults for primary slot
         if (damageIndex == 1)
@@ -824,24 +827,18 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     // We have secondary damage, so we need to calculate AP fraction depending on the slot we are calculating
     else
     {
-        // If calculating the secondary slot
-        if (damageIndex == 1)
+        // If calculating the primary slot
+        if (damageIndex == 0)
         {
-            float otherWeaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
-            float otherWeaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
-            float otherWeaponAverageDamage = (otherWeaponMinDamage + otherWeaponMaxDamage) / 2;
             apFraction = weaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
         }
-        // If calculating the primary slot
+        // If calculating the secondary slot
         else
         {
-            float otherWeaponMinDamage = weaponMinDamage;
-            float otherWeaponMaxDamage = weaponMaxDamage;
-            float otherWeaponAverageDamage = weaponAverageDamage;
-            weaponMinDamage = GetWeaponDamageRange(attType, MINDAMAGE, 0);
-            weaponMaxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, 0);
-            weaponAverageDamage = (weaponMinDamage + weaponMaxDamage) / 2;
-            apFraction = weaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
+            apFraction = otherWeaponAverageDamage / (weaponAverageDamage + otherWeaponAverageDamage);
+            // set our other weapon damages for use below
+            weaponMinDamage = otherWeaponMinDamage;
+            weaponMaxDamage = otherWeaponMaxDamage;
         }
     }
 
