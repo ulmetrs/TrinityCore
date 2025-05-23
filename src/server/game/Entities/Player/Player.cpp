@@ -5350,8 +5350,8 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
         }
     }
 
-    // TODO Adding elemental damage type elements is supported here but would require
-    // additional changes in DBC and likely the client
+    // TODO it is now possible with HandleDamageFlatModifier to add elemental flat bonuses (elemental damage enchants)
+    // but that would require additional support in the client
     HandleDamageFlatModifier(unitMod, SPELL_SCHOOL_NORMAL, amount, true);
 }
 
