@@ -9588,7 +9588,7 @@ void Unit::HandleStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifie
 void Unit::HandleDamageFlatModifier(UnitMods unitMod, SpellSchools school, float amount, bool apply)
 {
     uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
-    if (school >= MAX_SPELL_SCHOOL || unitModOffset >= 2)
+    if (school >= MAX_SPELL_SCHOOL || unitModOffset >= 3)
     {
         TC_LOG_ERROR("entities.unit", "ERROR in HandleDamageFlatModifier(): non-existing SpellSchools or wrong UnitModOffset!");
         return;
