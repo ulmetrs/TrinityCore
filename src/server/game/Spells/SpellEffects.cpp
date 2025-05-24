@@ -3229,7 +3229,7 @@ void Spell::EffectWeaponDmg()
     int32 fixed_bonus = 0; // A flat bonus to the weapon damage
     float totalDamagePercentMod  = 1.0f; // a final pct modifier to the attack damage
 
-    // get all effect modifiers
+    // get all base effect modifiers
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     {
         switch (spellEffectInfo.Effect)
@@ -3435,21 +3435,21 @@ void Spell::EffectWeaponDmg()
         }
     }
 
-    // pct dmg bonus is already applied to the base weapon damage, so we want to also apply it to the fixed bonus
-    // flat mod wants to 'add a fixed bonus to weapon damage' but there can be only 1 'baseWeaponDmg' type
-    // keeping with existing expectations we assume this type is physical and apply the physical pct mod to the fixed bonus
-    UnitMods unitMod;
-    switch (m_attackType)
+    // modify the the physical flat_bonus with the physical pct modifier
+    if (fixed_bonus > 0 && (m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
     {
-        default:
-        case BASE_ATTACK:   unitMod = UNIT_MOD_DAMAGE_MAINHAND; break;
-        case OFF_ATTACK:    unitMod = UNIT_MOD_DAMAGE_OFFHAND;  break;
-        case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
-    }
+        UnitMods unitMod;
+        switch (m_attackType)
+        {
+            default:
+            case BASE_ATTACK:   unitMod = UNIT_MOD_DAMAGE_MAINHAND; break;
+            case OFF_ATTACK:    unitMod = UNIT_MOD_DAMAGE_OFFHAND;  break;
+            case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
+        }
 
-    float weapon_total_pct = unitCaster->GetPctModifierValue(unitMod, TOTAL_PCT);
-    if (fixed_bonus)
+        float weapon_total_pct = unitCaster->GetPctModifierValue(unitMod, TOTAL_PCT);
         fixed_bonus = int32(fixed_bonus * weapon_total_pct);
+    }
 
     // 1. Calculate the base weapon damage to use for the spell
     // Spells can only have 1 damage type, so we need to add the damages together
