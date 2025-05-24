@@ -885,8 +885,8 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
     }
     else if (!CanUseAttackType(attType)) // check if player not in form but still can't use (disarm case)
     {
-        // when cannot attack for ranged/off attack or secondary damage do no damage.
-        if (attType != BASE_ATTACK || damageIndex != 0)
+        // cannot use ranged/off attack, set values to 0
+        if (attType != BASE_ATTACK)
         {
             minDamage = 0.f;
             maxDamage = 0.f;
