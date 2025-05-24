@@ -3435,7 +3435,9 @@ void Spell::EffectWeaponDmg()
         }
     }
 
-    // modify the fixed bonus with the pct mod of the spells school
+    // pct dmg bonus is already applied to the base weapon damage, so we want to also apply it to the fixed bonus
+    // flat mod wants to 'add a fixed bonus to weapon damage' but there can be only 1 'baseWeaponDmg' type
+    // keeping with existing expectations we assume this type is physical and apply the physical pct mod to the fixed bonus
     UnitMods unitMod;
     switch (m_attackType)
     {
@@ -3445,7 +3447,7 @@ void Spell::EffectWeaponDmg()
         case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
     }
 
-    float weapon_total_pct = unitCaster->GetDamagePctModifierValue(unitMod, GetFirstSchoolInMask(m_spellSchoolMask));
+    float weapon_total_pct = unitCaster->GetPctModifierValue(unitMod, TOTAL_PCT);
     if (fixed_bonus)
         fixed_bonus = int32(fixed_bonus * weapon_total_pct);
 
@@ -3475,6 +3477,13 @@ void Spell::EffectWeaponDmg()
     weaponDamage = int32(weaponDamage * weaponDamagePercentMod);
     weaponDamage += fixed_bonus;
     weaponDamage = int32(weaponDamage * totalDamagePercentMod);
+
+    // 3. If the spell is not physical we treat the resulting damage as a casted spell and apply the spell bonus mods
+    if (weaponDamage > 0 && !(m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL))
+    {
+        weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, m_spellSchoolMask, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
+        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, m_spellSchoolMask, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE);
+    }
 
     // apply spellmod to Done damage
     if (Player* modOwner = unitCaster->GetSpellModOwner())
