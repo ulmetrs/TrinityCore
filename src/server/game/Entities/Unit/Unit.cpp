@@ -8092,7 +8092,7 @@ bool Unit::IsImmunedToDamage(SpellSchoolMask schoolMask) const
     return false;
 }
 
-bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo) const
+bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo, SpellSchoolMask damageSchoolMask) const
 {
     if (!spellInfo)
         return false;
@@ -8104,7 +8104,10 @@ bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo) const
     if (spellInfo->HasAttribute(SPELL_ATTR1_UNAFFECTED_BY_SCHOOL_IMMUNE) || spellInfo->HasAttribute(SPELL_ATTR2_UNAFFECTED_BY_AURA_SCHOOL_IMMUNE))
         return false;
 
-    if (uint32 schoolMask = spellInfo->GetSchoolMask())
+    if (damageSchoolMask == SPELL_SCHOOL_MASK_NONE)
+        damageSchoolMask = spellInfo->GetSchoolMask();
+
+    if (uint32 schoolMask = damageSchoolMask)
     {
         // If m_immuneToSchool type contain this school type, IMMUNE damage.
         uint32 schoolImmunityMask = 0;

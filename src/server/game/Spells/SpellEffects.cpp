@@ -1542,7 +1542,7 @@ void Spell::EffectHealthLeech()
         healthGain = unitCaster->SpellHealingBonusDone(unitCaster, m_spellInfo, healthGain, HEAL, 1, *effectInfo, { });
         healthGain = unitCaster->SpellHealingBonusTaken(unitCaster, m_spellInfo, healthGain, HEAL);
 
-        HealInfo healInfo(unitCaster, unitCaster, healthGain, m_spellInfo, m_spellSchoolMask);
+        HealInfo healInfo(unitCaster, unitCaster, healthGain, m_spellInfo, m_spellInfo->GetSchoolMask());
         unitCaster->HealBySpell(healInfo);
     }
 }
@@ -3478,8 +3478,7 @@ void Spell::EffectWeaponDmg()
     weaponDamage += fixed_bonus;
     weaponDamage = int32(weaponDamage * totalDamagePercentMod);
 
-    // 3. If the spell is not physical we treat the resulting damage as a casted spell and apply the spell bonus mods
-    // (DO NOT USE m_spellSchoolMask here as we do not treat wand shoot as a spell)
+    // 3. If the base spell school is not physical we treat the resulting damage as a casted spell and apply the spell bonus mods
     if (weaponDamage > 0 && !(m_spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
     {
         weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
