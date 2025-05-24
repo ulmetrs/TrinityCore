@@ -527,10 +527,18 @@ m_caster((info->HasAttribute(SPELL_ATTR6_CAST_BY_CHARMER) && caster->GetCharmerO
     if (Player const* playerCaster = m_caster->ToPlayer())
     {
         // wand case
+        // TODO we should just use the hardcoded shoot ids here, this will allow us to support wand required spells without hijacking the type.
         if (m_attackType == RANGED_ATTACK)
             if ((playerCaster->GetClassMask() & CLASSMASK_WAND_USERS) != 0)
                 if (Item* pItem = playerCaster->GetWeaponForAttack(RANGED_ATTACK))
                     m_spellSchoolMask = SpellSchoolMask(1 << pItem->GetTemplate()->Damage[0].DamageType);
+
+        // bow/gun auto attack
+        // wen need to find the specific spells here as we only want to set the damage type for auto attacks, all other
+        // ranged spells requiring a bow/gun should use the spell's school mask
+        if (m_spellInfo->Id == 75 || m_spellInfo->Id == 3018)
+            if (Item* pItem = playerCaster->GetWeaponForAttack(RANGED_ATTACK))
+                m_spellSchoolMask = SpellSchoolMask(1 << pItem->GetTemplate()->Damage[0].DamageType);
     }
 
     if (originalCasterGUID)
