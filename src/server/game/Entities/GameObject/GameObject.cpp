@@ -1129,14 +1129,14 @@ bool GameObject::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap
         return false;
     }
 
+    uint32 entry = data->id;
     // Test swapping copper ore to silver, and see if it effects all respawns
-    if (data->id == 1731)
+    if (entry == 1731)
     {
-        data->id = 1733;
+        entry = 1733;
         TC_LOG_DEBUG("nodeswap", "Swapping copper ore to silver for spawnId: {}", spawnId);
     }
 
-    uint32 entry = data->id;
     //uint32 map_id = data->mapid;                          // already used before call
     uint32 phaseMask = data->phaseMask;
 
