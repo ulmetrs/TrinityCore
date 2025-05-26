@@ -11521,7 +11521,6 @@ bool Unit::InitTamedPet(Pet* pet, uint8 level, uint32 spell_id)
     if (GetTypeId() == TYPEID_PLAYER)
         pet->ReplaceAllUnitFlags(UNIT_FLAG_PLAYER_CONTROLLED);
 
-    TC_LOG_DEBUG("summons", "Unit::InitTamedPet calling InitStatsForLevel {}", level);
     if (!pet->InitStatsForLevel(level))
     {
         TC_LOG_ERROR("entities.unit", "Pet::InitStatsForLevel() failed for creature (Entry: {})!", pet->GetEntry());

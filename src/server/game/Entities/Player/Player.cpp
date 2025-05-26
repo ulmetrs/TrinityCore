@@ -608,7 +608,6 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     m_Played_time[PLAYED_TIME_LEVEL] = 0;
 
     // base stats and related field values
-    TC_LOG_DEBUG("summons", "Player::Create calling InitStatsForLevel {}", GetLevel());
     InitStatsForLevel();
     InitTaxiNodesForLevel();
     InitGlyphsForLevel();
@@ -2660,7 +2659,6 @@ void Player::GiveLevel(uint8 level)
     SetFullPower(POWER_MANA);
 
     // update level to hunter/summon pet
-    TC_LOG_DEBUG("summons", "Player Pet::SynchronizeLevelWithOwner");
     if (Pet* pet = GetPet())
         pet->SynchronizeLevelWithOwner();
 
@@ -27365,7 +27363,6 @@ Pet* Player::SummonPet(uint32 entry, float x, float y, float z, float ang, PetTy
     pet->SetFaction(GetFaction());
 
     pet->ReplaceAllNpcFlags(UNIT_NPC_FLAG_NONE);
-    TC_LOG_DEBUG("summons", "Player::SummonPet calling InitStatsForLevel {}", GetLevel());
     pet->InitStatsForLevel(GetLevel());
 
     SetMinion(pet, true);

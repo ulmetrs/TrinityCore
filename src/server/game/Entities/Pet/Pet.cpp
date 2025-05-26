@@ -282,7 +282,6 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
     SetPetNameTimestamp(uint32(GameTime::GetGameTime())); // cast can't be helped here
     SetCreatorGUID(owner->GetGUID());
 
-    TC_LOG_DEBUG("summons", "Pet::LoadPetFromDB");
     InitStatsForLevel(petlevel);
     SetPetExperience(petInfo->Experience);
 
@@ -777,7 +776,6 @@ void Pet::Remove(PetSaveMode mode, bool returnreagent)
 
 void Pet::GivePetXP(uint32 xp)
 {
-    TC_LOG_DEBUG("summons", "Pet::GivePetXP");
     if (getPetType() != HUNTER_PET)
         return;
 
@@ -824,7 +822,6 @@ void Pet::GivePetLevel(uint8 level)
         SetPetNextLevelExperience(uint32(sObjectMgr->GetXPForLevel(level)*PET_XP_FACTOR));
     }
 
-    TC_LOG_DEBUG("summons", "Pet::GivePetLevel");
     InitStatsForLevel(level);
     InitLevelupSpellsForLevel();
     InitTalentForLevel();
@@ -908,12 +905,8 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     ASSERT(cinfo);
 
-    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel BEFORE CREATURE::SETLEVEL Final Pet Level SET {} - GET {}", petlevel, GetLevel());
-
     // Force set level, ignoring summon flags
     Creature::SetLevel(petlevel);
-
-    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel AFTER CREATURE::SETLEVEL Final Pet Level SET {} - GET {}", petlevel, GetLevel());
 
     //Determine pet type
     PetType petType = MAX_PET_TYPE;
@@ -1198,8 +1191,6 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
 
     SetFullHealth();
     SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
-
-    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel END OF METHOD Final Pet Level SET {} - GET {}", petlevel, GetLevel());
 
     return true;
 }
@@ -2068,7 +2059,6 @@ void Pet::learnSpellHighRank(uint32 spellid)
 
 void Pet::SynchronizeLevelWithOwner()
 {
-    TC_LOG_DEBUG("summons", "Pet::SynchronizeLevelWithOwner");
     Player* owner = GetOwner();
 
     switch (getPetType())
