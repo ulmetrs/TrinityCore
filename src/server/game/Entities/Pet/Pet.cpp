@@ -908,10 +908,12 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     ASSERT(cinfo);
 
+    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel BEFORE CREATURE::SETLEVEL Final Pet Level SET {} - GET {}", petlevel, GetLevel());
+
     // Force set level, ignoring summon flags
     Creature::SetLevel(petlevel);
 
-    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel Final Pet Level SET {} - GET {}", petlevel, GetLevel());
+    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel AFTER CREATURE::SETLEVEL Final Pet Level SET {} - GET {}", petlevel, GetLevel());
 
     //Determine pet type
     PetType petType = MAX_PET_TYPE;
@@ -1196,6 +1198,9 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
 
     SetFullHealth();
     SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
+
+    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel END OF METHOD Final Pet Level SET {} - GET {}", petlevel, GetLevel());
+
     return true;
 }
 

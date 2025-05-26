@@ -500,6 +500,8 @@ void Guardian::InitStats(uint32 duration)
     TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel {}", GetLevel());
     InitStatsForLevel(GetLevel());
 
+    TC_LOG_DEBUG("summons", "FINISH Guardian::InitStatsForLevel {}", GetLevel());  
+
     if (GetOwner()->GetTypeId() == TYPEID_PLAYER && HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))
         m_charmInfo->InitCharmCreateSpells();
 
