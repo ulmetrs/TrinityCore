@@ -5512,6 +5512,7 @@ void Spell::SummonGuardian(SpellEffectInfo const& spellEffectInfo, uint32 entry,
         if (!summon)
             return;
 
+        // TODO come back and remove this code after verifying its removal has not broken any creature behavior
         // This is handled by SummonCreature
         // if (summon->HasUnitTypeMask(UNIT_MASK_GUARDIAN))
         //     ((Guardian*)summon)->InitStatsForLevel(level);
