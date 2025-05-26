@@ -905,8 +905,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     ASSERT(cinfo);
 
-    // Force set level, ignoring summon flags
-    Creature::SetLevel(petlevel);
+    SetLevel(petlevel);
 
     //Determine pet type
     PetType petType = MAX_PET_TYPE;

@@ -5481,15 +5481,13 @@ void Spell::SummonGuardian(SpellEffectInfo const& spellEffectInfo, uint32 entry,
     if (unitCaster->IsTotem())
         unitCaster = unitCaster->ToTotem()->GetOwner();
 
-    // in another case summon new
-    uint8 level = unitCaster->GetLevel();
-
     // level of pet summoned using engineering item based at engineering skill level
+    uint8 levelOverride = 0;
     if (m_CastItem && unitCaster->GetTypeId() == TYPEID_PLAYER)
         if (ItemTemplate const* proto = m_CastItem->GetTemplate())
             if (proto->RequiredSkill == SKILL_ENGINEERING)
                 if (uint16 skill202 = unitCaster->ToPlayer()->GetSkillValue(SKILL_ENGINEERING))
-                    level = skill202 / 5;
+                    levelOverride = skill202 / 5;
 
     float radius = 5.0f;
     int32 duration = m_spellInfo->GetDuration();
@@ -5508,7 +5506,7 @@ void Spell::SummonGuardian(SpellEffectInfo const& spellEffectInfo, uint32 entry,
             // randomize position for multiple summons
             pos = unitCaster->GetRandomPoint(*destTarget, radius);
 
-        TempSummon* summon = map->SummonCreature(entry, pos, properties, duration, unitCaster, m_spellInfo->Id);
+        TempSummon* summon = map->SummonCreature(entry, pos, properties, duration, unitCaster, m_spellInfo->Id, levelOverride);
         if (!summon)
             return;
 
@@ -5517,8 +5515,9 @@ void Spell::SummonGuardian(SpellEffectInfo const& spellEffectInfo, uint32 entry,
         // if (summon->HasUnitTypeMask(UNIT_MASK_GUARDIAN))
         //     ((Guardian*)summon)->InitStatsForLevel(level);
 
-        if (properties && properties->Control == SUMMON_CATEGORY_ALLY)
-            summon->SetFaction(unitCaster->GetFaction());
+        // TODO all minions/guardians are set to the caster/owners faction, this is redundant - come back and remove when we can verify is stable
+        // if (properties && properties->Control == SUMMON_CATEGORY_ALLY)
+        //     summon->SetFaction(unitCaster->GetFaction());
 
         if (summon->HasUnitTypeMask(UNIT_MASK_MINION) && m_targets.HasDst())
             ((Minion*)summon)->SetFollowAngle(unitCaster->GetAbsoluteAngle(summon));
