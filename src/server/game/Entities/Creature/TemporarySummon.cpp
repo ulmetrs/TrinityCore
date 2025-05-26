@@ -217,12 +217,9 @@ void TempSummon::InitStats(uint32 duration)
 
     Unit* owner = GetSummonerUnit();
 
-    TC_LOG_DEBUG("summons", "TempSummon::InitStats: GetLevel {} Flags {}", this->GetLevel(), m_Properties->Flags);
-
     if (owner && IsTrigger() && m_spells[0])
     {
         SetFaction(owner->GetFaction());
-        //if (!(m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL))
         SetLevel(owner->GetLevel());
         if (owner->GetTypeId() == TYPEID_PLAYER)
             m_ControlledByPlayer = true;
@@ -389,6 +386,15 @@ void TempSummon::CheckSummonPropertiesFlags(Unit* caster)
     }
 }
 
+void TempSummon::SetLevel(uint8 level)
+{
+    TC_LOG_DEBUG("summons", "TempSummon::SetLevel FORCING USE_CREATURE_LEVEL FOR TESTING");
+    m_Properties->Flags |= SUMMON_PROP_FLAG_USE_CREATURE_LEVEL;
+    if ((m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL))
+        return;
+    Creature::SetLevel(level);
+}
+
 std::string TempSummon::GetDebugInfo() const
 {
     std::stringstream sstr;
@@ -409,8 +415,6 @@ Minion::Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorl
 
 void Minion::InitStats(uint32 duration)
 {
-    TC_LOG_DEBUG("summons", "Minion::InitStats: GetLevel {} Flags {}", this->GetLevel(), m_Properties->Flags);
-
     TempSummon::InitStats(duration);
 
     SetReactState(REACT_PASSIVE);
@@ -480,11 +484,11 @@ Guardian::Guardian(SummonPropertiesEntry const* properties, Unit* owner, bool is
 
 void Guardian::InitStats(uint32 duration)
 {
-    TC_LOG_DEBUG("summons", "Guardian::InitStats: GetLevel {} Flags {}", this->GetLevel(), m_Properties->Flags);
-
     Minion::InitStats(duration);
 
-    InitStatsForLevel(GetOwner()->GetLevel());
+    SetLevel(GetOwner()->GetLevel());
+
+    InitStatsForLevel(GetLevel());
 
     if (GetOwner()->GetTypeId() == TYPEID_PLAYER && HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))
         m_charmInfo->InitCharmCreateSpells();
