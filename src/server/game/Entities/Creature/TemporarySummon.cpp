@@ -389,8 +389,9 @@ void TempSummon::CheckSummonPropertiesFlags(Unit* caster)
 void TempSummon::SetLevel(uint8 level)
 {
     TC_LOG_DEBUG("summons", "TempSummon::SetLevel FORCING USE_CREATURE_LEVEL FOR TESTING");
-    m_Properties->Flags |= SUMMON_PROP_FLAG_USE_CREATURE_LEVEL;
-    if ((m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL))
+    uint32 flags = m_Properties->Flags;
+    flags |= SUMMON_PROP_FLAG_USE_CREATURE_LEVEL;
+    if (flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL)
         return;
     Creature::SetLevel(level);
 }
