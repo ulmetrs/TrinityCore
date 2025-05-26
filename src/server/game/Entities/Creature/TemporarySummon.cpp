@@ -39,6 +39,8 @@ m_timer(0), m_lifetime(0), m_canFollowOwner(true), m_visibleBySummonerOnly(false
         m_summonerGUID = owner->GetGUID();
 
     m_unitTypeMask |= UNIT_MASK_SUMMON;
+
+    TC_LOG_DEBUG("summons", "TempSummon::TempSummon Contructor GetLevel {}", GetLevel());
 }
 
 WorldObject* TempSummon::GetSummoner() const
@@ -216,6 +218,8 @@ void TempSummon::InitStats(uint32 duration)
         m_type = (duration == 0) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
 
     Unit* owner = GetSummonerUnit();
+
+    TC_LOG_DEBUG("summons", "TempSummon::InitStats: GetLevel {} Flags {} USE_CREATURE_LEVEL {}", GetLevel(), m_Properties->Flags, m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL);
 
     if (owner && IsTrigger() && m_spells[0])
     {
@@ -407,6 +411,8 @@ Minion::Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorl
 
 void Minion::InitStats(uint32 duration)
 {
+    TC_LOG_DEBUG("summons", "Minion::InitStats: GetLevel {} Flags {} USE_CREATURE_LEVEL {}", GetLevel(), m_Properties->Flags, m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL);
+
     TempSummon::InitStats(duration);
 
     SetReactState(REACT_PASSIVE);
@@ -476,6 +482,8 @@ Guardian::Guardian(SummonPropertiesEntry const* properties, Unit* owner, bool is
 
 void Guardian::InitStats(uint32 duration)
 {
+    TC_LOG_DEBUG("summons", "Guardian::InitStats: GetLevel {} Flags {} USE_CREATURE_LEVEL {}", GetLevel(), m_Properties->Flags, m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL);
+
     Minion::InitStats(duration);
 
     InitStatsForLevel(GetLevel());

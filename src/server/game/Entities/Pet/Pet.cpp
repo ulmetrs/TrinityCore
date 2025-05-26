@@ -905,6 +905,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     ASSERT(cinfo);
 
+    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel Setting Level {}", petlevel);
     SetLevel(petlevel);
 
     //Determine pet type

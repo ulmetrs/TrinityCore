@@ -2165,6 +2165,7 @@ Creature* WorldObject::SummonTrigger(float x, float y, float z, float ang, Milli
     //summon->SetName(GetName());
     if (GetTypeId() == TYPEID_PLAYER || GetTypeId() == TYPEID_UNIT)
     {
+        TC_LOG_DEBUG("summons", "Object::SummonTrigger: Overriding Summon Faction and Level To Trigger Faction {} and Level {}", ((Unit*)this)->GetFaction(), ((Unit*)this)->GetLevel());
         summon->SetFaction(((Unit*)this)->GetFaction());
         summon->SetLevel(((Unit*)this)->GetLevel());
     }
