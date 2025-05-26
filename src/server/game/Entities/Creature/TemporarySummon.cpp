@@ -497,7 +497,7 @@ void Guardian::InitStats(uint32 duration)
     TC_LOG_DEBUG("summons", "Guardian::InitStats Setting Owner Level {}", GetOwner()->GetLevel());
     SetLevel(GetOwner()->GetLevel());
 
-    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel {}", GetLevel());
+    TC_LOG_DEBUG("summons", "Guardian::InitStats InitStatsForLevel {}", GetLevel());
     InitStatsForLevel(GetLevel());
 
     TC_LOG_DEBUG("summons", "FINISH Guardian::InitStatsForLevel {}", GetLevel());  

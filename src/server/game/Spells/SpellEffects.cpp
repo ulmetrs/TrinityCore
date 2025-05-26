@@ -5512,8 +5512,9 @@ void Spell::SummonGuardian(SpellEffectInfo const& spellEffectInfo, uint32 entry,
         if (!summon)
             return;
 
-        if (summon->HasUnitTypeMask(UNIT_MASK_GUARDIAN))
-            ((Guardian*)summon)->InitStatsForLevel(level);
+        // This is handled by SummonCreature
+        // if (summon->HasUnitTypeMask(UNIT_MASK_GUARDIAN))
+        //     ((Guardian*)summon)->InitStatsForLevel(level);
 
         if (properties && properties->Control == SUMMON_CATEGORY_ALLY)
             summon->SetFaction(unitCaster->GetFaction());
