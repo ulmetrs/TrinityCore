@@ -77,6 +77,8 @@ class TC_GAME_API Minion : public TempSummon
 {
     public:
         Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorldObject);
+        // This is needed to support tswow TotemCreature
+        void InitStats(uint32 duration) override { InitStats(duration, 0); }
         void InitStats(uint32 duration, uint8 levelOverride = 0) override;
         void RemoveFromWorld() override;
         void setDeathState(DeathState s) override;
