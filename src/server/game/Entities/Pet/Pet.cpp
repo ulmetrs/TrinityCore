@@ -1190,7 +1190,6 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
 
     SetFullHealth();
     SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
-
     return true;
 }
 
