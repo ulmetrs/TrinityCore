@@ -2659,6 +2659,7 @@ void Player::GiveLevel(uint8 level)
     SetFullPower(POWER_MANA);
 
     // update level to hunter/summon pet
+    TC_LOG_DEBUG("summons", "Player Pet::SynchronizeLevelWithOwner");
     if (Pet* pet = GetPet())
         pet->SynchronizeLevelWithOwner();
 

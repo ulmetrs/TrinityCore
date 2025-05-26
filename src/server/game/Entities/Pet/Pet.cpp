@@ -282,6 +282,7 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
     SetPetNameTimestamp(uint32(GameTime::GetGameTime())); // cast can't be helped here
     SetCreatorGUID(owner->GetGUID());
 
+    TC_LOG_DEBUG("summons", "Pet::LoadPetFromDB");
     InitStatsForLevel(petlevel);
     SetPetExperience(petInfo->Experience);
 
@@ -776,6 +777,7 @@ void Pet::Remove(PetSaveMode mode, bool returnreagent)
 
 void Pet::GivePetXP(uint32 xp)
 {
+    TC_LOG_DEBUG("summons", "Pet::GivePetXP");
     if (getPetType() != HUNTER_PET)
         return;
 
@@ -822,6 +824,7 @@ void Pet::GivePetLevel(uint8 level)
         SetPetNextLevelExperience(uint32(sObjectMgr->GetXPForLevel(level)*PET_XP_FACTOR));
     }
 
+    TC_LOG_DEBUG("summons", "Pet::GivePetLevel");
     InitStatsForLevel(level);
     InitLevelupSpellsForLevel();
     InitTalentForLevel();
@@ -2060,6 +2063,7 @@ void Pet::learnSpellHighRank(uint32 spellid)
 
 void Pet::SynchronizeLevelWithOwner()
 {
+    TC_LOG_DEBUG("summons", "Pet::SynchronizeLevelWithOwner");
     Player* owner = GetOwner();
 
     switch (getPetType())
