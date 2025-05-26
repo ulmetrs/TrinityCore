@@ -475,7 +475,7 @@ Guardian::Guardian(SummonPropertiesEntry const* properties, Unit* owner, bool is
 
 void Guardian::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
 {
-    Minion::InitStats(duration);
+    Minion::InitStats(duration, levelOverride);
 
     uint8 level = GetLevel();
 
