@@ -206,6 +206,7 @@ void TempSummon::Update(uint32 diff)
 
 void TempSummon::InitStats(uint32 duration)
 {
+    TC_LOG_DEBUG("summons", "TempSummon::InitStats Level {}", GetLevel());
     ASSERT(!IsPet());
 
     m_timer = duration;
@@ -220,6 +221,7 @@ void TempSummon::InitStats(uint32 duration)
     if (owner && IsTrigger() && m_spells[0])
     {
         SetFaction(owner->GetFaction());
+        TC_LOG_DEBUG("summons", "TempSummon::InitStats Setting Owner Level {}", owner->GetLevel());
         SetLevel(owner->GetLevel());
         if (owner->GetTypeId() == TYPEID_PLAYER)
             m_ControlledByPlayer = true;
@@ -388,11 +390,12 @@ void TempSummon::CheckSummonPropertiesFlags(Unit* caster)
 
 void TempSummon::SetLevel(uint8 level)
 {
-    TC_LOG_DEBUG("summons", "TempSummon::SetLevel FORCING USE_CREATURE_LEVEL FOR TESTING");
     uint32 flags = m_Properties->Flags;
     flags |= SUMMON_PROP_FLAG_USE_CREATURE_LEVEL;
+    TC_LOG_DEBUG("summons", "TempSummon::SetLevel FORCING USE_CREATURE_LEVEL FOR TESTING Flags {} USE CREATURE LEVEL {}", flags, (flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL));
     if (flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL)
         return;
+    TC_LOG_DEBUG("summons", "TempSummon::SetLevel Failed flags forcing level {}", level);
     Creature::SetLevel(level);
 }
 
@@ -416,6 +419,8 @@ Minion::Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorl
 
 void Minion::InitStats(uint32 duration)
 {
+    TC_LOG_DEBUG("summons", "Minion::InitStats {}", GetLevel());
+
     TempSummon::InitStats(duration);
 
     SetReactState(REACT_PASSIVE);
@@ -485,10 +490,14 @@ Guardian::Guardian(SummonPropertiesEntry const* properties, Unit* owner, bool is
 
 void Guardian::InitStats(uint32 duration)
 {
+    TC_LOG_DEBUG("summons", "Guardian::InitStats Level {}", GetLevel());
+
     Minion::InitStats(duration);
 
+    TC_LOG_DEBUG("summons", "Guardian::InitStats Setting Owner Level {}", GetOwner()->GetLevel());
     SetLevel(GetOwner()->GetLevel());
 
+    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel {}", GetLevel());
     InitStatsForLevel(GetLevel());
 
     if (GetOwner()->GetTypeId() == TYPEID_PLAYER && HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))

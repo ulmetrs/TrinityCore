@@ -908,6 +908,8 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     // Force set level, ignoring summon flags
     Creature::SetLevel(petlevel);
 
+    TC_LOG_DEBUG("summons", "Guardian::InitStatsForLevel Final Pet Level SET {} - GET {}", petlevel, GetLevel());
+
     //Determine pet type
     PetType petType = MAX_PET_TYPE;
     if (IsPet() && GetOwner()->GetTypeId() == TYPEID_PLAYER)
