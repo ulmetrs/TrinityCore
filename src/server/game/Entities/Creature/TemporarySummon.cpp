@@ -479,18 +479,10 @@ void Guardian::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
 
     uint8 level = GetLevel();
 
-    // For testing
-    uint32 flags = m_Properties->Flags;
-    flags |= SUMMON_PROP_FLAG_USE_CREATURE_LEVEL;
-
-    TC_LOG_DEBUG("summons", "Guardian::InitStats: level {} levelOverride {} flags {}", level, levelOverride, flags);
-
     if (levelOverride)
         level = levelOverride;
-    else if (!(flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL))
+    else if (!(m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL))
         level = GetOwner()->GetLevel();
-
-    TC_LOG_DEBUG("summons", "Guardian::InitStats: InitStatsForLevel {}", level);
 
     InitStatsForLevel(level);
 
