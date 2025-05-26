@@ -5481,13 +5481,13 @@ void Spell::SummonGuardian(SpellEffectInfo const& spellEffectInfo, uint32 entry,
     if (unitCaster->IsTotem())
         unitCaster = unitCaster->ToTotem()->GetOwner();
 
-    // level of pet summoned using engineering item based at engineering skill level
+    // for item with required skill, override guardian level to level based on skill
     uint8 levelOverride = 0;
     if (m_CastItem && unitCaster->GetTypeId() == TYPEID_PLAYER)
         if (ItemTemplate const* proto = m_CastItem->GetTemplate())
-            if (proto->RequiredSkill == SKILL_ENGINEERING)
-                if (uint16 skill202 = unitCaster->ToPlayer()->GetSkillValue(SKILL_ENGINEERING))
-                    levelOverride = skill202 / 5;
+            if (proto->RequiredSkill)
+                if (uint16 skillValue = unitCaster->ToPlayer()->GetSkillValue(proto->RequiredSkill))
+                    levelOverride = skillValue / 5;
 
     float radius = 5.0f;
     int32 duration = m_spellInfo->GetDuration();
