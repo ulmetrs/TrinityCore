@@ -2159,7 +2159,7 @@ GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float 
 Creature* WorldObject::SummonTrigger(float x, float y, float z, float ang, Milliseconds despawnTime, CreatureAI* (*GetAI)(Creature*))
 {
     TempSummonType summonType = (despawnTime == 0s) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
-    TempSummon* summon = SummonCreature(WORLD_TRIGGER, x, y, z, ang, summonType, despawnTime);
+    Creature* summon = SummonCreature(WORLD_TRIGGER, x, y, z, ang, summonType, despawnTime);
     if (!summon)
         return nullptr;
 
