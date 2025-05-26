@@ -3435,7 +3435,8 @@ void Spell::EffectWeaponDmg()
         }
     }
 
-    // modify the the physical flat_bonus with the physical pct modifier
+    // physical EffectWeaponDmg spells fixed_bonus is always expected to be scaled by pct mods
+    // magic EffectWeaponDmg fixed_bonus is already calculated to the expected value
     if (fixed_bonus > 0 && (m_spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
     {
         UnitMods unitMod;
@@ -3447,8 +3448,8 @@ void Spell::EffectWeaponDmg()
             case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
         }
 
-        float weapon_total_pct = unitCaster->GetPctModifierValue(unitMod, TOTAL_PCT);
-        fixed_bonus = int32(fixed_bonus * weapon_total_pct);
+        float physical_pct_mod = unitCaster->GetDamagePctModifierValue(unitMod, SPELL_SCHOOL_NORMAL);
+        fixed_bonus = int32(fixed_bonus * physical_pct_mod);
     }
 
     // 1. Calculate the base weapon damage to use for the spell
