@@ -54,6 +54,7 @@ void AddSC_misc_commandscript();
 void AddSC_mmaps_commandscript();
 void AddSC_modify_commandscript();
 void AddSC_npc_commandscript();
+void AddSC_onlogin_commandscript();
 void AddSC_pet_commandscript();
 void AddSC_quest_commandscript();
 void AddSC_rbac_commandscript();
@@ -65,7 +66,6 @@ void AddSC_tele_commandscript();
 void AddSC_ticket_commandscript();
 void AddSC_titles_commandscript();
 void AddSC_wp_commandscript();
-void AddSC_onlogin_commandscript();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -104,6 +104,7 @@ void AddCommandsScripts()
     AddSC_mmaps_commandscript();
     AddSC_modify_commandscript();
     AddSC_npc_commandscript();
+    AddSC_onlogin_commandscript();
     AddSC_quest_commandscript();
     AddSC_pet_commandscript();
     AddSC_rbac_commandscript();
@@ -115,5 +116,4 @@ void AddCommandsScripts()
     AddSC_ticket_commandscript();
     AddSC_titles_commandscript();
     AddSC_wp_commandscript();
-    AddSC_onlogin_commandscript();
 }

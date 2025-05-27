@@ -48,7 +48,7 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "onlogin", HandleOnLoginCommand, rbac::RBAC_PERM_COMMAND_ONLOGIN, Console::Yes }
+            { "onlogin", HandleOnLoginCommand, rbac::RBAC_PERM_COMMAND_ONLOGIN, Console::No }
         };
         return commandTable;
     }
@@ -58,23 +58,15 @@ public:
 
     static bool HandleOnLoginCommand(ChatHandler* handler, char const* args)
     {
-        if (!args || *args == '\0')
-        {
-            handler->SendSysMessage("Usage: .onlogin [playername] [command]");
-            handler->SetSentErrorMessage(true);
+        if (!*args)
             return false;
-        }
 
         std::istringstream iss(args);
         std::string playerName;
         iss >> playerName;
 
         if (playerName.empty())
-        {
-            handler->SendSysMessage("Usage: .onlogin [playername] [command]");
-            handler->SetSentErrorMessage(true);
             return false;
-        }
 
         std::string restOfCommand;
         std::getline(iss, restOfCommand);
@@ -82,11 +74,7 @@ public:
         restOfCommand.erase(0, restOfCommand.find_first_not_of(" "));
 
         if (restOfCommand.empty())
-        {
-            handler->SendSysMessage("Usage: .onlogin [playername] [command]");
-            handler->SetSentErrorMessage(true);
             return false;
-        }
 
         std::string name = playerName;
         if (!normalizePlayerName(name))
