@@ -37,16 +37,18 @@ EndScriptData */
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+using namespace Trinity::ChatCommands;
+
 class onlogin_commandscript : public CommandScript
 {
 public:
     onlogin_commandscript() : CommandScript("onlogin_commandscript") { }
 
-    std::vector<ChatCommand> GetCommands() const override
+    ChatCommandTable GetCommands() const override
     {
-        static std::vector<ChatCommand> commandTable =
+        static ChatCommandTable commandTable =
         {
-            { "onlogin", SEC_ADMINISTRATOR, true, &HandleOnLoginCommand, "" }
+            { "onlogin", HandleOnLoginCommand, rbac::RBAC_PERM_COMMAND_ONLOGIN, Console::Yes }
         };
         return commandTable;
     }
