@@ -5352,7 +5352,7 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
     }
 
     // For +damage enchants and rockbiter we add flat mods to the primary weapon's spell school
-    SpellSchools school = GetMeleeDamageSchool(attType, 0);
+    SpellSchools school = GetMeleeDamageSchool(attackType, 0);
     HandleDamageFlatModifier(unitMod, school, amount, true);
 }
 
