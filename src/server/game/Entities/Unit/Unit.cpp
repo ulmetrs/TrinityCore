@@ -9590,16 +9590,16 @@ void Unit::HandleStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifie
 
 void Unit::HandleDamageFlatModifier(UnitMods unitMod, SpellSchools school, float amount, bool apply)
 {
-    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
-    if (school >= MAX_SPELL_SCHOOL || unitModOffset >= 3)
+    if (unitMod < UNIT_MOD_DAMAGE_MAINHAND || unitMod > UNIT_MOD_DAMAGE_RANGED || school >= MAX_SPELL_SCHOOL)
     {
-        TC_LOG_ERROR("entities.unit", "ERROR in HandleDamageFlatModifier(): non-existing SpellSchools or wrong UnitModOffset!");
+        TC_LOG_ERROR("entities.unit", "ERROR in HandleDamageFlatModifier(): non-existing SpellSchools or wrong UnitMod!");
         return;
     }
 
     if (!amount)
         return;
 
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
     m_auraDamageFlatModifiersGroup[unitModOffset][school] += apply ? amount : -amount;
 
     UpdateUnitMod(unitMod);
@@ -9680,13 +9680,13 @@ float Unit::GetFlatModifierValue(UnitMods unitMod, UnitModifierFlatType modifier
 
 float Unit::GetDamageFlatModifierValue(UnitMods unitMod, SpellSchools school) const
 {
-    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
-    if (unitModOffset >= 3 || school >= MAX_SPELL_SCHOOL)
+    if (unitMod < UNIT_MOD_DAMAGE_MAINHAND || unitMod > UNIT_MOD_DAMAGE_RANGED || school >= MAX_SPELL_SCHOOL)
     {
-        TC_LOG_ERROR("entities.unit", "attempt to access non-existing modifier value from UnitMods!");
+        TC_LOG_ERROR("entities.unit", "attempt to access invalid modifier value from UnitMods!");
         return 0.0f;
     }
 
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
     return m_auraDamageFlatModifiersGroup[unitModOffset][school];
 }
 
@@ -9703,13 +9703,13 @@ float Unit::GetPctModifierValue(UnitMods unitMod, UnitModifierPctType modifierTy
 
 float Unit::GetDamagePctModifierValue(UnitMods unitMod, SpellSchools school) const
 {
-    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
-    if (unitModOffset >= 3 || school >= MAX_SPELL_SCHOOL)
+    if (unitMod < UNIT_MOD_DAMAGE_MAINHAND || unitMod > UNIT_MOD_DAMAGE_RANGED || school >= MAX_SPELL_SCHOOL)
     {
-        TC_LOG_ERROR("entities.unit", "attempt to access non-existing modifier value from UnitMods!");
+        TC_LOG_ERROR("entities.unit", "attempt to access invalid modifier value from UnitMods!");
         return 0.0f;
     }
 
+    uint32 unitModOffset = unitMod - UNIT_MOD_DAMAGE_MAINHAND;
     return m_auraDamagePctModifiersGroup[unitModOffset][school];
 }
 

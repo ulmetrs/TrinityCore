@@ -926,6 +926,7 @@ class TC_GAME_API Unit : public WorldObject
         bool IsWithinMeleeRangeAt(Position const& pos, Unit const* obj) const;
         float GetMeleeRange(Unit const* target) const;
         virtual SpellSchoolMask GetMeleeDamageSchoolMask(WeaponAttackType attackType = BASE_ATTACK, uint8 damageIndex = 0) const = 0;
+        virtual SpellSchools GetMeleeDamageSchool(WeaponAttackType attackType = BASE_ATTACK, uint8 damageIndex = 0) const = 0;
         bool m_canDualWield;
 
         void _addAttacker(Unit* pAttacker);                  // must be called only from Unit::Attack(Unit*)
