@@ -222,82 +222,82 @@ public:
             return false;
         }
 
-        // // Add quest items for quests that require items
-        // for (uint8 x = 0; x < QUEST_ITEM_OBJECTIVES_COUNT; ++x)
-        // {
-        //     uint32 id = quest->RequiredItemId[x];
-        //     uint32 count = quest->RequiredItemCount[x];
-        //     if (!id || !count)
-        //         continue;
+        // Add quest items for quests that require items
+        for (uint8 x = 0; x < QUEST_ITEM_OBJECTIVES_COUNT; ++x)
+        {
+            uint32 id = quest->RequiredItemId[x];
+            uint32 count = quest->RequiredItemCount[x];
+            if (!id || !count)
+                continue;
 
-        //     uint32 curItemCount = player->GetItemCount(id, true);
+            uint32 curItemCount = player->GetItemCount(id, true);
 
-        //     ItemPosCountVec dest;
-        //     uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, id, count-curItemCount);
-        //     if (msg == EQUIP_ERR_OK)
-        //     {
-        //         Item* item = player->StoreNewItem(dest, id, true);
-        //         player->SendNewItem(item, count-curItemCount, true, false);
-        //     }
-        // }
+            ItemPosCountVec dest;
+            uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, id, count-curItemCount);
+            if (msg == EQUIP_ERR_OK)
+            {
+                Item* item = player->StoreNewItem(dest, id, true);
+                player->SendNewItem(item, count-curItemCount, true, false);
+            }
+        }
 
-        // // All creature/GO slain/cast (not required, but otherwise it will display "Creature slain 0/10")
-        // for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
-        // {
-        //     int32 creature = quest->RequiredNpcOrGo[i];
-        //     uint32 creatureCount = quest->RequiredNpcOrGoCount[i];
+        // All creature/GO slain/cast (not required, but otherwise it will display "Creature slain 0/10")
+        for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
+        {
+            int32 creature = quest->RequiredNpcOrGo[i];
+            uint32 creatureCount = quest->RequiredNpcOrGoCount[i];
 
-        //     if (creature > 0)
-        //     {
-        //         if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(creature))
-        //             for (uint16 z = 0; z < creatureCount; ++z)
-        //                 player->KilledMonster(creatureInfo, ObjectGuid::Empty);
-        //     }
-        //     else if (creature < 0)
-        //         for (uint16 z = 0; z < creatureCount; ++z)
-        //             player->KillCreditGO(creature);
-        // }
+            if (creature > 0)
+            {
+                if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(creature))
+                    for (uint16 z = 0; z < creatureCount; ++z)
+                        player->KilledMonster(creatureInfo, ObjectGuid::Empty);
+            }
+            else if (creature < 0)
+                for (uint16 z = 0; z < creatureCount; ++z)
+                    player->KillCreditGO(creature);
+        }
 
-        // // player kills
-        // if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_PLAYER_KILL))
-        //     if (uint32 reqPlayers = quest->GetPlayersSlain())
-        //         player->KilledPlayerCreditForQuest(reqPlayers, quest);
+        // player kills
+        if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_PLAYER_KILL))
+            if (uint32 reqPlayers = quest->GetPlayersSlain())
+                player->KilledPlayerCreditForQuest(reqPlayers, quest);
 
-        // // If the quest requires reputation to complete
-        // if (uint32 repFaction = quest->GetRepObjectiveFaction())
-        // {
-        //     uint32 repValue = quest->GetRepObjectiveValue();
-        //     uint32 curRep = player->GetReputationMgr().GetReputation(repFaction);
-        //     if (curRep < repValue)
-        //         if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(repFaction))
-        //             player->GetReputationMgr().SetReputation(factionEntry, repValue);
-        // }
+        // If the quest requires reputation to complete
+        if (uint32 repFaction = quest->GetRepObjectiveFaction())
+        {
+            uint32 repValue = quest->GetRepObjectiveValue();
+            uint32 curRep = player->GetReputationMgr().GetReputation(repFaction);
+            if (curRep < repValue)
+                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(repFaction))
+                    player->GetReputationMgr().SetReputation(factionEntry, repValue);
+        }
 
-        // // If the quest requires a SECOND reputation to complete
-        // if (uint32 repFaction = quest->GetRepObjectiveFaction2())
-        // {
-        //     uint32 repValue2 = quest->GetRepObjectiveValue2();
-        //     uint32 curRep = player->GetReputationMgr().GetReputation(repFaction);
-        //     if (curRep < repValue2)
-        //         if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(repFaction))
-        //             player->GetReputationMgr().SetReputation(factionEntry, repValue2);
-        // }
+        // If the quest requires a SECOND reputation to complete
+        if (uint32 repFaction = quest->GetRepObjectiveFaction2())
+        {
+            uint32 repValue2 = quest->GetRepObjectiveValue2();
+            uint32 curRep = player->GetReputationMgr().GetReputation(repFaction);
+            if (curRep < repValue2)
+                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(repFaction))
+                    player->GetReputationMgr().SetReputation(factionEntry, repValue2);
+        }
 
-        // // If the quest requires money
-        // int32 ReqOrRewMoney = quest->GetRewOrReqMoney(player);
-        // if (ReqOrRewMoney < 0)
-        //     player->ModifyMoney(-ReqOrRewMoney);
+        // If the quest requires money
+        int32 ReqOrRewMoney = quest->GetRewOrReqMoney(player);
+        if (ReqOrRewMoney < 0)
+            player->ModifyMoney(-ReqOrRewMoney);
 
-        // if (sWorld->getBoolConfig(CONFIG_QUEST_ENABLE_QUEST_TRACKER)) // check if Quest Tracker is enabled
-        // {
-        //     // prepare Quest Tracker datas
-        //     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_QUEST_TRACK_GM_COMPLETE);
-        //     stmt->setUInt32(0, quest->GetQuestId());
-        //     stmt->setUInt32(1, player->GetGUID().GetCounter());
+        if (sWorld->getBoolConfig(CONFIG_QUEST_ENABLE_QUEST_TRACKER)) // check if Quest Tracker is enabled
+        {
+            // prepare Quest Tracker datas
+            CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_QUEST_TRACK_GM_COMPLETE);
+            stmt->setUInt32(0, quest->GetQuestId());
+            stmt->setUInt32(1, player->GetGUID().GetCounter());
 
-        //     // add to Quest Tracker
-        //     CharacterDatabase.Execute(stmt);
-        // }
+            // add to Quest Tracker
+            CharacterDatabase.Execute(stmt);
+        }
 
         player->CompleteQuest(quest->GetQuestId());
         return true;
