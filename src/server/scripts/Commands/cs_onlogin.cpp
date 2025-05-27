@@ -134,7 +134,7 @@ public:
             for (const std::string& cmd : itr->second)
             {
                 // Execute as server console (admin permissions)
-                CliHandler cliHandler(nullptr);
+                CliHandler cliHandler(nullptr, nullptr);
                 cliHandler.ParseCommands(cmd.c_str());
             }
             // Clear commands after execution
