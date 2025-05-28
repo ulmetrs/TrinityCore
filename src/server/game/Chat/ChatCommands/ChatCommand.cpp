@@ -266,7 +266,7 @@ namespace Trinity::Impl::ChatCommands
     cmdStr = std::string_view(str);
     // @tswow-end
 
-    TC_LOG_DEBUG("onlogin", "ChatCommandNode cmdStr {} top level map {} and size {}", WorldDatabase.EscapeString(cmdStr), map, sizeof(*map));
+    TC_LOG_DEBUG("onlogin", "ChatCommandNode cmdStr {} top level map {} and size {}", cmdStr, map, sizeof(*map));
     while (!cmdStr.empty() && (cmdStr.front() == COMMAND_DELIMITER))
         cmdStr.remove_prefix(1);
     while (!cmdStr.empty() && (cmdStr.back() == COMMAND_DELIMITER))
