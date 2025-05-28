@@ -95,8 +95,8 @@ public:
             return true;
         }
 
-        s_pendingCommands[guid.GetCounter()].emplace_back(argCommand);
-        handler->PSendSysMessage("Command {} stored for player {}", argCommand, playerName);
+        s_pendingCommands[guid.GetCounter()].emplace_back(argCommand.c_str());
+        handler->PSendSysMessage("Command {} stored for player {}", argCommand.c_str(), playerName.c_str());
         return true;
     }
 };
@@ -121,7 +121,7 @@ public:
             TC_LOG_DEBUG("onlogin", "onlogin_commandscript found commands for player {}", player->GetName());
             for (const std::string& cmd : itr->second)
             {
-                TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd);
+                TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd.c_str());
                 // Execute as server console (admin permissions)
                 CliHandler cliHandler(nullptr, nullptr);
                 cliHandler.ParseCommands(cmd.c_str());
