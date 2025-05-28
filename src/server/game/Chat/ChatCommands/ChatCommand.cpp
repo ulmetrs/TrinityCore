@@ -306,6 +306,7 @@ namespace Trinity::Impl::ChatCommands
 
         /* now we matched exactly one subcommand, and it1 points to it; go down the rabbit hole */
         cmd = &it1->second;
+        TC_LOG_DEBUG("onlogin", "Token Loop set new cmd {}", cmd->_name);
         map = &cmd->_subCommands;
 
         oldTail = newTail;
@@ -314,8 +315,10 @@ namespace Trinity::Impl::ChatCommands
     if (cmd)
     { /* if we matched a command at some point, invoke it */
         handler.SetSentErrorMessage(false);
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode cmd {:p} and size {}", static_cast<const void*>(cmd), sizeof(*cmd));
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode _invoker {:p} and size {}", reinterpret_cast<const void*>(&cmd->_invoker), sizeof(cmd->_invoker));
+        if (!cmd->_invoker) {
+            TC_LOG_ERROR("onlogin", "cmd->_invoker is null! for cmd {}", cmd->_name);
+            return false;
+        }
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
             TC_LOG_DEBUG("onlogin", "ChatCommandNode Command success {}", cmdStr);

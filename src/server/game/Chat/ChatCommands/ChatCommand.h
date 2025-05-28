@@ -144,6 +144,7 @@ namespace Trinity::Impl::ChatCommands
         }
         CommandInvoker(bool(&handler)(ChatHandler*, char const*))
         {
+            TC_LOG_DEBUG("onlogin", "ChatCommandNode inside _invoker {:p} and size {}", reinterpret_cast<const void*>(&handler), sizeof(handler));
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 // make a copy of the argument string
