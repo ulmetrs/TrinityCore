@@ -211,6 +211,7 @@ public:
             player = handler->getSelectedPlayerOrSelf();
             if (!player)
             {
+                TC_LOG_DEBUG("onlogin", "HandleQuestComplete no target, so send sys message");
                 handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
                 handler->SetSentErrorMessage(true);
                 return false;

@@ -159,10 +159,7 @@ namespace Trinity::Impl::ChatCommands
         explicit operator bool() const { return (_wrapper != nullptr); }
         bool operator()(ChatHandler* chatHandler, std::string_view args) const
         {
-            TC_LOG_DEBUG("onlogin", "CommandInvoker operator() called: this={:p}, args={}", static_cast<const void*>(this), args);
-            TC_LOG_DEBUG("onlogin", "CommandInvoker operator() called: _wrapper={:p}, _handler={:p}", static_cast<const void*>(_wrapper), static_cast<const void*>(_handler));
             ASSERT(_wrapper && _handler);
-            TC_LOG_DEBUG("onlogin", "CommandInvoker operator() passed assert");
             return _wrapper(_handler, chatHandler, args);
         }
 

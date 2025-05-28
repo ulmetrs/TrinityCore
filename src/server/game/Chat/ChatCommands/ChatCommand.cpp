@@ -266,7 +266,6 @@ namespace Trinity::Impl::ChatCommands
     cmdStr = std::string_view(str);
     // @tswow-end
 
-    TC_LOG_DEBUG("onlogin", "ChatCommandNode cmdStr {} top level map {:p} and size {}", cmdStr, static_cast<const void*>(map), sizeof(*map));
     while (!cmdStr.empty() && (cmdStr.front() == COMMAND_DELIMITER))
         cmdStr.remove_prefix(1);
     while (!cmdStr.empty() && (cmdStr.back() == COMMAND_DELIMITER))
@@ -278,7 +277,6 @@ namespace Trinity::Impl::ChatCommands
         auto [token, newTail] = tokenize(oldTail);
         ASSERT(!token.empty());
         FilteredCommandListIterator it1(*map, handler, token);
-        TC_LOG_DEBUG("onlogin", "Token Loop {} it1 {:p} and size {}", token, static_cast<const void*>(&it1), sizeof(it1));
         if (!it1)
             break; /* no matching subcommands found */
 
@@ -306,7 +304,6 @@ namespace Trinity::Impl::ChatCommands
 
         /* now we matched exactly one subcommand, and it1 points to it; go down the rabbit hole */
         cmd = &it1->second;
-        TC_LOG_DEBUG("onlogin", "Token Loop set new cmd {}", cmd->_name);
         map = &cmd->_subCommands;
 
         oldTail = newTail;
@@ -315,22 +312,13 @@ namespace Trinity::Impl::ChatCommands
     if (cmd)
     { /* if we matched a command at some point, invoke it */
         handler.SetSentErrorMessage(false);
-        if (!cmd->_invoker) {
-            TC_LOG_DEBUG("onlogin", "cmd->_invoker is null! for cmd {}", cmd->_name);
-            return false;
-        }
-        if (cmd->IsInvokerVisible(handler)) {
-            TC_LOG_DEBUG("onlogin", "cmd->IsInvokerVisible is true for cmd {}", cmd->_name);
-        }
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
-            TC_LOG_DEBUG("onlogin", "ChatCommandNode Command success {}", cmdStr);
             if (!handler.IsConsole())
                 LogCommandUsage(*handler.GetSession(), cmd->_permission.RequiredPermission, cmdStr);
         }
         else if (!handler.HasSentErrorMessage())
         { /* invocation failed, we should show usage */
-            TC_LOG_DEBUG("onlogin", "ChatCommandNode Command failed {}", cmdStr);
             cmd->SendCommandHelp(handler);
             handler.SetSentErrorMessage(true);
         }
