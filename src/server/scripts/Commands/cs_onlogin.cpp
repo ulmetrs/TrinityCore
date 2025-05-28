@@ -101,6 +101,8 @@ public:
     }
 };
 
+std::unordered_map<uint32, std::vector<std::string>> onlogin_commandscript::s_pendingCommands;
+
 class OnLoginPlayerScript : public PlayerScript
 {
 public:
