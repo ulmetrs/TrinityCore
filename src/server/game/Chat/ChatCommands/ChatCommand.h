@@ -121,14 +121,11 @@ namespace Trinity::Impl::ChatCommands
 
     struct CommandInvoker
     {
-        CommandInvoker() : _wrapper(nullptr), _handler(nullptr) {
-            TC_LOG_DEBUG("onlogin", "CommandInvoker default constructor called: this={:p}", static_cast<const void*>(this));
-        }
+        CommandInvoker() : _wrapper(nullptr), _handler(nullptr) {}
 
         template <typename TypedHandler>
         CommandInvoker(TypedHandler& handler)
         {
-            TC_LOG_DEBUG("onlogin", "CommandInvoker constructor called: this={:p}", static_cast<const void*>(this));
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 using Tuple = TupleType<TypedHandler>;
@@ -149,7 +146,6 @@ namespace Trinity::Impl::ChatCommands
         }
         CommandInvoker(bool(&handler)(ChatHandler*, char const*))
         {
-            TC_LOG_DEBUG("onlogin", "CommandInvoker constructor called: this={:p}", static_cast<const void*>(this));
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 // make a copy of the argument string
@@ -163,7 +159,10 @@ namespace Trinity::Impl::ChatCommands
         explicit operator bool() const { return (_wrapper != nullptr); }
         bool operator()(ChatHandler* chatHandler, std::string_view args) const
         {
+            TC_LOG_DEBUG("onlogin", "CommandInvoker operator() called: this={:p}, args={}", static_cast<const void*>(this), args);
+            TC_LOG_DEBUG("onlogin", "CommandInvoker operator() called: _wrapper={:p}, _handler={:p}", static_cast<const void*>(_wrapper), static_cast<const void*>(_handler));
             ASSERT(_wrapper && _handler);
+            TC_LOG_DEBUG("onlogin", "CommandInvoker operator() passed assert");
             return _wrapper(_handler, chatHandler, args);
         }
 

@@ -316,11 +316,11 @@ namespace Trinity::Impl::ChatCommands
     { /* if we matched a command at some point, invoke it */
         handler.SetSentErrorMessage(false);
         if (!cmd->_invoker) {
-            TC_LOG_ERROR("onlogin", "cmd->_invoker is null! for cmd {}", cmd->_name);
+            TC_LOG_DEBUG("onlogin", "cmd->_invoker is null! for cmd {}", cmd->_name);
             return false;
         }
         if (cmd->IsInvokerVisible(handler)) {
-            TC_LOG_ERROR("onlogin", "cmd->IsInvokerVisible is true for cmd {}", cmd->_name);
+            TC_LOG_DEBUG("onlogin", "cmd->IsInvokerVisible is true for cmd {}", cmd->_name);
         }
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
