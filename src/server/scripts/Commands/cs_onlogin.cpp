@@ -68,11 +68,15 @@ public:
         if (argPlayerName.empty())
             return false;
 
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript argPlayerName {}", argPlayerName);
+
         std::string argCommand;
         std::getline(iss, argCommand);
         argCommand.erase(0, argCommand.find_first_not_of(" "));
         if (argCommand.empty())
             return false;
+
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript argCommand {}", argCommand);
 
         std::string playerName = argPlayerName;
         if (!normalizePlayerName(playerName))
@@ -95,8 +99,8 @@ public:
             return true;
         }
 
-        s_pendingCommands[guid.GetCounter()].emplace_back(argCommand.c_str());
-        handler->PSendSysMessage("Command {} stored for player {}", argCommand.c_str(), playerName.c_str());
+        s_pendingCommands[guid.GetCounter()].emplace_back(argCommand);
+        handler->PSendSysMessage("Command stored for %s: %s", playerName.c_str(), argCommand.c_str());
         return true;
     }
 };
@@ -121,10 +125,10 @@ public:
             TC_LOG_DEBUG("onlogin", "onlogin_commandscript found commands for player {}", player->GetName());
             for (const std::string& cmd : itr->second)
             {
-                TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd.c_str());
+                TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd);
                 // Execute as server console (admin permissions)
                 CliHandler cliHandler(nullptr, nullptr);
-                cliHandler.ParseCommands(cmd.c_str());
+                cliHandler.ParseCommands(cmd);
             }
             onlogin_commandscript::s_pendingCommands.erase(itr);
         }
