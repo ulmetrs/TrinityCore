@@ -121,10 +121,14 @@ namespace Trinity::Impl::ChatCommands
 
     struct CommandInvoker
     {
-        CommandInvoker() : _wrapper(nullptr), _handler(nullptr) {}
+        CommandInvoker() : _wrapper(nullptr), _handler(nullptr) {
+            TC_LOG_DEBUG("onlogin", "CommandInvoker default constructor called: this={:p}", static_cast<const void*>(this));
+        }
+
         template <typename TypedHandler>
         CommandInvoker(TypedHandler& handler)
         {
+            TC_LOG_DEBUG("onlogin", "CommandInvoker constructor called: this={:p}", static_cast<const void*>(this));
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 using Tuple = TupleType<TypedHandler>;
@@ -145,7 +149,7 @@ namespace Trinity::Impl::ChatCommands
         }
         CommandInvoker(bool(&handler)(ChatHandler*, char const*))
         {
-            TC_LOG_DEBUG("onlogin", "ChatCommandNode inside _invoker {:p}", reinterpret_cast<const void*>(&handler));
+            TC_LOG_DEBUG("onlogin", "CommandInvoker constructor called: this={:p}", static_cast<const void*>(this));
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 // make a copy of the argument string
