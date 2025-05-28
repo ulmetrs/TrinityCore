@@ -25,6 +25,7 @@ EndScriptData */
 #include "CharacterCache.h"
 #include "Chat.h"
 #include "Language.h"
+#include "Log.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
@@ -61,12 +62,17 @@ public:
         if (!*args)
             return false;
 
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript with args {}", args);
+
         std::istringstream iss(args);
         std::string playerName;
         iss >> playerName;
 
         if (playerName.empty())
             return false;
+
+
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript got player name {}", playerName);
 
         std::string restOfCommand;
         std::getline(iss, restOfCommand);
@@ -76,29 +82,38 @@ public:
         if (restOfCommand.empty())
             return false;
 
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript got rest of command {}", restOfCommand);
+
         std::string name = playerName;
         if (!normalizePlayerName(name))
             return false;
 
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript got normalized player name {}", name);
+
         // Detect target's GUID
         ObjectGuid guid;
         if (Player* player = ObjectAccessor::FindPlayerByName(name))
+        {
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript found player by name, getting guid");
             guid = player->GetGUID();
+        }
         else
+        {
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript no player found, getting from cache");
             guid = sCharacterCache->GetCharacterGuidByName(name);
+        }
 
         // Target must exist
         if (guid.IsEmpty())
         {
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript guid is empty returning error");
             handler->SendSysMessage(LANG_NO_PLAYERS_FOUND);
             return true;
         }
 
-        // Store the command for the player (case-insensitive, normalized)
-        std::transform(playerName.begin(), playerName.end(), playerName.begin(), ::tolower);
-        s_pendingCommands[playerName].emplace_back(restOfCommand);
+        s_pendingCommands[name].emplace_back(restOfCommand);
 
-        handler->PSendSysMessage("Command stored for %s: %s", playerName.c_str(), restOfCommand.c_str());
+        handler->PSendSysMessage("Command stored for %s: %s", name.c_str(), restOfCommand.c_str());
         return true;
     }
 };
@@ -115,19 +130,30 @@ public:
     // void OnMapChanged(Player* player) override
     void OnLogin(Player* player, bool loginFirst) override
     {
-        std::string playerKey = player->GetName();
-        std::transform(playerKey.begin(), playerKey.end(), playerKey.begin(), ::tolower);
+        TC_LOG_DEBUG("onlogin", "onlogin_commandscript player logged in {}", player->GetName());
+        std::string playerName = player->GetName();
+        std::string name = playerName;
+        if (!normalizePlayerName(name))
+        {
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript could not normalize player name {}", playerName);
+            return;
+        }
 
-        auto itr = onlogin_commandscript::s_pendingCommands.find(playerKey);
+        auto itr = onlogin_commandscript::s_pendingCommands.find(name);
         if (itr != onlogin_commandscript::s_pendingCommands.end())
         {
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript found commands for player {}", name);
             for (const std::string& cmd : itr->second)
             {
+                TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd);
                 // Execute as server console (admin permissions)
                 CliHandler cliHandler(nullptr, nullptr);
+                TC_LOG_DEBUG("onlogin", "onlogin_commandscript calling ParseCommands"); 
                 cliHandler.ParseCommands(cmd.c_str());
+                TC_LOG_DEBUG("onlogin", "onlogin_commandscript ParseCommands returned"); 
             }
             // Clear commands after execution
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript erasing commands for player {}", name);
             onlogin_commandscript::s_pendingCommands.erase(itr);
         }
     }
