@@ -23,6 +23,7 @@
 #include "Define.h"
 #include "Errors.h"
 #include "Language.h"
+#include "Log.h"
 #include "ObjectGuid.h"
 #include "Optional.h"
 #include "RBAC.h"
@@ -144,7 +145,7 @@ namespace Trinity::Impl::ChatCommands
         }
         CommandInvoker(bool(&handler)(ChatHandler*, char const*))
         {
-            TC_LOG_DEBUG("onlogin", "ChatCommandNode inside _invoker {:p} and size {}", reinterpret_cast<const void*>(&handler), sizeof(handler));
+            TC_LOG_DEBUG("onlogin", "ChatCommandNode inside _invoker {:p}", reinterpret_cast<const void*>(&handler));
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 // make a copy of the argument string
