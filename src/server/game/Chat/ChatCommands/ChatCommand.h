@@ -23,6 +23,7 @@
 #include "Define.h"
 #include "Errors.h"
 #include "Language.h"
+#include "Log.h"
 #include "ObjectGuid.h"
 #include "Optional.h"
 #include "RBAC.h"
@@ -144,11 +145,13 @@ namespace Trinity::Impl::ChatCommands
         }
         CommandInvoker(bool(&handler)(ChatHandler*, char const*))
         {
+            TC_LOG_DEBUG("onlogin", "Inside CommandInvoker");
             _wrapper = [](void* handler, ChatHandler* chatHandler, std::string_view argsStr)
             {
                 // make a copy of the argument string
                 // legacy handlers can destroy input strings with strtok
                 std::string argsStrCopy(argsStr);
+                TC_LOG_DEBUG("onlogin", "Inside CommandInvoker argsStrCopy {}", argsStrCopy);
                 return reinterpret_cast<bool(*)(ChatHandler*, char const*)>(handler)(chatHandler, argsStrCopy.c_str());
             };
             _handler = reinterpret_cast<void*>(handler);

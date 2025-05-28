@@ -316,8 +316,10 @@ namespace Trinity::Impl::ChatCommands
 
     if (cmd)
     { /* if we matched a command at some point, invoke it */
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode Command is true {}", cmdStr);
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode Command is true, oldTail {}", oldTail);
         handler.SetSentErrorMessage(false);
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode IsInvokerVisible {}", cmd->IsInvokerVisible(handler));
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode _invoker {}", cmd->_invoker(&handler, oldTail));
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
             TC_LOG_DEBUG("onlogin", "ChatCommandNode Command success {}", cmdStr);
