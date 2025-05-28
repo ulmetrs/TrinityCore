@@ -27,7 +27,6 @@ EndScriptData */
 #include "DatabaseEnv.h"
 #include "DBCStores.h"
 #include "DisableMgr.h"
-#include "Log.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "RBAC.h"

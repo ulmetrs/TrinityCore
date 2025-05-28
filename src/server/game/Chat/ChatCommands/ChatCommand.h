@@ -121,7 +121,6 @@ namespace Trinity::Impl::ChatCommands
     struct CommandInvoker
     {
         CommandInvoker() : _wrapper(nullptr), _handler(nullptr) {}
-
         template <typename TypedHandler>
         CommandInvoker(TypedHandler& handler)
         {
