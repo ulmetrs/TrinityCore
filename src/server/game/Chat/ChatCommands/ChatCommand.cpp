@@ -248,11 +248,9 @@ namespace Trinity::Impl::ChatCommands
 
 /*static*/ bool Trinity::Impl::ChatCommands::ChatCommandNode::TryExecuteCommand(ChatHandler& handler, std::string_view cmdStr)
 {
-    TC_LOG_DEBUG("onlogin", "ChatCommandNode::TryExecuteCommand with cmdStr {}", cmdStr);
     ChatCommandNode const* cmd = nullptr;
     ChatSubCommandMap const* map = &GetTopLevelMap();
 
-    TC_LOG_DEBUG("onlogin", "ChatCommandNode Firing TS wow OnCommand with cmdStr {}", cmdStr);
     // @tswow-begin
     bool found = false;
     std::string str(cmdStr);
@@ -263,13 +261,12 @@ namespace Trinity::Impl::ChatCommands
         );
     if(found)
     {
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode Firing TS found = true {}", cmdStr);
         return true;
     }
     cmdStr = std::string_view(str);
     // @tswow-end
 
-    TC_LOG_DEBUG("onlogin", "ChatCommandNode removing prefixes {}", cmdStr);
+    TC_LOG_DEBUG("onlogin", "ChatCommandNode cmdStr {} top level map {}", WorldDatabase.EscapeString(cmdStr), map.inspect());
     while (!cmdStr.empty() && (cmdStr.front() == COMMAND_DELIMITER))
         cmdStr.remove_prefix(1);
     while (!cmdStr.empty() && (cmdStr.back() == COMMAND_DELIMITER))
@@ -279,9 +276,9 @@ namespace Trinity::Impl::ChatCommands
     {
         /* oldTail = token DELIMITER newTail */
         auto [token, newTail] = tokenize(oldTail);
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode Token Loop {}", token);
         ASSERT(!token.empty());
         FilteredCommandListIterator it1(*map, handler, token);
+        TC_LOG_DEBUG("onlogin", "Token Loop {} it1 {}", token, it1.inspect());
         if (!it1)
             break; /* no matching subcommands found */
 
@@ -316,10 +313,9 @@ namespace Trinity::Impl::ChatCommands
 
     if (cmd)
     { /* if we matched a command at some point, invoke it */
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode Command is true, oldTail {}", oldTail);
         handler.SetSentErrorMessage(false);
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode IsInvokerVisible {}", cmd->IsInvokerVisible(handler));
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode _invoker {}", cmd->_invoker(&handler, oldTail));
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode cmd {}", cmd->inspect());
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode _invoker {}", cmd->_invoker.inspect());
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
             TC_LOG_DEBUG("onlogin", "ChatCommandNode Command success {}", cmdStr);

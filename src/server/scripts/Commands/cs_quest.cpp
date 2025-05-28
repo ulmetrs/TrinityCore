@@ -65,7 +65,7 @@ public:
         // If target player is specified
         if (playerName)
         {
-            player = ObjectAccessor::FindConnectedPlayerByName(std::string(*playerName));
+            player = ObjectAccessor::FindPlayerByName(std::string(*playerName));
             if (!player)
             {
                 handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
@@ -123,7 +123,7 @@ public:
         // If target player is specified
         if (playerName)
         {
-            player = ObjectAccessor::FindConnectedPlayerByName(std::string(*playerName));
+            player = ObjectAccessor::FindPlayerByName(std::string(*playerName));
             if (!player)
             {
                 handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
@@ -193,7 +193,7 @@ public:
         // If target player is specified
         if (playerName)
         {
-            player = ObjectAccessor::FindConnectedPlayerByName(std::string(*playerName));
+            player = ObjectAccessor::FindPlayerByName(std::string(*playerName));
             if (!player)
             {
                 handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
@@ -310,7 +310,7 @@ public:
         // If target player is specified
         if (playerName)
         {
-            player = ObjectAccessor::FindConnectedPlayerByName(std::string(*playerName));
+            player = ObjectAccessor::FindPlayerByName(std::string(*playerName));
             if (!player)
             {
                 handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);

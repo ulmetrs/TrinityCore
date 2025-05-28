@@ -149,7 +149,6 @@ void ChatHandler::SendSysMessage(uint32 entry)
 
 bool ChatHandler::_ParseCommands(std::string_view text)
 {
-    TC_LOG_DEBUG("onlogin", "ChatHandler::_ParseCommands with text {}", text);
     if (Trinity::ChatCommands::TryExecuteCommand(*this, text))
         return true;
 

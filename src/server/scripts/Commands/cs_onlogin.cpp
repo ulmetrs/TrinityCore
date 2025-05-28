@@ -54,72 +54,52 @@ public:
         return commandTable;
     }
 
-    // Static storage for pending commands
-    static std::unordered_map<std::string, std::vector<std::string>> s_pendingCommands;
+    static std::unordered_map<uint32, std::vector<std::string>> s_pendingCommands;
 
     static bool HandleOnLoginCommand(ChatHandler* handler, char const* args)
     {
         if (!*args)
             return false;
 
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript with args {}", args);
-
         std::istringstream iss(args);
-        std::string playerName;
-        iss >> playerName;
 
-        if (playerName.empty())
+        std::string argPlayerName;
+        iss >> argPlayerName;
+        if (argPlayerName.empty())
             return false;
 
-
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript got player name {}", playerName);
-
-        std::string restOfCommand;
-        std::getline(iss, restOfCommand);
-        // Remove leading spaces from restOfCommand
-        restOfCommand.erase(0, restOfCommand.find_first_not_of(" "));
-
-        if (restOfCommand.empty())
+        std::string argCommand;
+        std::getline(iss, argCommand);
+        argCommand.erase(0, argCommand.find_first_not_of(" "));
+        if (argCommand.empty())
             return false;
 
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript got rest of command {}", restOfCommand);
-
-        std::string name = playerName;
-        if (!normalizePlayerName(name))
+        std::string playerName = argPlayerName;
+        if (!normalizePlayerName(playerName))
             return false;
-
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript got normalized player name {}", name);
 
         // Detect target's GUID
-        ObjectGuid guid;
-        if (Player* player = ObjectAccessor::FindPlayerByName(name))
+        
+        if (Player* player = ObjectAccessor::FindPlayerByName(playerName))
         {
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript found player by name, getting guid");
-            guid = player->GetGUID();
-        }
-        else
-        {
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript no player found, getting from cache");
-            guid = sCharacterCache->GetCharacterGuidByName(name);
+            // TODO reroute to just run the command, player is online
+            // for now return error
+            handler->SendSysMessage("player is online, just run the command");
+            return true;
         }
 
-        // Target must exist
+        ObjectGuid guid = sCharacterCache->GetCharacterGuidByName(playerName);
         if (guid.IsEmpty())
         {
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript guid is empty returning error");
             handler->SendSysMessage(LANG_NO_PLAYERS_FOUND);
             return true;
         }
 
-        s_pendingCommands[name].emplace_back(restOfCommand);
-
-        handler->PSendSysMessage("Command stored for %s: %s", name.c_str(), restOfCommand.c_str());
+        s_pendingCommands[guid.GetCounter()].emplace_back(argCommand);
+        handler->PSendSysMessage("Command {} stored for player {}", argCommand, playerName);
         return true;
     }
 };
-
-// Define the static member
-std::unordered_map<std::string, std::vector<std::string>> onlogin_commandscript::s_pendingCommands;
 
 class OnLoginPlayerScript : public PlayerScript
 {
@@ -131,29 +111,19 @@ public:
     void OnLogin(Player* player, bool loginFirst) override
     {
         TC_LOG_DEBUG("onlogin", "onlogin_commandscript player logged in {}", player->GetName());
-        std::string playerName = player->GetName();
-        std::string name = playerName;
-        if (!normalizePlayerName(name))
-        {
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript could not normalize player name {}", playerName);
-            return;
-        }
+        uint32 playerId = player->GetGUID().GetCounter();
 
-        auto itr = onlogin_commandscript::s_pendingCommands.find(name);
+        auto itr = onlogin_commandscript::s_pendingCommands.find(playerId);
         if (itr != onlogin_commandscript::s_pendingCommands.end())
         {
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript found commands for player {}", name);
+            TC_LOG_DEBUG("onlogin", "onlogin_commandscript found commands for player {}", player->GetName());
             for (const std::string& cmd : itr->second)
             {
                 TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd);
                 // Execute as server console (admin permissions)
                 CliHandler cliHandler(nullptr, nullptr);
-                TC_LOG_DEBUG("onlogin", "onlogin_commandscript calling ParseCommands"); 
                 cliHandler.ParseCommands(cmd.c_str());
-                TC_LOG_DEBUG("onlogin", "onlogin_commandscript ParseCommands returned"); 
             }
-            // Clear commands after execution
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript erasing commands for player {}", name);
             onlogin_commandscript::s_pendingCommands.erase(itr);
         }
     }
