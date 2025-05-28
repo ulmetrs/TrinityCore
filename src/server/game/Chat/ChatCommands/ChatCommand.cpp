@@ -266,7 +266,7 @@ namespace Trinity::Impl::ChatCommands
     cmdStr = std::string_view(str);
     // @tswow-end
 
-    TC_LOG_DEBUG("onlogin", "ChatCommandNode cmdStr {} top level map {} and size {}", cmdStr, map, sizeof(*map));
+    TC_LOG_DEBUG("onlogin", "ChatCommandNode cmdStr {} top level map {:p} and size {}", cmdStr, static_cast<const void*>(map), sizeof(*map));
     while (!cmdStr.empty() && (cmdStr.front() == COMMAND_DELIMITER))
         cmdStr.remove_prefix(1);
     while (!cmdStr.empty() && (cmdStr.back() == COMMAND_DELIMITER))
@@ -278,7 +278,7 @@ namespace Trinity::Impl::ChatCommands
         auto [token, newTail] = tokenize(oldTail);
         ASSERT(!token.empty());
         FilteredCommandListIterator it1(*map, handler, token);
-        TC_LOG_DEBUG("onlogin", "Token Loop {} it1 {} and size {}", token, it1, sizeof(*it1));
+        TC_LOG_DEBUG("onlogin", "Token Loop {} it1 {:p} and size {}", token, static_cast<const void*>(&it1), sizeof(it1));
         if (!it1)
             break; /* no matching subcommands found */
 
@@ -314,8 +314,8 @@ namespace Trinity::Impl::ChatCommands
     if (cmd)
     { /* if we matched a command at some point, invoke it */
         handler.SetSentErrorMessage(false);
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode cmd {} and size {}", cmd, sizeof(*cmd));
-        TC_LOG_DEBUG("onlogin", "ChatCommandNode _invoker {} and size {}", cmd->_invoker, sizeof(cmd->_invoker));
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode cmd {:p} and size {}", static_cast<const void*>(cmd), sizeof(*cmd));
+        TC_LOG_DEBUG("onlogin", "ChatCommandNode _invoker {:p} and size {}", reinterpret_cast<const void*>(&cmd->_invoker), sizeof(cmd->_invoker));
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
             TC_LOG_DEBUG("onlogin", "ChatCommandNode Command success {}", cmdStr);
