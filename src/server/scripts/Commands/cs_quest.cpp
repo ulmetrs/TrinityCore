@@ -189,13 +189,11 @@ public:
 
     static bool HandleQuestComplete(ChatHandler* handler, Quest const* quest, Optional<std::string_view> playerName = {})
     {
-        TC_LOG_DEBUG("onlogin", "HandleQuestComplete called: quest={}", quest->GetQuestId());
         Player* player = nullptr;
 
         // If target player is specified
         if (playerName)
         {
-            TC_LOG_DEBUG("onlogin", "HandleQuestComplete target player specified: playerName={}", std::string(*playerName));
             player = ObjectAccessor::FindPlayerByName(std::string(*playerName));
             if (!player)
             {
@@ -207,18 +205,14 @@ public:
         // No target behavior
         else
         {
-            TC_LOG_DEBUG("onlogin", "HandleQuestComplete no target, get selected player or self");
             player = handler->getSelectedPlayerOrSelf();
             if (!player)
             {
-                TC_LOG_DEBUG("onlogin", "HandleQuestComplete no target, so send sys message");
                 handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
                 handler->SetSentErrorMessage(true);
                 return false;
             }
         }
-
-        TC_LOG_DEBUG("onlogin", "HandleQuestComplete player found: player={}", player->GetGUID().GetCounter());
 
         // If player doesn't have the quest
         if (player->GetQuestStatus(quest->GetQuestId()) == QUEST_STATUS_NONE

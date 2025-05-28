@@ -68,28 +68,20 @@ public:
         if (argPlayerName.empty())
             return false;
 
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript argPlayerName {}", argPlayerName);
-
         std::string argCommand;
         std::getline(iss, argCommand);
         argCommand.erase(0, argCommand.find_first_not_of(" "));
         if (argCommand.empty())
             return false;
 
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript argCommand {}", argCommand);
-
         std::string playerName = argPlayerName;
         if (!normalizePlayerName(playerName))
             return false;
 
-        // Detect target's GUID
-        
-        if (Player* player = ObjectAccessor::FindPlayerByName(playerName))
+        // if argPlayer is online, just run the command
+        if (ObjectAccessor::FindPlayerByName(playerName))
         {
-            // TODO reroute to just run the command, player is online
-            // for now return error
-            handler->SendSysMessage("player is online, just run the command");
-            return true;
+            return handler->ParseCommands(argCommand);
         }
 
         ObjectGuid guid = sCharacterCache->GetCharacterGuidByName(playerName);
@@ -112,20 +104,14 @@ class OnLoginPlayerScript : public PlayerScript
 public:
     OnLoginPlayerScript() : PlayerScript("OnLoginPlayerScript") { }
 
-    // If you want this to trigger on map entry, use OnMapChanged instead of OnLogin:
-    // void OnMapChanged(Player* player) override
     void OnLogin(Player* player, bool loginFirst) override
     {
-        TC_LOG_DEBUG("onlogin", "onlogin_commandscript player logged in {}", player->GetName());
-        uint32 playerId = player->GetGUID().GetCounter();
-
-        auto itr = onlogin_commandscript::s_pendingCommands.find(playerId);
+        ObjectGuid guid = player->GetGUID();
+        auto itr = onlogin_commandscript::s_pendingCommands.find(guid.GetCounter());
         if (itr != onlogin_commandscript::s_pendingCommands.end())
         {
-            TC_LOG_DEBUG("onlogin", "onlogin_commandscript found commands for player {}", player->GetName());
             for (const std::string& cmd : itr->second)
             {
-                TC_LOG_DEBUG("onlogin", "onlogin_commandscript executing command {}", cmd);
                 // Execute as server console (admin permissions)
                 CliHandler cliHandler(nullptr, nullptr);
                 cliHandler.ParseCommands(cmd);

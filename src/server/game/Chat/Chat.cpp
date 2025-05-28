@@ -21,7 +21,6 @@
 #include "CharacterCache.h"
 #include "GridNotifiersImpl.h"
 #include "Language.h"
-#include "Log.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Optional.h"
@@ -707,7 +706,6 @@ char const* CliHandler::GetTrinityString(uint32 entry) const
 
 void CliHandler::SendSysMessage(std::string_view str, bool /*escapeCharacters*/)
 {
-    TC_LOG_DEBUG("onlogin", "CliHandler::SendSysMessage: str={}", str);
     if (m_print)
     {
         m_print(m_callbackArg, str);

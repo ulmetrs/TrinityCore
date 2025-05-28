@@ -23,7 +23,6 @@
 #include "Define.h"
 #include "Errors.h"
 #include "Language.h"
-#include "Log.h"
 #include "ObjectGuid.h"
 #include "Optional.h"
 #include "RBAC.h"
