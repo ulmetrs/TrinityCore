@@ -319,9 +319,8 @@ namespace Trinity::Impl::ChatCommands
             TC_LOG_ERROR("onlogin", "cmd->_invoker is null! for cmd {}", cmd->_name);
             return false;
         }
-        if (!handler) {
-            TC_LOG_ERROR("onlogin", "handler is null! for cmd {} and old tail {}", cmd->_name, oldTail);
-            return false;
+        if (cmd->IsInvokerVisible(handler)) {
+            TC_LOG_ERROR("onlogin", "cmd->IsInvokerVisible is true for cmd {}", cmd->_name);
         }
         if (cmd->IsInvokerVisible(handler) && cmd->_invoker(&handler, oldTail))
         { /* invocation succeeded, log this */
