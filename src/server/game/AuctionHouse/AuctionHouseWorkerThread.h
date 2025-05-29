@@ -157,6 +157,8 @@ private:
     MPSCQueue<ListAuctionResponse>* _responseQueue;
     std::unordered_map<uint8, SearchableAuctionEntriesMap> _auctions;
     std::jthread _workerThread;
+    uint32 _auctionsAdded;
+    uint32 _auctionsRemoved;
 };
 
 #endif // AUCTION_HOUSE_WORKER_THREAD_H
