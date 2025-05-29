@@ -340,11 +340,11 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
 
     for (auto const& pair : searchableAuctionMap)
     {
-        if (pair.second->ownerGuid != searchOwnerListRequest.ownerGuid)
+        if (pair.second->ownerGuid != message.ownerGuid)
             continue;
 
         std::shared_ptr<SearchableAuctionEntry> const& auctionEntry = pair.second;
-        auctionEntry->BuildAuctionInfo(searchResponse->packet);
+        auctionEntry->BuildAuctionInfo(listResponse->packet);
         ++count;
         ++totalcount;
     }

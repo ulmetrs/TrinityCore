@@ -566,7 +566,7 @@ void AuctionHouseMgr::ProcessListAuctionResponses()
 
 void AuctionHouseMgr::UpdateExpiredAuctions()
 {
-    for (auto& pair : auctionHouseMap_)
+    for (auto& pair : _auctionHouses)
     {
         AuctionHouseObject* auctionHouse = pair.second.get();
 
