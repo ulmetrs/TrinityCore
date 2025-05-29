@@ -121,7 +121,7 @@ private:
 };
 
 typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
-typedef std::unordered_map<uint32, std::unique_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
+typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
 typedef std::vector<SearchableAuctionEntry*> SortableAuctionEntriesList;
 
 class AuctionSorter
