@@ -39,6 +39,7 @@
 //void called when player click on auctioneer npc
 void WorldSession::HandleAuctionHelloOpcode(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_HELLO");
     ObjectGuid guid;                                            //NPC guid
     recvData >> guid;
 
@@ -64,6 +65,7 @@ void WorldSession::HandleAuctionHelloOpcode(WorldPacket& recvData)
 //this void causes that auction window is opened
 void WorldSession::SendAuctionHello(ObjectGuid guid, Unit const* unit)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_HELLO");
     if (GetPlayer()->GetLevel() < sWorld->getIntConfig(CONFIG_AUCTION_LEVEL_REQ))
     {
         SendNotification(GetTrinityString(LANG_AUCTION_REQ), sWorld->getIntConfig(CONFIG_AUCTION_LEVEL_REQ));
@@ -124,6 +126,7 @@ void WorldSession::SendAuctionOwnerNotification(AuctionEntry* auction)
 //this void creates new auction and adds auction to some auctionhouse
 void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_SELL_ITEM");
     ObjectGuid auctioneer;
     uint32 itemsCount, etime, bid, buyout;
     recvData >> auctioneer;
@@ -585,6 +588,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
 //this void is called when auction_owner cancels his auction
 void WorldSession::HandleAuctionRemoveItem(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_REMOVE_ITEM");
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_AUCTION_REMOVE_ITEM");
 
     ObjectGuid auctioneer;
@@ -661,6 +665,7 @@ void WorldSession::HandleAuctionRemoveItem(WorldPacket& recvData)
 //called when player lists his bids
 void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_LIST_BIDDER_ITEMS");
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_AUCTION_LIST_BIDDER_ITEMS");
 
     ObjectGuid guid;                                        //NPC guid
@@ -715,6 +720,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
 //this void sends player info about his auctions
 void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_LIST_OWNER_ITEMS");
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_AUCTION_LIST_OWNER_ITEMS");
 
     uint32 listfrom;
@@ -746,6 +752,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
 //this void is called when player clicks on search button
 void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
 {
+    TC_LOG_DEBUG("auctions", "WORLD: Received CMSG_AUCTION_LIST_ITEMS");
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_AUCTION_LIST_ITEMS");
 
     std::string searchedname;
