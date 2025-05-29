@@ -92,7 +92,7 @@ AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
 
 void AuctionHouseWorkerThread::QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message)
 {
-    _updateQueue->send(std::move(message));
+    _updateQueue.send(std::move(message));
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop)
@@ -103,7 +103,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
         {
             TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run received message from request queue"); 
             // Lazy processing of updates
-            while(auto updateMessage = _updateQueue->try_receive())
+            while(auto updateMessage = _updateQueue.try_receive())
             {
                 TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run received update message from update queue"); 
                 auto* update = updateMessage->get();
