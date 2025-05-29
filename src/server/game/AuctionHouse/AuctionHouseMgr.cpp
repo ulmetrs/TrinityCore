@@ -218,26 +218,19 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, Character
     if (!pItem)
         return;
 
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Item found");
     ObjectGuid owner_guid(HighGuid::Player, auction->owner);
     Player* owner = ObjectAccessor::FindConnectedPlayer(owner_guid);
     uint32 owner_accId = sCharacterCache->GetCharacterAccountIdByGuid(owner_guid);
     // owner exist
     if ((owner || owner_accId) && !sAuctionBotConfig->IsBotChar(auction->owner))
     {
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner found and not bot");
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Bid and Deposit: {}", auction->bid + auction->deposit);
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Entry is null: {}", auction->auctionHouseEntry == nullptr);
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Cut: {}", auction->GetAuctionCut());
         uint32 profit = auction->bid + auction->deposit - auction->GetAuctionCut();
 
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Profit: {}", profit);
         //FIXME: what do if owner offline
         if (owner)
         {
             TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try update profit achievement");
             owner->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS, profit);
-            TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try update highest auction sold achievement");
             owner->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_AUCTION_SOLD, auction->bid);
             TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try send auction owner notification");
             //send auction owner notification, bidder must be current!
@@ -422,12 +415,10 @@ void AuctionHouseMgr::LoadAuctions()
         aItem->LoadFromDB(fields);
 
         if (moveToNeutralAH)
-        {
             aItem->houseId = AUCTIONHOUSE_NEUTRAL;
-            aItem->auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId);
-        }
 
-        if (!AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId))
+        aItem->auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId);
+        if (!aItem->auctionHouseEntry)
         {
             TC_LOG_ERROR("misc", "Auction {} has invalid house id {}", aItem->Id, aItem->houseId);
             aItem->DeleteFromDB(trans);
@@ -488,6 +479,7 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
 void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
 {
     ASSERT(auction);
+    ASSERT(auction->auctionHouseEntry);
 
     Item* item = GetAItem(auction->itemGUIDLow);
     ASSERT(item);
