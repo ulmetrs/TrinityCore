@@ -116,10 +116,12 @@ uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32
 //does not clear ram
 void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, CharacterDatabaseTransaction trans)
 {
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Start Method");
     Item* pItem = GetAItem(auction->itemGUIDLow);
     if (!pItem)
         return;
 
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Item found");
     uint32 bidderAccId = 0;
     ObjectGuid bidderGuid(HighGuid::Player, auction->bidder);
     Player* bidder = ObjectAccessor::FindConnectedPlayer(bidderGuid);
@@ -170,12 +172,15 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, CharacterDatabas
             bidder->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WON_AUCTIONS, 1);
         }
 
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Sending Mail Draft");
         MailDraft(auction->BuildAuctionMailSubject(pItem, AUCTION_WON), AuctionEntry::BuildAuctionWonMailBody(ObjectGuid::Create<HighGuid::Player>(auction->owner), auction->bid, auction->buyout))
             .AddItem(pItem)
             .SendMailTo(trans, MailReceiver(bidder, auction->bidder), auction, MAIL_CHECK_MASK_COPIED);
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Mail Draft Sent");
     }
     else
     {
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Bidder doesn't exist, deleting item");
         // bidder doesn't exist, delete the item
         RemoveAItem(auction->itemGUIDLow, true, &trans);
     }
@@ -208,16 +213,19 @@ void AuctionHouseMgr::SendAuctionSalePendingMail(AuctionEntry* auction, Characte
 //call this method to send mail to auction owner, when auction is successful, it does not clear ram
 void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, CharacterDatabaseTransaction trans)
 {
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Start Method");
     Item* pItem = GetAItem(auction->itemGUIDLow);
     if (!pItem)
         return;
 
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Item found");
     ObjectGuid owner_guid(HighGuid::Player, auction->owner);
     Player* owner = ObjectAccessor::FindConnectedPlayer(owner_guid);
     uint32 owner_accId = sCharacterCache->GetCharacterAccountIdByGuid(owner_guid);
     // owner exist
     if ((owner || owner_accId) && !sAuctionBotConfig->IsBotChar(auction->owner))
     {
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner found and not bot");
         uint32 profit = auction->bid + auction->deposit - auction->GetAuctionCut();
 
         //FIXME: what do if owner offline
@@ -229,10 +237,12 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, Character
             owner->GetSession()->SendAuctionOwnerNotification(auction);
         }
 
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Sending Mail Draft");
         MailDraft(auction->BuildAuctionMailSubject(pItem, AUCTION_SUCCESSFUL),
             AuctionEntry::BuildAuctionSoldMailBody(ObjectGuid::Create<HighGuid::Player>(auction->bidder), auction->bid, auction->buyout, auction->deposit, auction->GetAuctionCut()))
             .AddMoney(profit)
             .SendMailTo(trans, MailReceiver(owner, auction->owner), auction, MAIL_CHECK_MASK_COPIED, sWorld->getIntConfig(CONFIG_MAIL_DELIVERY_DELAY));
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Mail Draft Sent");
     }
 }
 

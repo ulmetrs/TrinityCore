@@ -580,6 +580,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
         //sAuctionMgr->SendAuctionSalePendingMail(auction, trans);
         // @epoch-end
         sAuctionMgr->SendAuctionSuccessfulMail(auction, trans);
+        TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid Sent Auction Successful Mail");
         sAuctionMgr->SendAuctionWonMail(auction, trans);
 
         TC_LOG_INFO("auctions", "Buyout Auction via purchase, delete from db and remove: {}", auction->Id);
