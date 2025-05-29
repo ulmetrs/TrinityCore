@@ -227,7 +227,7 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, Character
     {
         TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner found and not bot");
         TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Bid and Deposit: {}", auction->bid + auction->deposit);
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Entry: {}", auction->auctionHouseEntry);
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Entry is null: {}", auction->auctionHouseEntry == nullptr);
         TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Cut: {}", auction->auctionHouseEntry->GetAuctionCut());
         uint32 profit = auction->bid + auction->deposit - auction->GetAuctionCut();
 
