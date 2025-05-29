@@ -107,7 +107,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
             {
                 TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run received update message from update queue"); 
                 auto* update = updateMessage->get();
-                TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run update message type {}", update->type); 
+                TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run update message type {}", uint8(update->type)); 
                 switch (update->type)
                 {
                     case AuctionMessage::Type::Add:
@@ -126,7 +126,7 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
             
             TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run attempting to get list message"); 
             auto* list = listMessage->get();
-            TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run get list message type {}", list->type); 
+            TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run get list message type {}", uint8(list->type)); 
             switch (list->type)
             {
                 case AuctionMessage::Type::List:
