@@ -476,8 +476,6 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
     auctionHouse->AddAuction(auction);
     sScriptMgr->OnAuctionAdd(auctionHouse, auction);
 
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::AddAuction added auction new house count: {}", auctionHouse->Getcount());
-
     // SearchableAuctionEntry is a shared_ptr as it will be shared among all the worker threads and needs to be self-managed
     std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry = std::make_shared<SearchableAuctionEntry>();
     searchableAuctionEntry->Id = auction->Id;
@@ -525,7 +523,6 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 
     // we need to delete the entry, it is not referenced any more
     delete auction;
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAuction removed auction new house count: {}", auctionHouse->Getcount());
     return wasInMap;
 }
 
@@ -547,7 +544,8 @@ void AuctionHouseMgr::QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage>
 }
 
 void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> message)
-{  
+{
+    TC_LOG_INFO("auctions", "Queue Auction Message:, TOTAL AUCTIONS {}", GetAuctionHouse(message->houseId)->Getcount());
     _requestQueue.send(std::move(message));
 }
 
@@ -750,7 +748,7 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint8 houseId)
 uint8 AuctionHouseMgr::GetAuctionHouseId(uint32 factionTemplateId)
 {
     if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        return AUCTIONHOUSE_ALLIANCE; // goblin auction house
+        return AUCTIONHOUSE_NEUTRAL; // goblin auction house
 
     // FIXME: found way for proper auctionhouse selection by another way
     // AuctionHouse.dbc have faction field with _player_ factions associated with auction house races.

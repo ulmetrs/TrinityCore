@@ -75,7 +75,7 @@ bool AuctionSorter::operator()(SearchableAuctionEntry const* auc1, SearchableAuc
     return false;
 }
 
-AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListAuctionResponse>* responseQueue) : _requestQueue(requestQueue), _responseQueue(responseQueue), _auctionsAdded(0), _auctionsRemoved(0)
+AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListAuctionResponse>* responseQueue) : _requestQueue(requestQueue), _responseQueue(responseQueue)
 {
     _auctions[AUCTIONHOUSE_ALLIANCE];
     _auctions[AUCTIONHOUSE_HORDE];
@@ -146,16 +146,12 @@ void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& message)
 {
     auto& searchableAuctionMap = _auctions[message.houseId];
     searchableAuctionMap.insert(std::make_pair(message.searchableAuctionEntry->Id, message.searchableAuctionEntry));
-    _auctionsAdded++;
-    TC_LOG_INFO("auctions", "Worker Mod Auctions Added: {} Removed: {}, Total: {}", _auctionsAdded, _auctionsRemoved, _auctionsAdded - _auctionsRemoved);
 }
 
 void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& message)
 {
     auto& searchableAuctionMap = _auctions[message.houseId];
     searchableAuctionMap.erase(message.auctionId);
-    _auctionsRemoved++;
-    TC_LOG_INFO("auctions", "Worker Mod Auctions Added: {} Removed: {}, Total: {}", _auctionsAdded, _auctionsRemoved, _auctionsAdded - _auctionsRemoved);
 }
 
 void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& message)
@@ -173,7 +169,7 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
 {
     uint32 oldMSTime = getMSTime();
     auto const& searchableAuctionMap = _auctions[message.houseId];
-    TC_LOG_INFO("auctions", "Worker List Auctions Added: {} Removed: {}, Total: {}", _auctionsAdded, _auctionsRemoved, _auctionsAdded - _auctionsRemoved);
+    TC_LOG_INFO("auctions", "Worker List Auctions Total: {}", searchableAuctionMap.size());
     uint32 count = 0, totalCount = 0;
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
@@ -297,7 +293,7 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
 {
     uint32 oldMSTime = getMSTime();
     SearchableAuctionEntriesMap const& searchableAuctionMap = _auctions[message.houseId];
-    TC_LOG_INFO("auctions", "Worker Bidder List Auctions Added: {} Removed: {}, Total: {}", _auctionsAdded, _auctionsRemoved, _auctionsAdded - _auctionsRemoved);
+    TC_LOG_INFO("auctions", "Worker Bidder List Auctions Total: {}", searchableAuctionMap.size());
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
     listResponse->playerGuid = message.ownerGuid;
@@ -342,7 +338,7 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
 {
     uint32 oldMSTime = getMSTime();
     SearchableAuctionEntriesMap const& searchableAuctionMap = _auctions[message.houseId];
-    TC_LOG_INFO("auctions", "Worker Owner List Auctions Added: {} Removed: {}, Total: {}", _auctionsAdded, _auctionsRemoved, _auctionsAdded - _auctionsRemoved);
+    TC_LOG_INFO("auctions", "Worker Owner List Auctions Total: {}", searchableAuctionMap.size());
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
     listResponse->playerGuid = message.ownerGuid;
