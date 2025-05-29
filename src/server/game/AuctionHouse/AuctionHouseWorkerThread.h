@@ -140,7 +140,7 @@ class AuctionHouseWorkerThread
 public:
     AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListAuctionResponse>* responseQueue);
     ~AuctionHouseWorkerThread();
-    void QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message);
+    void QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage> message);
 
 private:
     void Run(std::stop_token stop);
@@ -152,7 +152,7 @@ private:
     void ListBidderAuctions(ListBidderAuctionMessage const& message);
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    SignalQueue<std::shared_ptr<AuctionMessage>> _updateQueue;
+    SignalQueue<std::shared_ptr<AuctionMessage>> _modifyQueue;
     SignalQueue<std::unique_ptr<AuctionMessage>>* _requestQueue;
     MPSCQueue<ListAuctionResponse>* _responseQueue;
     std::unordered_map<uint8, SearchableAuctionEntriesMap> _auctions;

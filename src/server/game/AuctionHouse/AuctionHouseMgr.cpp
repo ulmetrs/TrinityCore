@@ -513,7 +513,7 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
     searchableAuctionEntry->SetItemNames();
 
     auto message = std::make_shared<AddAuctionMessage>(searchableAuctionEntry);
-    QueueUpdateAuctionMessage(message);
+    QueueModifyAuctionsMessage(message);
 }
 
 bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
@@ -523,7 +523,7 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
     sScriptMgr->OnAuctionRemove(auctionHouse, auction);
 
     auto message = std::make_shared<RemoveAuctionMessage>(auction->Id, auction->houseId);
-    QueueUpdateAuctionMessage(message);
+    QueueModifyAuctionsMessage(message);
 
     // we need to delete the entry, it is not referenced any more
     delete auction;
@@ -534,19 +534,20 @@ void AuctionHouseMgr::UpdateBid(AuctionEntry* auction)
 {
     // Note: the synchronous bid update is done in the handler
     ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auction->bidder);
-    auto message = std::make_shared<UpdateAuctionBidMessage>(auction->Id, auction->houseId, auction->bid, bidderGuid);
-    QueueUpdateAuctionMessage(message);
+    // The SearchableAuctionEntry is shared ptr amongst all workers, we only need 1 worker to modify the bid
+    auto message = std::make_unique<UpdateAuctionBidMessage>(auction->Id, auction->houseId, auction->bid, bidderGuid);
+    QueueAuctionMessage(std::move(message));
 }
 
-void AuctionHouseMgr::QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message)
+void AuctionHouseMgr::QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage> message)
 {
     for (auto& worker : _workerThreads)
     {
-        worker->QueueUpdateAuctionMessage(message);
+        worker->QueueModifyAuctionsMessage(message);
     }
 }
 
-void AuctionHouseMgr::QueueListAuctionMessage(std::unique_ptr<AuctionMessage> message)
+void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> message)
 {  
     _requestQueue.send(std::move(message));
 }

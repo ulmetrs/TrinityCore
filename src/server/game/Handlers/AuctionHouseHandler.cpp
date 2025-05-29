@@ -709,7 +709,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListBidderAuctionMessage>(ahEntry->ID, std::move(auctionIds), GetPlayer()->GetGUID());
-    sAuctionMgr->QueueListAuctionMessage(std::move(message));
+    sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
 //this void sends player info about his auctions
@@ -740,7 +740,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
         return;
 
     auto message = std::make_unique<ListOwnerAuctionMessage>(ahEntry->ID, GetPlayer()->GetGUID());
-    sAuctionMgr->QueueListAuctionMessage(std::move(message));
+    sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
 //this void is called when player clicks on search button
@@ -850,7 +850,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListAuctionMessage>(ahEntry->ID, std::move(ahSearchInfo), std::move(ahPlayerInfo));
-    sAuctionMgr->QueueListAuctionMessage(std::move(message));
+    sAuctionMgr->QueueAuctionMessage(std::move(message));
 }
 
 void WorldSession::HandleAuctionListPendingSales(WorldPacket& recvData)

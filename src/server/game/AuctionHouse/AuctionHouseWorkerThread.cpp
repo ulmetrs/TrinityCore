@@ -90,50 +90,49 @@ AuctionHouseWorkerThread::~AuctionHouseWorkerThread()
     }
 }
 
-void AuctionHouseWorkerThread::QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message)
+void AuctionHouseWorkerThread::QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage> message)
 {
-    _updateQueue.send(std::move(message));
+    _modifyQueue.send(std::move(message));
 }
 
 void AuctionHouseWorkerThread::Run(std::stop_token stop)
 {
     while (!stop.stop_requested())
     {
-        if (auto listMessage = _requestQueue->receive(stop))
+        if (auto auctionMessage = _requestQueue->receive(stop))
         {
-            // Lazy processing of updates
-            // updates are only used to provide accurate search results, so we don't need a separate
-            // process to apply them, just do them when we have a search request
-            while(auto updateMessage = _updateQueue.try_receive())
+            // Lazy processing of add/remove updates
+            // Process these first to ensure UpdateAuctionBid always finds an entry
+            while(auto modifyMessage = _modifyQueue.try_receive())
             {
-                auto* update = updateMessage->get();
-                switch (update->type)
+                auto* modify = modifyMessage->get();
+                switch (modify->type)
                 {
                     case AuctionMessage::Type::Add:
-                        AddAuction(*static_cast<AddAuctionMessage*>(update));
+                        AddAuction(*static_cast<AddAuctionMessage*>(modify));
                         break;
                     case AuctionMessage::Type::Remove:
-                        RemoveAuction(*static_cast<RemoveAuctionMessage*>(update));
-                        break;
-                    case AuctionMessage::Type::UpdateBid:
-                        UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(update));
+                        RemoveAuction(*static_cast<RemoveAuctionMessage*>(modify));
                         break;
                     default:
                         break;
                 }
             }
 
-            auto* list = listMessage->get();
-            switch (list->type)
+            auto* message = auctionMessage->get();
+            switch (message->type)
             {
+                case AuctionMessage::Type::UpdateBid:
+                    UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(message));
+                    break;
                 case AuctionMessage::Type::List:
-                    ListAuctions(*static_cast<ListAuctionMessage*>(list));
+                    ListAuctions(*static_cast<ListAuctionMessage*>(message));
                     break;
                 case AuctionMessage::Type::ListOwner:
-                    ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(list));
+                    ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(message));
                     break;
                 case AuctionMessage::Type::ListBidder:
-                    ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(list));
+                    ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(message));
                     break;
                 default:
                     break;
