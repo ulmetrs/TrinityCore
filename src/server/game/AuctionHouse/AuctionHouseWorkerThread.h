@@ -138,7 +138,7 @@ private:
 class AuctionHouseWorkerThread
 {
 public:
-    AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListResponse>* responseQueue);
+    AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListAuctionResponse>* responseQueue);
     ~AuctionHouseWorkerThread();
     void QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message);
 

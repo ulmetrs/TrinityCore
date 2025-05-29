@@ -566,9 +566,9 @@ void AuctionHouseMgr::ProcessListAuctionResponses()
 
 void AuctionHouseMgr::UpdateExpiredAuctions()
 {
-    for (auto& [_, ahPtr] : _auctionHouses)
+    for (auto& pair : auctionHouseMap_)
     {
-        AuctionHouseObject* auctionHouse = ahPtr.get();
+        AuctionHouseObject* auctionHouse = pair.second.get();
 
         // If storage is empty, no need to update. next == NULL in this case
         if (!auctionHouse || auctionHouse->Getcount() == 0)

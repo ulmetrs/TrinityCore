@@ -74,7 +74,7 @@ bool AuctionSorter::operator()(SearchableAuctionEntry const* auc1, SearchableAuc
     return false;
 }
 
-AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListResponse>* responseQueue) : _requestQueue(requestQueue), _responseQueue(responseQueue)
+AuctionHouseWorkerThread::AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListAuctionResponse>* responseQueue) : _requestQueue(requestQueue), _responseQueue(responseQueue)
 {
     _auctions[AUCTIONHOUSE_ALLIANCE];
     _auctions[AUCTIONHOUSE_HORDE];
