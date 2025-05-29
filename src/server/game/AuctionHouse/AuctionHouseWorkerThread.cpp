@@ -99,37 +99,39 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
 {
     while (!stop.stop_requested())
     {
-        if (auto message = _requestQueue->receive(stop))
+        if (auto listMessage = _requestQueue->receive(stop))
         {
             // Lazy processing of updates
-            while(auto update = _updateQueue->try_receive())
+            while(auto updateMessage = _updateQueue->try_receive())
             {
+                auto* update = updateMessage->get();
                 switch (update->type)
                 {
                     case AuctionMessage::Type::Add:
-                        AddAuction(*static_cast<AddAuctionMessage*>(update.get()));
+                        AddAuction(*static_cast<AddAuctionMessage*>(update));
                         break;
                     case AuctionMessage::Type::Remove:
-                        RemoveAuction(*static_cast<RemoveAuctionMessage*>(update.get()));
+                        RemoveAuction(*static_cast<RemoveAuctionMessage*>(update));
                         break;
                     case AuctionMessage::Type::UpdateBid:
-                        UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(update.get()));
+                        UpdateAuctionBid(*static_cast<UpdateAuctionBidMessage*>(update));
                         break;
                     default:
                         break;
                 }
             }
             
-            switch (message->type)
+            auto* list = listMessage->get();
+            switch (list->type)
             {
                 case AuctionMessage::Type::List:
-                    ListAuctions(*static_cast<ListAuctionMessage*>(message.get()));
+                    ListAuctions(*static_cast<ListAuctionMessage*>(list));
                     break;
                 case AuctionMessage::Type::ListOwner:
-                    ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(message.get()));
+                    ListOwnerAuctions(*static_cast<ListOwnerAuctionMessage*>(list));
                     break;
                 case AuctionMessage::Type::ListBidder:
-                    ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(message.get()));
+                    ListBidderAuctions(*static_cast<ListBidderAuctionMessage*>(list));
                     break;
                 default:
                     break;
