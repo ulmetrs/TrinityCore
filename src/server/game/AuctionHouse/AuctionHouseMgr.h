@@ -67,8 +67,8 @@ public:
     void AddAuction(AuctionEntry* auctionEntry);
     bool RemoveAuction(AuctionEntry* auctionEntry);
     void UpdateBid(AuctionEntry* auctionEntry);
-    void QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message);
-    void QueueListAuctionMessage(std::unique_ptr<AuctionMessage> message);
+    void QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage> message);
+    void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
     void ProcessListAuctionResponses();
     void UpdateExpiredAuctions();
     bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
