@@ -16,12 +16,9 @@
  */
 
 #include "AuctionHouseMgr.h"
-#include "AuctionHouseCommon.h"
-#include "AuctionHouseWorkerThread.h"
+#include "AuctionHouseDefines.h"
 #include "AuctionHouseBot.h"
-#include "AccountMgr.h"
 #include "Bag.h"
-#include "Common.h"
 #include "CharacterCache.h"
 #include "DatabaseEnv.h"
 #include "DBCStores.h"
@@ -45,14 +42,22 @@ enum eAuctionHouse
 
 AuctionHouseMgr::AuctionHouseMgr()
 {
-    auctionHouseMap_[AUCTIONHOUSE_ALLIANCE] = std::make_unique<AuctionHouseObject>();
-    auctionHouseMap_[AUCTIONHOUSE_HORDE]    = std::make_unique<AuctionHouseObject>();
-    auctionHouseMap_[AUCTIONHOUSE_NEUTRAL]  = std::make_unique<AuctionHouseObject>();
+    _auctionHouses[AUCTIONHOUSE_ALLIANCE] = std::make_unique<AuctionHouseObject>();
+    _auctionHouses[AUCTIONHOUSE_HORDE]    = std::make_unique<AuctionHouseObject>();
+    _auctionHouses[AUCTIONHOUSE_NEUTRAL]  = std::make_unique<AuctionHouseObject>();
 
     for (uint32 i = 0; i < sWorld->getIntConfig(CONFIG_AUCTION_WORKER_THREADS); ++i)
     {
-        workerThreads_.push_back(std::make_unique<AuctionHouseWorkerThread>(&messageQueue_, auctionHouseMap_));
+        _workerThreads.push_back(std::make_unique<AuctionHouseWorkerThread>(&_requestQueue, &_responseQueue));
     }
+}
+
+AuctionHouseMgr::~AuctionHouseMgr()
+{
+    for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
+        delete itr->second;
+
+    _requestQueue.close();
 }
 
 AuctionHouseMgr* AuctionHouseMgr::instance()
@@ -69,10 +74,10 @@ AuctionHouseObject* AuctionHouseMgr::GetAuctionHouseByFactionTemplateId(uint32 f
 
 AuctionHouseObject* AuctionHouseMgr::GetAuctionHouse(uint8 houseId)
 {
-    auto it = auctionHouseMap_.find(houseId);
-    if (it != auctionHouseMap_.end())
+    auto it = _auctionHouses.find(houseId);
+    if (it != _auctionHouses.end())
         return it->second.get();
-    return auctionHouseMap_[AUCTIONHOUSE_NEUTRAL].get();
+    return _auctionHouses[AUCTIONHOUSE_NEUTRAL].get();
 }
 
 uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32 time, Item* pItem, uint32 count)
@@ -507,9 +512,8 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
     searchableAuctionEntry->item.itemTemplate = item->GetTemplate();
     searchableAuctionEntry->SetItemNames();
 
-    // Queue the searchable auction entry to be added asynchronously
-    auto message = std::make_unique<AddAuctionMessage>(searchableAuctionEntry);
-    messageQueue_.send(std::move(message));
+    auto message = std::make_shared<AddAuctionMessage>(searchableAuctionEntry);
+    QueueUpdateAuctionMessage(message);
 }
 
 bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
@@ -518,9 +522,8 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
     bool wasInMap = auctionHouse->RemoveAuction(auction);
     sScriptMgr->OnAuctionRemove(auctionHouse, auction);
 
-    // Queue the searchable auction entry to be removed asynchronously
-    auto message = std::make_unique<RemoveAuctionMessage>(auction->Id, auction->houseId);
-    messageQueue_.send(std::move(message));
+    auto message = std::make_shared<RemoveAuctionMessage>(auction->Id, auction->houseId);
+    QueueUpdateAuctionMessage(message);
 
     // we need to delete the entry, it is not referenced any more
     delete auction;
@@ -529,22 +532,43 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 
 void AuctionHouseMgr::UpdateBid(AuctionEntry* auction)
 {
-    // Queue the searchable auction entry to be removed asynchronously Note: the synchronous bid update is done in the handler
+    // Note: the synchronous bid update is done in the handler
     ObjectGuid bidderGuid = ObjectGuid(HighGuid::Player, auction->bidder);
-    auto message = std::make_unique<UpdateAuctionBidMessage>(auction->Id, auction->houseId, auction->bid, bidderGuid);
-    messageQueue_.send(std::move(message));
+    auto message = std::make_shared<UpdateAuctionBidMessage>(auction->Id, auction->houseId, auction->bid, bidderGuid);
+    QueueUpdateAuctionMessage(message);
 }
 
-void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> message)
+void AuctionHouseMgr::QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> message)
 {
-    messageQueue_.send(std::move(message));
+    for (auto& worker : _workerThreads)
+    {
+        worker->QueueUpdateAuctionMessage(message);
+    }
+}
+
+void AuctionHouseMgr::QueueListAuctionMessage(std::unique_ptr<AuctionMessage> message)
+{
+    _requestQueue.send(std::move(message));
+}
+
+void AuctionHouseMgr::ProcessListAuctionResponses()
+{
+    ListAuctionResponse* response = nullptr;
+    while (_responseQueue.Dequeue(response))
+    {
+        Player* player = ObjectAccessor::FindConnectedPlayer(response->playerGuid);
+        if (player)
+            player->GetSession()->SendPacket(&response->packet);
+
+        delete response;
+    }
 }
 
 void AuctionHouseMgr::UpdateExpiredAuctions()
 {
-    for (auto& pair : auctionHouseMap_)
+    for (auto& [_, ahPtr] : _auctionHouses)
     {
-        AuctionHouseObject* auctionHouse = pair.second.get();
+        AuctionHouseObject* auctionHouse = ahPtr.get();
 
         // If storage is empty, no need to update. next == NULL in this case
         if (!auctionHouse || auctionHouse->Getcount() == 0)

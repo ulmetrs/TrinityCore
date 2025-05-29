@@ -15,7 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AuctionHouseCommon.h"
+#include "AuctionHouseDefines.h"
 #include "DBCStores.h"
 #include "GameTime.h"
 #include "Item.h"
@@ -370,20 +370,6 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
             break;
     }
     return 0;
-}
-
-bool AuctionSorter::operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const
-{
-    if (_sort->empty()) return false;
-
-    for (AuctionSortOrderVector::const_iterator itr = _sort->begin(); itr != _sort->end(); ++itr)
-    {
-        int res = auc1->CompareAuctionEntry(itr->sortOrder, *auc2, _loc_idx);
-        if (res == 0) continue;
-        return (res < 0) == itr->isDesc;
-    }
-
-    return false;
 }
 
 void AuctionHouseObject::AddAuction(AuctionEntry* auction)

@@ -2566,10 +2566,17 @@ void World::Update(uint32 diff)
         ResetGuildCap();
     }
 
+    {
+        ZoneScopedNC("AuctionHouseMgr::ProcessListAuctionResponses", WORLD_UPDATE_COLOR)
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Process list auction responses"));
+
+        sAuctionMgr->ProcessListAuctionResponses();
+    }
+
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
-        ZoneScopedNC("World::UpdateExpiredAuctions", WORLD_UPDATE_COLOR)
+        ZoneScopedNC("AuctionHouseMgr::UpdateExpiredAuctions", WORLD_UPDATE_COLOR)
         TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update expired auctions"));
         m_timers[WUPDATE_AUCTIONS].Reset();
 
