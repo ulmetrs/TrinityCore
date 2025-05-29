@@ -331,8 +331,6 @@ void AuctionHouseMgr::LoadAuctionItems()
     if (!result)
     {
         TC_LOG_INFO("server.loading", ">> Loaded 0 auction items. DB table `auctionhouse` or `item_instance` is empty!");
-        TC_LOG_INFO("auctions", ">> Loaded 0 auction items. DB table `auctionhouse` or `item_instance` is empty!");
-
         return;
     }
 
@@ -349,14 +347,12 @@ void AuctionHouseMgr::LoadAuctionItems()
         if (!proto)
         {
             TC_LOG_ERROR("misc", "AuctionHouseMgr::LoadAuctionItems: Unknown item (GUID: {} item entry: #{}) in auction, skipped.", item_guid, itemEntry);
-            TC_LOG_ERROR("auctions", "AuctionHouseMgr::LoadAuctionItems: Unknown item (GUID: {} item entry: #{}) in auction, skipped.", item_guid, itemEntry);
             continue;
         }
 
         Item* item = NewItemOrBag(proto);
         if (!item->LoadFromDB(item_guid, ObjectGuid::Empty, fields, itemEntry))
         {
-            TC_LOG_ERROR("auctions", "AuctionHouseMgr::LoadAuctionItems: Could not load auctionitem from DB (GUID: {} item entry: #{}), skipped.", item_guid, itemEntry);
             delete item;
             continue;
         }
@@ -367,7 +363,6 @@ void AuctionHouseMgr::LoadAuctionItems()
     while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded {} auction items in {} ms", count, GetMSTimeDiffToNow(oldMSTime));
-    TC_LOG_INFO("auctions", ">> Loaded {} auction items in {} ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void AuctionHouseMgr::LoadAuctions()
@@ -380,7 +375,6 @@ void AuctionHouseMgr::LoadAuctions()
     if (!resultAuctions)
     {
         TC_LOG_INFO("server.loading", ">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
-        TC_LOG_INFO("auctions", ">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
         return;
     }
 
@@ -419,7 +413,6 @@ void AuctionHouseMgr::LoadAuctions()
         if (!AuctionHouseMgr::GetAuctionHouseEntry(aItem->houseId))
         {
             TC_LOG_ERROR("misc", "Auction {} has invalid house id {}", aItem->Id, aItem->houseId);
-            TC_LOG_ERROR("auctions", "Auction {} has invalid house id {}", aItem->Id, aItem->houseId);
             aItem->DeleteFromDB(trans);
             delete aItem;
             continue;
@@ -430,7 +423,6 @@ void AuctionHouseMgr::LoadAuctions()
         if (!GetAItem(aItem->itemGUIDLow))
         {
             TC_LOG_ERROR("misc", "Auction {} has not a existing item : {}", aItem->Id, aItem->itemGUIDLow);
-            TC_LOG_ERROR("auctions", "Auction {} has not a existing item : {}", aItem->Id, aItem->itemGUIDLow);
             aItem->DeleteFromDB(trans);
             delete aItem;
             continue;
@@ -447,7 +439,6 @@ void AuctionHouseMgr::LoadAuctions()
     CharacterDatabase.CommitTransaction(trans);
 
     TC_LOG_INFO("server.loading", ">> Loaded {} auctions with {} bidders in {} ms", countAuctions, countBidders, GetMSTimeDiffToNow(oldMSTime));
-    TC_LOG_INFO("auctions", ">> Loaded {} auctions with {} bidders in {} ms", countAuctions, countBidders, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void AuctionHouseMgr::AddAItem(Item* it)
@@ -463,6 +454,8 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
     if (i == mAitems.end())
         return false;
 
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAItem found item to remove: {}", id);
+
     if (deleteItem)
     {
         ASSERT(trans);
@@ -471,6 +464,7 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
     }
 
     mAitems.erase(i);
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAItem removed item: {}", id);
     return true;
 }
 
@@ -526,6 +520,7 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
     bool wasInMap = auctionHouse->RemoveAuction(auction);
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAuction found auction to remove: {}", auction->Id);
     sScriptMgr->OnAuctionRemove(auctionHouse, auction);
 
     auto message = std::make_shared<RemoveAuctionMessage>(auction->Id, auction->houseId);
@@ -533,6 +528,7 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 
     // we need to delete the entry, it is not referenced any more
     delete auction;
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAuction removed auction: {}", auction->Id);
     return wasInMap;
 }
 

@@ -571,10 +571,13 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
         sAuctionMgr->SendAuctionSuccessfulMail(auction, trans);
         sAuctionMgr->SendAuctionWonMail(auction, trans);
 
+        TC_LOG_INFO("auctions", "Buyout Auction via purchase, delete from db and remove: {}", auction->Id);
+
         SendAuctionCommandResult(auction->Id, AUCTION_PLACE_BID, ERR_AUCTION_OK);
 
         auction->DeleteFromDB(trans);
 
+        TC_LOG_INFO("auctions", "Removing Auction via purchase: {}", auction->Id);
         sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
         sAuctionMgr->RemoveAuction(auction);
     }
@@ -649,11 +652,13 @@ void WorldSession::HandleAuctionRemoveItem(WorldPacket& recvData)
     SendAuctionCommandResult(auction->Id, AUCTION_CANCEL, ERR_AUCTION_OK);
 
     // Now remove the auction
+    TC_LOG_INFO("auctions", "Remove Auction via handler, delete from db and remove: {}", auction->Id);
 
     player->SaveInventoryAndGoldToDB(trans);
     auction->DeleteFromDB(trans);
     CharacterDatabase.CommitTransaction(trans);
 
+    TC_LOG_INFO("auctions", "Removing Auction via handler: {}", auction->Id);
     sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
     sAuctionMgr->RemoveAuction(auction);
 }
