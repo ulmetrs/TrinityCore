@@ -78,7 +78,13 @@ public:
 
 private:
     AuctionHouseMgr();
-    ~AuctionHouseMgr();
+    ~AuctionHouseMgr()
+    {
+        for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
+            delete itr->second;
+    
+        _requestQueue.close();
+    }
 
     AuctionHouseMap _auctionHouses;
 
