@@ -16,7 +16,6 @@
  */
 
 #include "AuctionHouseWorkerThread.h"
-#include "Log.h"
 #include "World.h"
 
 template<typename T>
@@ -167,9 +166,7 @@ void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& m
 
 void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
 {
-    uint32 oldMSTime = getMSTime();
     auto const& searchableAuctionMap = _auctions[message.houseId];
-    TC_LOG_INFO("auctions", "Worker List Auctions Total: {}", searchableAuctionMap.size());
     uint32 count = 0, totalCount = 0;
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
@@ -227,7 +224,6 @@ void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
     listResponse->packet << totalCount;
     listResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    TC_LOG_INFO("auctions", "Worker List Auctions Queue Response, Total Time MS: {}", GetMSTimeDiffToNow(oldMSTime));
     _responseQueue->Enqueue(listResponse);
 }
 
@@ -291,9 +287,7 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& m
 
 void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& message)
 {
-    uint32 oldMSTime = getMSTime();
     SearchableAuctionEntriesMap const& searchableAuctionMap = _auctions[message.houseId];
-    TC_LOG_INFO("auctions", "Worker Bidder List Auctions Total: {}", searchableAuctionMap.size());
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
     listResponse->playerGuid = message.ownerGuid;
@@ -330,15 +324,12 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
     listResponse->packet << totalcount;
     listResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    TC_LOG_INFO("auctions", "Worker List Bidder Auctions Queue Response, Total Time MS: {}", GetMSTimeDiffToNow(oldMSTime));
     _responseQueue->Enqueue(listResponse);
 }
 
 void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
 {
-    uint32 oldMSTime = getMSTime();
     SearchableAuctionEntriesMap const& searchableAuctionMap = _auctions[message.houseId];
-    TC_LOG_INFO("auctions", "Worker Owner List Auctions Total: {}", searchableAuctionMap.size());
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
     listResponse->playerGuid = message.ownerGuid;
@@ -363,6 +354,5 @@ void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& 
     listResponse->packet << (uint32)totalcount;
     listResponse->packet << (uint32)sWorld->getIntConfig(CONFIG_AUCTION_SEARCH_DELAY);
 
-    TC_LOG_INFO("auctions", "Worker List Owner Auctions Queue Response, Total Time MS: {}", GetMSTimeDiffToNow(oldMSTime));
     _responseQueue->Enqueue(listResponse);
 }

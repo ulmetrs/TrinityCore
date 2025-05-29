@@ -545,7 +545,6 @@ void AuctionHouseMgr::QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage>
 
 void AuctionHouseMgr::QueueAuctionMessage(std::unique_ptr<AuctionMessage> message)
 {
-    TC_LOG_INFO("auctions", "Queue Auction Message:, TOTAL AUCTIONS {}", GetAuctionHouse(message->houseId)->Getcount());
     _requestQueue.send(std::move(message));
 }
 
