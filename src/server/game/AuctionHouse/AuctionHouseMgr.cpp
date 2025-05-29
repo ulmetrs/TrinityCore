@@ -116,12 +116,10 @@ uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32
 //does not clear ram
 void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, CharacterDatabaseTransaction trans)
 {
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Start Method");
     Item* pItem = GetAItem(auction->itemGUIDLow);
     if (!pItem)
         return;
 
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Item found");
     uint32 bidderAccId = 0;
     ObjectGuid bidderGuid(HighGuid::Player, auction->bidder);
     Player* bidder = ObjectAccessor::FindConnectedPlayer(bidderGuid);
@@ -172,15 +170,12 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, CharacterDatabas
             bidder->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WON_AUCTIONS, 1);
         }
 
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Sending Mail Draft");
         MailDraft(auction->BuildAuctionMailSubject(pItem, AUCTION_WON), AuctionEntry::BuildAuctionWonMailBody(ObjectGuid::Create<HighGuid::Player>(auction->owner), auction->bid, auction->buyout))
             .AddItem(pItem)
             .SendMailTo(trans, MailReceiver(bidder, auction->bidder), auction, MAIL_CHECK_MASK_COPIED);
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Mail Draft Sent");
     }
     else
     {
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionWonMail Bidder doesn't exist, deleting item");
         // bidder doesn't exist, delete the item
         RemoveAItem(auction->itemGUIDLow, true, &trans);
     }
@@ -213,7 +208,6 @@ void AuctionHouseMgr::SendAuctionSalePendingMail(AuctionEntry* auction, Characte
 //call this method to send mail to auction owner, when auction is successful, it does not clear ram
 void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, CharacterDatabaseTransaction trans)
 {
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Start Method");
     Item* pItem = GetAItem(auction->itemGUIDLow);
     if (!pItem)
         return;
@@ -229,20 +223,16 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, Character
         //FIXME: what do if owner offline
         if (owner)
         {
-            TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try update profit achievement");
             owner->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS, profit);
             owner->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_AUCTION_SOLD, auction->bid);
-            TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try send auction owner notification");
             //send auction owner notification, bidder must be current!
             owner->GetSession()->SendAuctionOwnerNotification(auction);
         }
 
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Sending Mail Draft");
         MailDraft(auction->BuildAuctionMailSubject(pItem, AUCTION_SUCCESSFUL),
             AuctionEntry::BuildAuctionSoldMailBody(ObjectGuid::Create<HighGuid::Player>(auction->bidder), auction->bid, auction->buyout, auction->deposit, auction->GetAuctionCut()))
             .AddMoney(profit)
             .SendMailTo(trans, MailReceiver(owner, auction->owner), auction, MAIL_CHECK_MASK_COPIED, sWorld->getIntConfig(CONFIG_MAIL_DELIVERY_DELAY));
-        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Mail Draft Sent");
     }
 }
 
@@ -462,8 +452,6 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
     if (i == mAitems.end())
         return false;
 
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAItem found item to remove: {}", id);
-
     if (deleteItem)
     {
         ASSERT(trans);
@@ -472,7 +460,6 @@ bool AuctionHouseMgr::RemoveAItem(ObjectGuid::LowType id, bool deleteItem /*= fa
     }
 
     mAitems.erase(i);
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAItem removed item: {}", id);
     return true;
 }
 
@@ -488,6 +475,8 @@ void AuctionHouseMgr::AddAuction(AuctionEntry* auction)
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
     auctionHouse->AddAuction(auction);
     sScriptMgr->OnAuctionAdd(auctionHouse, auction);
+
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::AddAuction added auction new house count: {}", auctionHouse->Getcount());
 
     // SearchableAuctionEntry is a shared_ptr as it will be shared among all the worker threads and needs to be self-managed
     std::shared_ptr<SearchableAuctionEntry> searchableAuctionEntry = std::make_shared<SearchableAuctionEntry>();
@@ -529,7 +518,6 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 {
     AuctionHouseObject* auctionHouse = GetAuctionHouse(auction->houseId);
     bool wasInMap = auctionHouse->RemoveAuction(auction);
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAuction found auction to remove: {}", auction->Id);
     sScriptMgr->OnAuctionRemove(auctionHouse, auction);
 
     auto message = std::make_shared<RemoveAuctionMessage>(auction->Id, auction->houseId);
@@ -537,7 +525,7 @@ bool AuctionHouseMgr::RemoveAuction(AuctionEntry* auction)
 
     // we need to delete the entry, it is not referenced any more
     delete auction;
-    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAuction removed auction: {}", auction->Id);
+    TC_LOG_INFO("auctions", "AuctionHouseMgr::RemoveAuction removed auction new house count: {}", auctionHouse->Getcount());
     return wasInMap;
 }
 
