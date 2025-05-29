@@ -433,6 +433,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
 void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_AUCTION_PLACE_BID");
+    TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid Received CMSG_AUCTION_PLACE_BID");
 
     ObjectGuid auctioneer;
     uint32 auctionId;
@@ -443,6 +444,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
     if (!auctionId || !price)
         return;                                             //check for cheaters
 
+    TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid auctionId: {} price: {}", auctionId, price);
     Creature* creature = GetPlayer()->GetNPCIfCanInteractWith(auctioneer, UNIT_NPC_FLAG_AUCTIONEER);
     if (!creature)
     {
@@ -454,9 +456,12 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
+    TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid calling GetAuctionHouseByFactionTemplateId");
     AuctionHouseObject* auctionHouse = sAuctionMgr->GetAuctionHouseByFactionTemplateId(creature->GetFaction());
+    TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid GetAuctionHouseByFactionTemplateId returned house with auction count: {}", auctionHouse->Getcount());
 
     AuctionEntry* auction = auctionHouse->GetAuction(auctionId);
+    TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid House->GetAuction returned auction with id: {} - is null: {}", auctionId, auction == nullptr);
     Player* player = GetPlayer();
 
     if (!auction || auction->owner == player->GetGUID().GetCounter())
@@ -494,6 +499,8 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
         //SendAuctionCommandResult(auction->auctionId, AUCTION_PLACE_BID, ???);
         return;
     }
+
+    TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid passed money check");
 
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
@@ -546,6 +553,7 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
     }
     else
     {
+        TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid Bid is Buyout");
         //buyout:
         if (player->GetGUID().GetCounter() == auction->bidder)
             player->ModifyMoney(-int32(auction->buyout - auction->bid));
@@ -557,12 +565,15 @@ void WorldSession::HandleAuctionPlaceBid(WorldPacket& recvData)
         }
         auction->bidder = player->GetGUID().GetCounter();
         auction->bid = auction->buyout;
+        TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid Has set bidder and bid to buyout");
         if (HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
             auction->Flags = AuctionEntryFlag(auction->Flags | AUCTION_ENTRY_FLAG_GM_LOG_BUYER);
         else
             auction->Flags = AuctionEntryFlag(auction->Flags & ~AUCTION_ENTRY_FLAG_GM_LOG_BUYER);
 
         GetPlayer()->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_AUCTION_BID, auction->buyout);
+
+        TC_LOG_INFO("auctions", "WorldSession::HandleAuctionPlaceBid Set auction achievement criteria");
 
         //- Mails must be under transaction control too to prevent data loss
         // @epoch-start
