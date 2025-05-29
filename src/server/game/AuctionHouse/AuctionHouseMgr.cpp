@@ -547,8 +547,7 @@ void AuctionHouseMgr::QueueUpdateAuctionMessage(std::shared_ptr<AuctionMessage> 
 }
 
 void AuctionHouseMgr::QueueListAuctionMessage(std::unique_ptr<AuctionMessage> message)
-{
-    TC_LOG_DEBUG("auctions", "AuctionHouseMgr::QueueListAuctionMessage moving message to request queue");    
+{  
     _requestQueue.send(std::move(message));
 }
 
