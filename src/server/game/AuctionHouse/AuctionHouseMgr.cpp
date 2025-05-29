@@ -226,13 +226,20 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, Character
     if ((owner || owner_accId) && !sAuctionBotConfig->IsBotChar(auction->owner))
     {
         TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner found and not bot");
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Bid and Deposit: {}", auction->bid + auction->deposit);
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Entry: {}", auction->auctionHouseEntry);
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Auction Cut: {}", auction->auctionHouseEntry->GetAuctionCut());
         uint32 profit = auction->bid + auction->deposit - auction->GetAuctionCut();
 
+        TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Profit: {}", profit);
         //FIXME: what do if owner offline
         if (owner)
         {
+            TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try update profit achievement");
             owner->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS, profit);
+            TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try update highest auction sold achievement");
             owner->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_AUCTION_SOLD, auction->bid);
+            TC_LOG_INFO("auctions", "AuctionHouseMgr::SendAuctionSuccessfulMail Owner online try send auction owner notification");
             //send auction owner notification, bidder must be current!
             owner->GetSession()->SendAuctionOwnerNotification(auction);
         }
