@@ -101,10 +101,13 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
     {
         if (auto listMessage = _requestQueue->receive(stop))
         {
+            TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run received message from request queue"); 
             // Lazy processing of updates
             while(auto updateMessage = _updateQueue->try_receive())
             {
+                TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run received update message from update queue"); 
                 auto* update = updateMessage->get();
+                TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run update message type {}", update->type); 
                 switch (update->type)
                 {
                     case AuctionMessage::Type::Add:
@@ -121,7 +124,9 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
                 }
             }
             
+            TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run attempting to get list message"); 
             auto* list = listMessage->get();
+            TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::Run get list message type {}", list->type); 
             switch (list->type)
             {
                 case AuctionMessage::Type::List:
@@ -142,18 +147,21 @@ void AuctionHouseWorkerThread::Run(std::stop_token stop)
 
 void AuctionHouseWorkerThread::AddAuction(AddAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::AddAuction house id {}", message.houseId);
     auto& searchableAuctionMap = _auctions[message.houseId];
     searchableAuctionMap.insert(std::make_pair(message.searchableAuctionEntry->Id, message.searchableAuctionEntry));
 }
 
 void AuctionHouseWorkerThread::RemoveAuction(RemoveAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::RemoveAuction house id {}", message.houseId);
     auto& searchableAuctionMap = _auctions[message.houseId];
     searchableAuctionMap.erase(message.auctionId);
 }
 
 void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& message)
 {
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::UpdateAuctionBid house id {}", message.houseId);
     auto& searchableAuctionMap = _auctions[message.houseId];
     auto itr = searchableAuctionMap.find(message.auctionId);
     if (itr != searchableAuctionMap.end())
@@ -165,7 +173,9 @@ void AuctionHouseWorkerThread::UpdateAuctionBid(UpdateAuctionBidMessage const& m
 
 void AuctionHouseWorkerThread::ListAuctions(ListAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::ListAuctions house id {}", message.houseId);
     auto const& searchableAuctionMap = _auctions[message.houseId];
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::ListAuctions searchableAuctionMap size {}", searchableAuctionMap.size());
     uint32 count = 0, totalCount = 0;
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
@@ -286,7 +296,9 @@ void AuctionHouseWorkerThread::BuildListAuctionItems(ListAuctionMessage const& m
 
 void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::ListBidderAuctions house id {}", message.houseId);
     SearchableAuctionEntriesMap const& searchableAuctionMap = _auctions[message.houseId];
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::ListBidderAuctions searchableAuctionMap size {}", searchableAuctionMap.size());
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
     listResponse->playerGuid = message.ownerGuid;
@@ -328,7 +340,9 @@ void AuctionHouseWorkerThread::ListBidderAuctions(ListBidderAuctionMessage const
 
 void AuctionHouseWorkerThread::ListOwnerAuctions(ListOwnerAuctionMessage const& message)
 {
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::ListOwnerAuctions house id {}", message.houseId);
     SearchableAuctionEntriesMap const& searchableAuctionMap = _auctions[message.houseId];
+    TC_LOG_DEBUG("auctions", "AuctionHouseWorkerThread::ListOwnerAuctions searchableAuctionMap size {}", searchableAuctionMap.size());
 
     ListAuctionResponse* listResponse = new ListAuctionResponse();
     listResponse->playerGuid = message.ownerGuid;

@@ -714,6 +714,7 @@ void WorldSession::HandleAuctionListBidderItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListBidderAuctionMessage>(ahEntry->ID, std::move(auctionIds), GetPlayer()->GetGUID());
+    TC_LOG_DEBUG("auctions", "QueueListAuctionMessage ListBidderAuctionMessage from Handler");
     sAuctionMgr->QueueListAuctionMessage(std::move(message));
 }
 
@@ -746,6 +747,7 @@ void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recvData)
         return;
 
     auto message = std::make_unique<ListOwnerAuctionMessage>(ahEntry->ID, GetPlayer()->GetGUID());
+    TC_LOG_DEBUG("auctions", "QueueListAuctionMessage ListOwnerAuctionMessage from Handler");
     sAuctionMgr->QueueListAuctionMessage(std::move(message));
 }
 
@@ -857,6 +859,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
     }
 
     auto message = std::make_unique<ListAuctionMessage>(ahEntry->ID, std::move(ahSearchInfo), std::move(ahPlayerInfo));
+    TC_LOG_DEBUG("auctions", "QueueListAuctionMessage ListAuctionMessage from Handler");
     sAuctionMgr->QueueListAuctionMessage(std::move(message));
 }
 
