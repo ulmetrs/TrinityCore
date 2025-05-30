@@ -279,6 +279,7 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
             break;
         }
         case AUCTION_SORT_BUYOUT:
+        {
             uint32 min1 = buyout > 0 ? buyout : bid;
             uint32 min2 = auc.buyout > 0 ? auc.buyout : auc.bid;
             if (min1 > min2)
@@ -286,6 +287,7 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
             else if (min1 < min2)
                 return +1;
             break;
+        }
         case AUCTION_SORT_TIMELEFT:
             if (expire_time > auc.expire_time)
                 return -1;
