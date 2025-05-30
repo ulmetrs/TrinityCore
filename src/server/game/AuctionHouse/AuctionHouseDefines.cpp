@@ -342,10 +342,10 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         }
         case AUCTION_SORT_BID:
         {
-            uint32 val1 = bid;
+            uint32 val1 = buyout > bid ? buyout : bid;
             if (item.count > 1)
                 val1 /= item.count;
-            uint32 val2 = auc.bid;
+            uint32 val2 = auc.buyout > auc.bid ? auc.buyout : auc.bid;
             if (auc.item.count > 1)
                 val2 /= auc.item.count;
             if (val1 > val2)
