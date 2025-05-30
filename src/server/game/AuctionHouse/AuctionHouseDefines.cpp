@@ -272,38 +272,30 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         {
             ItemTemplate const* itemProto1 = item.itemTemplate;
             ItemTemplate const* itemProto2 = auc.item.itemTemplate;
-            if (itemProto1->Quality < itemProto2->Quality)
+            if (itemProto1->Quality > itemProto2->Quality)
                 return -1;
-            else if (itemProto1->Quality > itemProto2->Quality)
+            else if (itemProto1->Quality < itemProto2->Quality)
                 return +1;
             break;
         }
         case AUCTION_SORT_BUYOUT:
-            if (buyout != auc.buyout)
-            {
-                if (buyout < auc.buyout)
-                    return -1;
-                else if (buyout > auc.buyout)
-                    return +1;
-            }
-            else
-            {
-                if (bid < auc.bid)
-                    return -1;
-                else if (bid > auc.bid)
-                    return +1;
-            }
+            uint32 min1 = buyout > 0 ? buyout : bid;
+            uint32 min2 = auc.buyout > 0 ? auc.buyout : auc.bid;
+            if (min1 > min2)
+                return -1;
+            else if (min1 < min2)
+                return +1;
             break;
         case AUCTION_SORT_TIMELEFT:
-            if (expire_time < auc.expire_time)
+            if (expire_time > auc.expire_time)
                 return -1;
-            else if (expire_time > auc.expire_time)
+            else if (expire_time < auc.expire_time)
                 return +1;
             break;
         case AUCTION_SORT_UNK4:
-            if (bidderGuid.GetCounter() < auc.bidderGuid.GetCounter())
+            if (bidderGuid.GetCounter() > auc.bidderGuid.GetCounter())
                 return -1;
-            else if (bidderGuid.GetCounter() > auc.bidderGuid.GetCounter())
+            else if (bidderGuid.GetCounter() < auc.bidderGuid.GetCounter())
                 return +1;
             break;
         case AUCTION_SORT_ITEM:
@@ -317,20 +309,12 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         }
         case AUCTION_SORT_MINBIDBUY:
         {
-            if (buyout != auc.buyout)
-            {
-                if (buyout > auc.buyout)
-                    return -1;
-                else if (buyout < auc.buyout)
-                    return +1;
-            }
-            else
-            {
-                if (bid < auc.bid)
-                    return -1;
-                else if (bid > auc.bid)
-                    return +1;
-            }
+            uint32 min1 = buyout > 0 ? buyout : bid;
+            uint32 min2 = auc.buyout > 0 ? auc.buyout : auc.bid;
+            if (min1 > min2)
+                return -1;
+            else if (min1 < min2)
+                return +1;
             break;
         }
         case AUCTION_SORT_OWNER:
@@ -354,16 +338,16 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         }
         case AUCTION_SORT_STACK:
         {
-            if (item.count < auc.item.count)
+            if (item.count > auc.item.count)
                 return -1;
-            else if (item.count > auc.item.count)
+            else if (item.count < auc.item.count)
                 return +1;
             break;
         }
         case AUCTION_SORT_BUYOUT_2:
-            if (buyout < auc.buyout)
+            if (buyout > auc.buyout)
                 return -1;
-            else if (buyout > auc.buyout)
+            else if (buyout < auc.buyout)
                 return +1;
             break;
         default:
