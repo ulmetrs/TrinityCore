@@ -1719,7 +1719,7 @@ class TC_GAME_API Unit : public WorldObject
         int32 SpellBaseDamageBonusDone(SpellSchoolMask schoolMask) const;
         uint32 SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uint32 pdamage, DamageEffectType damagetype, uint32 totalTicks, SpellEffectInfo const& spellEffectInfo, Optional<float> const& donePctTotal, uint32 stack = 1) const;
         float SpellDamagePctDone(Unit* victim, SpellInfo const* spellProto, DamageEffectType damagetype) const;
-        uint32 SpellDamageBonusTaken(Unit* caster, SpellInfo const* spellProto, uint32 pdamage, DamageEffectType damagetype) const;
+        uint32 SpellDamageBonusTaken(Unit* caster, SpellInfo const* spellProto, uint32 pdamage, DamageEffectType damagetype, uint32 totalTicks, SpellEffectInfo const& spellEffectInfo, uint32 stack = 1) const;
         int32 SpellBaseHealingBonusDone(SpellSchoolMask schoolMask) const;
         uint32 SpellHealingBonusDone(Unit* victim, SpellInfo const* spellProto, uint32 healamount, DamageEffectType damagetype, uint32 totalTicks, SpellEffectInfo const& spellEffectInfo, Optional<float> const& donePctTotal, uint32 stack = 1) const;
         float SpellHealingPctDone(Unit* victim, SpellInfo const* spellProto) const;

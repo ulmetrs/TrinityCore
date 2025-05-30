@@ -1646,7 +1646,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
             if (Unit* caster = aurEff->GetCaster())
             {
                 damage = caster->SpellDamageBonusDone(this, spellInfo, damage, SPELL_DIRECT_DAMAGE, 1, aurEff->GetSpellEffectInfo(), { });
-                damage = SpellDamageBonusTaken(caster, spellInfo, damage, SPELL_DIRECT_DAMAGE);
+                damage = SpellDamageBonusTaken(caster, spellInfo, damage, SPELL_DIRECT_DAMAGE, 1, aurEff->GetSpellEffectInfo());
             }
 
             // No Unit::CalcAbsorbResist here - opcode doesn't send that data - this damage is probably not affected by that
@@ -6846,15 +6846,15 @@ void Unit::EnergizeBySpell(Unit* victim, SpellInfo const* spellInfo, int32 damag
 
 uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uint32 pdamage, DamageEffectType damagetype, uint32 totalTicks, SpellEffectInfo const& spellEffectInfo, Optional<float> const& donePctTotal, uint32 stack /*= 1*/) const
 {
-    // Spell Auras with infinite ticks should be calculated as if they had 1 tick
-    totalTicks = std::max(totalTicks, 1u);
-
     if (!spellProto || !victim || damagetype == DIRECT_DAMAGE)
         return pdamage;
 
     // Some spells don't benefit from done mods
     if (spellProto->HasAttribute(SPELL_ATTR3_NO_DONE_BONUS))
         return pdamage;
+
+    // Spell Auras with infinite ticks should be calculated as if they had 1 tick
+    totalTicks = std::max(totalTicks, 1u);
 
     // For totems get damage bonus from owner
     if (GetTypeId() == TYPEID_UNIT && IsTotem())
@@ -6925,8 +6925,6 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
 
     // Done fixed damage bonus auras
     int32 DoneAdvertisedBenefit  = SpellBaseDamageBonusDone(spellProto->GetSchoolMask());
-    // modify spell power by victim's SPELL_AURA_MOD_DAMAGE_TAKEN auras (eg Amplify/Dampen Magic)
-    DoneAdvertisedBenefit += victim->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_TAKEN, spellProto->GetSchoolMask());
 
     // Pets just add their bonus damage to their spell damage
     // note that their spell damage is just gain of their own auras
@@ -6961,15 +6959,15 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
             return uint32(std::max(pdamage * DoneTotalMod, 0.0f));
     }
 
+    // @epoch-start
+    // Physical spells should not gain spell damage modifiers
+    if (spellProto->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL)
+        DoneAdvertisedBenefit = 0;
+    // @epoch-end
+
     // Default calculation
     if (DoneAdvertisedBenefit)
     {
-        // @epoch-start
-        // Physical spells should not gain spell damage modifiers
-        if (spellProto->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL)
-            DoneAdvertisedBenefit = 0;
-        // @epoch-end
-
         if (coeff < 0.f)
             coeff = CalculateDefaultCoefficient(spellProto, damagetype);  // As wowwiki says: C = (Cast Time / 3.5)
 
@@ -7316,11 +7314,14 @@ float Unit::SpellDamagePctDone(Unit* victim, SpellInfo const* spellProto, Damage
     return DoneTotalMod;
 }
 
-uint32 Unit::SpellDamageBonusTaken(Unit* caster, SpellInfo const* spellProto, uint32 pdamage, DamageEffectType damagetype) const
+uint32 Unit::SpellDamageBonusTaken(Unit* caster, SpellInfo const* spellProto, uint32 pdamage, DamageEffectType damagetype, uint32 totalTicks, SpellEffectInfo const& spellEffectInfo, uint32 stack /*= 1*/) const
 {
     if (!spellProto || damagetype == DIRECT_DAMAGE)
         return pdamage;
 
+    // Spell Auras with infinite ticks should be calculated as if they had 1 tick
+    totalTicks = std::max(totalTicks, 1u);
+    int32 TakenTotal = 0;
     float TakenTotalMod = 1.0f;
 
     // Mod damage from spell mechanic
@@ -7389,7 +7390,50 @@ uint32 Unit::SpellDamageBonusTaken(Unit* caster, SpellInfo const* spellProto, ui
         TakenTotalMod = 1.0f - damageReduction;
     }
 
-    float tmpDamage = pdamage * TakenTotalMod;
+    // Damage taken
+    int32 TakenAdvertisedBenefit = victim->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_TAKEN, spellProto->GetSchoolMask());
+
+    // Check for table values
+    float coeff = spellEffectInfo.BonusMultiplier;
+    if (SpellBonusEntry const* bonus = sSpellMgr->GetSpellBonusData(spellProto->Id))
+    {
+        if (damagetype == DOT)
+            coeff = bonus->dot_damage;
+        else
+            coeff = bonus->direct_damage;
+    }
+    else
+    {
+        // No bonus damage for SPELL_DAMAGE_CLASS_NONE class spells by default
+        if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE)
+            return uint32(std::max(pdamage * TakenTotalMod, 0.0f));
+    }
+
+    // @epoch-start
+    // Physical spells should not gain spell damage modifiers
+    if (spellProto->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL)
+        TakenAdvertisedBenefit = 0;
+    // @epoch-end
+
+    // Default calculation
+    if (TakenAdvertisedBenefit)
+    {
+        if (coeff < 0.f)
+            coeff = CalculateDefaultCoefficient(spellProto, damagetype);  // As wowwiki says: C = (Cast Time / 3.5)
+
+        float factorMod = CalculateSpellpowerCoefficientLevelPenalty(spellProto) * stack;
+        if (Player* modOwner = GetSpellModOwner())
+        {
+            coeff *= 100.0f;
+            modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_BONUS_MULTIPLIER, coeff);
+            coeff /= 100.0f;
+        }
+
+        TakenTotal += int32(TakenAdvertisedBenefit * coeff * factorMod);
+    }
+
+    float tmpDamage = (pdamage + float(TakenTotal) / float(totalTicks)) * TakenTotalMod;
+
     return uint32(std::max(tmpDamage, 0.0f));
 }
 

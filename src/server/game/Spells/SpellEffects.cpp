@@ -712,7 +712,7 @@ void Spell::EffectSchoolDMG()
             if (m_triggeredByAuraIsPeriodic)
                 totalTicks = m_triggeredByAuraTotalTicks;
             damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo, { });
-            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE);
+            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo);
         }
 
         m_damage += damage;
@@ -1158,7 +1158,7 @@ void Spell::EffectPowerDrain()
     if (unitCaster)
     {
         damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE);
+        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo);
     }
 
     // resilience reduce mana draining effect at spell crit damage reduction (added in 2.4)
@@ -1520,7 +1520,7 @@ void Spell::EffectHealthLeech()
     if (unitCaster)
     {
         damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE);
+        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo);
     }
 
     TC_LOG_DEBUG("spells", "HealthLeech :{}", damage);
@@ -3483,7 +3483,7 @@ void Spell::EffectWeaponDmg()
     if (weaponDamage > 0 && !(m_spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
     {
         weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE);
+        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo);
     }
 
     // apply spellmod to Done damage

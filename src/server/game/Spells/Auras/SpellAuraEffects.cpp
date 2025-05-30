@@ -5229,7 +5229,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
     else // ceil obtained value, it may happen that 10 ticks for 10% damage may not kill owner
         damage = uint32(ceil(CalculatePct<float, float>(target->GetMaxHealth(), damage)));
 
-    damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
+    damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT, GetTotalTicks(), GetSpellEffectInfo(), GetBase()->GetStackAmount());
 
     // @tswow-begin
     float crit_chance = GetCritChanceFor(caster,target);
@@ -5331,7 +5331,7 @@ void AuraEffect::HandlePeriodicHealthLeechAuraTick(Unit* target, Unit* caster) c
     // dynobj auras must always have a caster
     if (GetBase()->GetType() == DYNOBJ_AURA_TYPE)
         damage = ASSERT_NOTNULL(caster)->SpellDamageBonusDone(target, GetSpellInfo(), damage, DOT, GetTotalTicks(), GetSpellEffectInfo(), { }, GetBase()->GetStackAmount());
-    damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT);
+    damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT, GetTotalTicks(), GetSpellEffectInfo(), GetBase()->GetStackAmount());
 
     // @tswow-begin
     float crit_chance = GetCritChanceFor(caster,target);
@@ -5793,7 +5793,7 @@ void AuraEffect::HandleProcTriggerDamageAuraProc(AuraApplication* aurApp, ProcEv
 
     SpellNonMeleeDamage damageInfo(target, triggerTarget, GetId(), GetSpellInfo()->SchoolMask);
     uint32 damage = target->SpellDamageBonusDone(triggerTarget, GetSpellInfo(), GetAmount(), SPELL_DIRECT_DAMAGE, 1, GetSpellEffectInfo(), { });
-    damage = triggerTarget->SpellDamageBonusTaken(target, GetSpellInfo(), damage, SPELL_DIRECT_DAMAGE);
+    damage = triggerTarget->SpellDamageBonusTaken(target, GetSpellInfo(), damage, SPELL_DIRECT_DAMAGE, 1, GetSpellEffectInfo());
     // @tswow-begin effect mask
     target->CalculateSpellDamageTaken(&damageInfo, damage, GetSpellInfo(), BASE_ATTACK, false, false, nullptr, 1 << GetSpellEffectInfo().EffectIndex);
     // @tswow-end

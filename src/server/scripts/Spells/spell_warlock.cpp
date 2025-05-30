@@ -1249,7 +1249,7 @@ class spell_warl_unstable_affliction : public AuraScript
                 if (Unit* target = dispelInfo->GetDispeller()->ToUnit())
                 {
                     int32 bp = aurEff->GetAmount();
-                    bp = target->SpellDamageBonusTaken(caster, aurEff->GetSpellInfo(), bp, DOT);
+                    bp = target->SpellDamageBonusTaken(caster, aurEff->GetSpellInfo(), bp, DOT, 1, aurEff->GetSpellEffectInfo());
                     bp *= 9;
 
                     // backfire damage and silence
