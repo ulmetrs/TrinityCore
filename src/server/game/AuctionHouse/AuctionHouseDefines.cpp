@@ -280,12 +280,8 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         }
         case AUCTION_SORT_BUYOUT:
         {
-            uint32 val1 = buyout > bid ? buyout : bid;
-            if (item.count > 1)
-                val1 /= item.count;
-            uint32 val2 = auc.buyout > auc.bid ? auc.buyout : auc.bid;
-            if (auc.item.count > 1)
-                val2 /= auc.item.count;
+            uint32 val1 = item.count > 1 ? buyout / item.count : buyout;
+            uint32 val2 = auc.item.count > 1 ? auc.buyout / auc.item.count : auc.buyout;
             if (val1 > val2)
                 return -1;
             else if (val1 < val2)
@@ -342,12 +338,8 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         }
         case AUCTION_SORT_BID:
         {
-            uint32 val1 = buyout > bid ? buyout : bid;
-            if (item.count > 1)
-                val1 /= item.count;
-            uint32 val2 = auc.buyout > auc.bid ? auc.buyout : auc.bid;
-            if (auc.item.count > 1)
-                val2 /= auc.item.count;
+            uint32 val1 = item.count > 1 ? bid / item.count : bid;
+            uint32 val2 = auc.item.count > 1 ? auc.bid / auc.item.count : auc.bid;
             if (val1 > val2)
                 return -1;
             else if (val1 < val2)
@@ -364,12 +356,8 @@ int SearchableAuctionEntry::CompareAuctionEntry(uint32 column, SearchableAuction
         }
         case AUCTION_SORT_BUYOUT_2:
         {
-            uint32 val1 = buyout > bid ? buyout : bid;
-            if (item.count > 1)
-                val1 /= item.count;
-            uint32 val2 = auc.buyout > auc.bid ? auc.buyout : auc.bid;
-            if (auc.item.count > 1)
-                val2 /= auc.item.count;
+            uint32 val1 = item.count > 1 ? buyout / item.count : buyout;
+            uint32 val2 = auc.item.count > 1 ? auc.buyout / auc.item.count : auc.buyout;
             if (val1 > val2)
                 return -1;
             else if (val1 < val2)
