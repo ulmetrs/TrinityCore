@@ -782,7 +782,7 @@ void WorldSession::HandleAuctionListItems(WorldPacket& recvData)
         sortInfo.sortOrder = static_cast<AuctionSortOrder>(sortMode);
         sortOrder.push_back(std::move(sortInfo));
     }
-    TC_LOG_INFO("auctions", "end read client sort order")
+    TC_LOG_INFO("auctions", "end read client sort order");
 
     // converting string that we try to find to lower case
     std::wstring wsearchedname;
