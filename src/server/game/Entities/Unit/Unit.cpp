@@ -7432,6 +7432,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit* caster, SpellInfo const* spellProto, ui
         TakenTotal += int32(TakenAdvertisedBenefit * coeff * factorMod);
     }
 
+    TC_LOG_DEBUG("spellfixes", "Taken Total Mod: {}", TakenTotalMod);
     float tmpDamage = (pdamage + float(TakenTotal) / float(totalTicks)) * TakenTotalMod;
 
     return uint32(std::max(tmpDamage, 0.0f));

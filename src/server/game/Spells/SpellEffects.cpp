@@ -711,8 +711,11 @@ void Spell::EffectSchoolDMG()
             uint32 totalTicks = 1;
             if (m_triggeredByAuraIsPeriodic)
                 totalTicks = m_triggeredByAuraTotalTicks;
+            TC_LOG_DEBUG("spellfixes", "Damage before bonuses: {}", damage);
             damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo, { });
+            TC_LOG_DEBUG("spellfixes", "Damage after bonus done: {}", damage);
             damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo);
+            TC_LOG_DEBUG("spellfixes", "Damage after bonus taken: {}", damage);
         }
 
         m_damage += damage;
