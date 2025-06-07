@@ -67,7 +67,9 @@ public:
     void AddAuction(AuctionEntry* auctionEntry);
     bool RemoveAuction(AuctionEntry* auctionEntry);
     void UpdateBid(AuctionEntry* auctionEntry);
+    void QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage> message);
     void QueueAuctionMessage(std::unique_ptr<AuctionMessage> message);
+    void ProcessListAuctionResponses();
     void UpdateExpiredAuctions();
     bool PendingAuctionAdd(Player* player, AuctionEntry* aEntry);
     uint32 PendingAuctionCount(Player const* player) const;
@@ -76,21 +78,16 @@ public:
 
 private:
     AuctionHouseMgr();
-    ~AuctionHouseMgr()
-    {
-        for (ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
-            delete itr->second;
+    ~AuctionHouseMgr();
 
-        messageQueue_.close();
-    }
+    AuctionHouseMap _auctionHouses;
 
-    AuctionHouseMap auctionHouseMap_;
     std::map<ObjectGuid, AuctionPair> pendingAuctionMap;
-
     ItemMap mAitems;
 
-    SignalQueue<std::unique_ptr<AuctionMessage>> messageQueue_;
-    std::vector<std::unique_ptr<AuctionHouseWorkerThread>> workerThreads_;
+    SignalQueue<std::unique_ptr<AuctionMessage>> _requestQueue;
+    MPSCQueue<ListAuctionResponse> _responseQueue;
+    std::vector<std::unique_ptr<AuctionHouseWorkerThread>> _workerThreads;
 };
 
 #define sAuctionMgr AuctionHouseMgr::instance()

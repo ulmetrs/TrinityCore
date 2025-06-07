@@ -18,7 +18,8 @@
 #ifndef AUCTION_HOUSE_WORKER_THREAD_H
 #define AUCTION_HOUSE_WORKER_THREAD_H
 
-#include "AuctionHouseCommon.h"
+#include "AuctionHouseDefines.h"
+#include "MPSCQueue.h"
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -97,10 +98,16 @@ struct ListBidderAuctionMessage : AuctionMessage
     ObjectGuid ownerGuid;
 };
 
+struct ListAuctionResponse
+{
+    ObjectGuid playerGuid;
+    WorldPacket packet;
+};
+
 template<typename T>
 class SignalQueue {
 public:
-    explicit SignalQueue(size_t capacity = 0) : capacity_(capacity) {}
+    explicit SignalQueue() {}
 
     void send(T value, std::stop_token stop = {});
     std::optional<T> receive(std::stop_token stop = {});
@@ -109,22 +116,34 @@ public:
 
 private:
     std::queue<T> queue_;
-    size_t capacity_;
     std::mutex mutex_;
     std::condition_variable_any cv_;
+};
+
+typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
+typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
+typedef std::vector<SearchableAuctionEntry*> SortableAuctionEntriesList;
+
+class AuctionSorter
+{
+public:
+    AuctionSorter(AuctionSortOrderVector const* sort, int loc_idx) : _sort(sort), _loc_idx(loc_idx) {}
+    bool operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const;
+
+private:
+    AuctionSortOrderVector const* _sort;
+    int _loc_idx;
 };
 
 class AuctionHouseWorkerThread
 {
 public:
-    AuctionHouseWorkerThread(
-        SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue,
-        AuctionHouseMap& auctionHouseMap);
+    AuctionHouseWorkerThread(SignalQueue<std::unique_ptr<AuctionMessage>>* requestQueue, MPSCQueue<ListAuctionResponse>* responseQueue);
     ~AuctionHouseWorkerThread();
+    void QueueModifyAuctionsMessage(std::shared_ptr<AuctionMessage> message);
 
 private:
     void Run(std::stop_token stop);
-    void ProcessMessage(std::unique_ptr<AuctionMessage> message);
     void AddAuction(AddAuctionMessage const& message);
     void RemoveAuction(RemoveAuctionMessage const& message);
     void UpdateAuctionBid(UpdateAuctionBidMessage const& message);
@@ -133,14 +152,11 @@ private:
     void ListBidderAuctions(ListBidderAuctionMessage const& message);
     void ListOwnerAuctions(ListOwnerAuctionMessage const& message);
 
-    AuctionHouseObject* GetAuctionHouse(uint8 houseId) {
-        auto it = auctionHouseMap_.find(houseId);
-        return it != auctionHouseMap_.end() ? it->second.get() : nullptr;
-    }
-
-    SignalQueue<std::unique_ptr<AuctionMessage>>* messageQueue_;
-    AuctionHouseMap& auctionHouseMap_;
-    std::jthread workerThread_;
+    SignalQueue<std::shared_ptr<AuctionMessage>> _modifyQueue;
+    SignalQueue<std::unique_ptr<AuctionMessage>>* _requestQueue;
+    MPSCQueue<ListAuctionResponse>* _responseQueue;
+    std::unordered_map<uint8, SearchableAuctionEntriesMap> _auctions;
+    std::jthread _workerThread;
 };
 
 #endif // AUCTION_HOUSE_WORKER_THREAD_H

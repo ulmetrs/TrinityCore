@@ -300,6 +300,7 @@ class TC_GAME_API Spell
         Spell(WorldObject* caster, SpellInfo const* info, TriggerCastFlags triggerFlags, ObjectGuid originalCasterGUID = ObjectGuid::Empty);
         ~Spell();
 
+        SpellSchoolMask GetDamageSchoolMask() const;
         void InitExplicitTargets(SpellCastTargets const& targets);
         void SelectExplicitTargets();
 
@@ -510,7 +511,6 @@ class TC_GAME_API Spell
         Unit* m_originalCaster;                             // cached pointer for m_originalCaster, updated at Spell::UpdatePointers()
 
         // Spell data
-        SpellSchoolMask m_spellSchoolMask;                  // Spell school (can be overwrite for some spells (wand shoot for example)
         WeaponAttackType m_attackType;                      // For weapon based attack
         int32 m_powerCost;                                  // Calculated spell cost initialized only in Spell::prepare
         int32 m_casttime;                                   // Calculated spell cast time initialized only in Spell::prepare
