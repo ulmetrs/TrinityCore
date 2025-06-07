@@ -87,7 +87,12 @@ static Optional<float> GetVelocity(Unit* owner, Unit* target, G3D::Vector3 const
             if (playerPet)
                 multiplier += (distance / 30.f);
             else
-                *speed = owner->IsCreature() ? owner->ToCreature()->GetCreatureTemplate()->speed_run : owner->GetSpeed(MOVE_RUN);
+                // TODO: Implement a catchup mechanic (same as pet?) for non pet NPCs like charms at distance
+                // atm the owner has the same speed as the target when next to them (can be huge)
+                // when far, the owner uses its own base move speed.
+                // template->speed_run is the multiplier on the base speed, ~1.14 for NPCs; we would have needed to multiply it with base speed
+                // commenting out for time being, unsure what the intent was
+                *speed = /* owner->IsCreature() ? owner->ToCreature()->GetCreatureTemplate()->speed_run : */ owner->GetSpeed(MOVE_RUN);
             
             *speed *= multiplier;
         }

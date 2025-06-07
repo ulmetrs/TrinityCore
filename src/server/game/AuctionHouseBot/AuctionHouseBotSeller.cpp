@@ -836,7 +836,7 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
 
     int ahType = config.GetHouseType();
     uint8 houseid = ahType == AUCTION_HOUSE_ALLIANCE ? AUCTIONHOUSE_ALLIANCE : ahType == AUCTION_HOUSE_HORDE ? AUCTIONHOUSE_HORDE : AUCTIONHOUSE_NEUTRAL;
-    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(houseid);
+    AuctionHouseEntry const* ahEntry = sAuctionMgr->GetAuctionHouseEntry(houseid);
 
     ItemsToSellArray itemsToSell;
     AllItemsArray allItems(MAX_AUCTION_QUALITY, std::vector<uint32>(MAX_ITEM_CLASS));

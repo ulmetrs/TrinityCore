@@ -439,7 +439,7 @@ void Spell::EffectSchoolDMG()
                     // {
                     //     // Calculate damage of Immolate/Shadowflame tick
                     //     int32 pdamage = aura->GetAmount();
-                    //     pdamage = unitTarget->SpellDamageBonusTaken(unitCaster, aura->GetSpellInfo(), aura->GetSpellInfo()->GetSchoolMask(), pdamage, DOT);
+                    //     pdamage = unitTarget->SpellDamageBonusTaken(unitCaster, aura->GetSpellInfo(), pdamage, DOT);
 
                     //     // And multiply by amount of ticks to get damage potential
                     //     pdamage *= aura->GetSpellInfo()->GetMaxTicks();
@@ -667,7 +667,7 @@ void Spell::EffectSchoolDMG()
                     float tmpMin, tmpMax;
                     for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
                     {
-                        unitCaster->CalculateMinMaxDamage(BASE_ATTACK, false, false, tmpMin, tmpMax, i);
+                        unitCaster->CalculateMinMaxDamage(BASE_ATTACK, false, tmpMin, tmpMax, i);
                         minTotal += tmpMin;
                         maxTotal += tmpMax;
                     }
@@ -711,8 +711,8 @@ void Spell::EffectSchoolDMG()
             uint32 totalTicks = 1;
             if (m_triggeredByAuraIsPeriodic)
                 totalTicks = m_triggeredByAuraTotalTicks;
-            damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, m_spellSchoolMask, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo, { });
-            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, m_spellSchoolMask, (uint32)damage, SPELL_DIRECT_DAMAGE);
+            damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo, { });
+            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo);
         }
 
         m_damage += damage;
@@ -1157,8 +1157,8 @@ void Spell::EffectPowerDrain()
     // add spell damage bonus
     if (unitCaster)
     {
-        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, m_spellSchoolMask, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, m_spellSchoolMask, uint32(damage), SPELL_DIRECT_DAMAGE);
+        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
+        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo);
     }
 
     // resilience reduce mana draining effect at spell crit damage reduction (added in 2.4)
@@ -1519,8 +1519,8 @@ void Spell::EffectHealthLeech()
     Unit* unitCaster = GetUnitCasterForEffectHandlers();
     if (unitCaster)
     {
-        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, m_spellSchoolMask, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, m_spellSchoolMask, uint32(damage), SPELL_DIRECT_DAMAGE);
+        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
+        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo);
     }
 
     TC_LOG_DEBUG("spells", "HealthLeech :{}", damage);
@@ -1542,7 +1542,7 @@ void Spell::EffectHealthLeech()
         healthGain = unitCaster->SpellHealingBonusDone(unitCaster, m_spellInfo, healthGain, HEAL, 1, *effectInfo, { });
         healthGain = unitCaster->SpellHealingBonusTaken(unitCaster, m_spellInfo, healthGain, HEAL);
 
-        HealInfo healInfo(unitCaster, unitCaster, healthGain, m_spellInfo, m_spellSchoolMask);
+        HealInfo healInfo(unitCaster, unitCaster, healthGain, m_spellInfo, m_spellInfo->GetSchoolMask());
         unitCaster->HealBySpell(healInfo);
     }
 }
@@ -3224,11 +3224,33 @@ void Spell::EffectWeaponDmg()
         }
     }
 
-    // some spell specific modifiers
-    float totalDamagePercentMod  = 1.0f;                    // applied to final bonus+weapon damage
-    int32 fixed_bonus = 0;
-    int32 spell_bonus = 0;                                  // bonus specific for spell
+    float weaponDamagePercentMod = 1.0f; // SPELL_EFFECT_WEAPON_PERCENT_DAMAGE modifier (e.g. 0.7 for Seal of Command, 1.0 for Sinister Strike)
+    bool normalized = false; // If any effect is SPELL_EFFECT_NORMALIZED_WEAPON_DMG the base weapon damage is normalized
+    int32 fixed_bonus = 0; // A flat bonus to the weapon damage
+    float totalDamagePercentMod  = 1.0f; // a final pct modifier to the attack damage
 
+    // get all base effect modifiers
+    for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
+    {
+        switch (spellEffectInfo.Effect)
+        {
+            case SPELL_EFFECT_WEAPON_DAMAGE:
+            case SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL:
+                fixed_bonus += CalculateDamage(spellEffectInfo);
+                break;
+            case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
+                fixed_bonus += CalculateDamage(spellEffectInfo);
+                normalized = true;
+                break;
+            case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
+                ApplyPct(weaponDamagePercentMod, CalculateDamage(spellEffectInfo));
+                break;
+            default:
+                break; // not weapon damage effect, just skip
+        }
+    }
+
+    // some spell specific modifiers
     switch (m_spellInfo->SpellFamilyName)
     {
         case SPELLFAMILY_WARRIOR:
@@ -3245,9 +3267,9 @@ void Spell::EffectWeaponDmg()
             //     if (Aura* aur = unitTarget->GetAura(58567, unitCaster->GetGUID()))
             //         fixed_bonus += (aur->GetStackAmount() - 1) * CalculateDamage(m_spellInfo->GetEffect(EFFECT_2)); // subtract 1 so fixed bonus is not applied twice
             // }
+            /** @epoch-end */
             if (m_spellInfo->SpellFamilyFlags[0] & 0x8000000) // Mocking Blow
             {
-            /** @epoch-end */
                 if (unitTarget->IsImmunedToSpellEffect(m_spellInfo, m_spellInfo->GetEffect(EFFECT_1), unitCaster) || unitTarget->GetTypeId() == TYPEID_PLAYER)
                 {
                     m_damage = 0;
@@ -3304,11 +3326,11 @@ void Spell::EffectWeaponDmg()
         }
         case SPELLFAMILY_PALADIN:
         {
-            // Seal of Command Unleashed
+            // Judgement of Command
             if (m_spellInfo->Id == 20467)
             {
-                spell_bonus += int32(0.08f * unitCaster->GetTotalAttackPowerValue(BASE_ATTACK));
-                spell_bonus += int32(0.13f * unitCaster->SpellBaseDamageBonusDone(m_spellInfo->GetSchoolMask()));
+                fixed_bonus += int32(0.08f * unitCaster->GetTotalAttackPowerValue(BASE_ATTACK));
+                fixed_bonus += int32(0.13f * unitCaster->SpellBaseDamageBonusDone(m_spellInfo->GetSchoolMask()));
             }
             break;
         }
@@ -3338,7 +3360,7 @@ void Spell::EffectWeaponDmg()
         {
             // Kill Shot - bonus damage from Ranged Attack Power
             if (m_spellInfo->SpellFamilyFlags[1] & 0x800000)
-                spell_bonus += int32(0.4f * unitCaster->GetTotalAttackPowerValue(RANGED_ATTACK));
+                fixed_bonus += int32(0.4f * unitCaster->GetTotalAttackPowerValue(RANGED_ATTACK));
             break;
         }
         case SPELLFAMILY_DEATHKNIGHT:
@@ -3413,32 +3435,9 @@ void Spell::EffectWeaponDmg()
         }
     }
 
-    bool normalized = false;
-    float weaponDamagePercentMod = 1.0f;
-    for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
-    {
-        switch (spellEffectInfo.Effect)
-        {
-            case SPELL_EFFECT_WEAPON_DAMAGE:
-            case SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL:
-                fixed_bonus += CalculateDamage(spellEffectInfo);
-                break;
-            case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
-                fixed_bonus += CalculateDamage(spellEffectInfo);
-                normalized = true;
-                break;
-            case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
-                ApplyPct(weaponDamagePercentMod, CalculateDamage(spellEffectInfo));
-                break;
-            default:
-                break;                                      // not weapon damage effect, just skip
-        }
-    }
-
-    // if (addPctMods) { percent mods are added in Unit::CalculateDamage } else { percent mods are added in Unit::MeleeDamageBonusDone }
-    // this distinction is neccessary to properly inform the client about his autoattack damage values from Script_UnitDamage
-    bool const addPctMods = !m_spellInfo->HasAttribute(SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS) && (m_spellSchoolMask & SPELL_SCHOOL_MASK_NORMAL);
-    if (addPctMods)
+    // physical EffectWeaponDmg spells fixed_bonus is always expected to be scaled by pct mods
+    // magic EffectWeaponDmg fixed_bonus is already calculated to the expected value
+    if (fixed_bonus > 0 && (m_spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
     {
         UnitMods unitMod;
         switch (m_attackType)
@@ -3449,50 +3448,50 @@ void Spell::EffectWeaponDmg()
             case RANGED_ATTACK: unitMod = UNIT_MOD_DAMAGE_RANGED;   break;
         }
 
-        float weapon_total_pct = unitCaster->GetPctModifierValue(unitMod, TOTAL_PCT);
-        if (fixed_bonus)
-            fixed_bonus = int32(fixed_bonus * weapon_total_pct);
-        if (spell_bonus)
-            spell_bonus = int32(spell_bonus * weapon_total_pct);
+        float physical_pct_mod = unitCaster->GetDamagePctModifierValue(unitMod, SPELL_SCHOOL_NORMAL);
+        fixed_bonus = int32(fixed_bonus * physical_pct_mod);
     }
 
-    int32 weaponDamage = unitCaster->CalculateDamage(m_attackType, normalized, addPctMods);
-
-    // Sequence is important
-    for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
+    // 1. Calculate the base weapon damage to use for the spell
+    // Spells can only have 1 damage type, so we need to add the damages together
+    int32 weaponDamage = 0;
+    for (uint8 i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
     {
-        // We assume that a spell have at most one fixed_bonus
-        // and at most one weaponDamagePercentMod
-        switch (spellEffectInfo.Effect)
-        {
-            case SPELL_EFFECT_WEAPON_DAMAGE:
-            case SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL:
-            case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
-                weaponDamage += fixed_bonus;
-                break;
-            case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
-                weaponDamage = int32(weaponDamage * weaponDamagePercentMod);
-                break;
-            default:
-                break;                                      // not weapon damage effect, just skip
-        }
+        // only players have secondary weapon damage
+        if (i > 0 && unitCaster->GetTypeId() != TYPEID_PLAYER)
+            break;
+
+        SpellSchoolMask schoolMask = unitCaster->GetMeleeDamageSchoolMask(m_attackType, i);
+
+        uint8 itemDamagesMask = (unitCaster->GetTypeId() == TYPEID_PLAYER) ? (1 << i) : 0;
+
+        uint32 damage = unitCaster->CalculateDamage(m_attackType, normalized, itemDamagesMask);
+
+        // Add additional melee damage mods to each damage component
+        damage = unitCaster->MeleeDamageBonusDone(unitTarget, damage, m_attackType, m_spellInfo);
+        damage = unitTarget->MeleeDamageBonusTaken(unitCaster, damage, m_attackType, m_spellInfo, schoolMask);
+
+        weaponDamage += damage;
     }
 
-    weaponDamage += spell_bonus;
+    // 2. Apply the spell damage modifiers
+    weaponDamage = int32(weaponDamage * weaponDamagePercentMod);
+    weaponDamage += fixed_bonus;
     weaponDamage = int32(weaponDamage * totalDamagePercentMod);
+
+    // 3. If the base spell school is not physical we treat the resulting damage as a casted spell and apply the spell bonus mods
+    if (weaponDamage > 0 && !(m_spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
+    {
+        weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
+        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo);
+    }
 
     // apply spellmod to Done damage
     if (Player* modOwner = unitCaster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, weaponDamage);
 
-    // prevent negative damage
-    weaponDamage = std::max(weaponDamage, 0);
-
-    // Add melee damage bonuses (also check for negative)
-    /** @epoch-start */
-    weaponDamage = unitCaster->MeleeDamageBonusDone(unitTarget, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
-    m_damage += unitTarget->MeleeDamageBonusTaken(unitCaster, weaponDamage, m_attackType, m_spellInfo, m_spellSchoolMask);
-    /** @epoch-end */
+    // prevent negative damage bonus
+    m_damage += std::max(weaponDamage, 0);
 }
 
 void Spell::EffectThreat()

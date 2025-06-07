@@ -278,9 +278,9 @@ bool ForcedDespawnDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
 }
 
 Creature::Creature(bool isWorldObject): Unit(isWorldObject), MapObject(), m_groupLootTimer(0), lootingGroupLowGUID(0), m_PlayerDamageReq(0), m_lootRecipient(), m_lootRecipientGroup(0), _pickpocketLootRestore(0),
-    m_corpseRemoveTime(0), m_respawnTime(0), m_respawnDelay(300), m_corpseDelay(60), m_respawnAggroDelay(5000), m_ignoreCorpseDecayRatio(false), m_wanderDistance(0.0f), m_boundaryCheckTime(2500), m_backpedalTime(MOVE_BACKWARDS_CHECK_INTERVAL), m_encircleTime(MOVE_CIRCLE_CHECK_INTERVAL), m_combatPulseTime(0), m_combatPulseDelay(0), m_reactState(REACT_AGGRESSIVE),
+    m_corpseRemoveTime(0), m_respawnTime(0), m_respawnDelay(300), m_corpseDelay(60), m_respawnAggroDelay(5000), m_ignoreCorpseDecayRatio(false), m_wanderDistance(0.0f), m_boundaryCheckTime(2500), m_backpedalTime(MOVE_BACKWARDS_CHECK_INTERVAL), m_encircleTime(MOVE_CIRCLE_CHECK_INTERVAL), m_extendLeashTime(EXTEND_LEASH_CHECK_INTERVAL), m_combatPulseTime(0), m_combatPulseDelay(0), m_reactState(REACT_AGGRESSIVE),
     m_defaultMovementType(IDLE_MOTION_TYPE), m_spawnId(0), m_equipmentId(0), m_originalEquipmentId(0), m_AlreadyCallAssistance(false), m_InitialAggroCallAssistance(true), m_AlreadySearchedAssistance(false), m_cannotReachTarget(false), m_cannotReachTimer(0),
-    m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL), m_originalEntry(0), m_homePosition(), m_transportHomePosition(), m_creatureInfo(nullptr), m_creatureData(nullptr), m_detectionDistance(20.0f), _waypointPathId(0),
+    m_meleeDamageSchool(SPELL_SCHOOL_NORMAL), m_originalEntry(0), m_homePosition(), m_transportHomePosition(), m_creatureInfo(nullptr), m_creatureData(nullptr), m_detectionDistance(20.0f), _waypointPathId(0),
     m_formation(nullptr), m_triggerJustAppeared(true), m_respawnCompatibilityMode(false), m_lastLeashExtensionTime(nullptr),
     _currentWaypointNodeInfo(0, 0), _regenerateHealth(true), _regenerateHealthLock(false), _isMissingCanSwimFlagOutOfCombat(false), m_assistanceTimer(0), m_forcePowerRegen(false),
     m_BaseAttackPower(0), m_BaseRangedAttackPower(0)
@@ -925,6 +925,14 @@ void Creature::Update(uint32 diff)
                     m_encircleTime = urand(MOVE_CIRCLE_CHECK_INTERVAL, MOVE_CIRCLE_CHECK_INTERVAL * 2);
                 } else
                     m_encircleTime -= diff;
+
+                if (diff >= m_extendLeashTime)
+                {
+                    if (!CanFreeMove())
+                        UpdateLeashExtensionTime();
+                    m_extendLeashTime = EXTEND_LEASH_CHECK_INTERVAL;
+                } else
+                    m_extendLeashTime -= diff;
             }
 
             // if periodic combat pulse is enabled and we are both in combat and in a dungeon, do this now

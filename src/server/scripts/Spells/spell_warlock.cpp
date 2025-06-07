@@ -975,7 +975,7 @@ class spell_warl_seed_of_corruption_dummy : public AuraScript
             return;
 
         // effect 1 scales with 14% of caster's SP (DBC data)
-        amount = caster->SpellDamageBonusDone(GetUnitOwner(), GetSpellInfo(), GetSpellInfo()->GetSchoolMask(), amount, SPELL_DIRECT_DAMAGE, 1, aurEff->GetSpellEffectInfo(), GetAura()->GetDonePct());
+        amount = caster->SpellDamageBonusDone(GetUnitOwner(), GetSpellInfo(), amount, SPELL_DIRECT_DAMAGE, 1, aurEff->GetSpellEffectInfo(), GetAura()->GetDonePct());
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -1249,7 +1249,7 @@ class spell_warl_unstable_affliction : public AuraScript
                 if (Unit* target = dispelInfo->GetDispeller()->ToUnit())
                 {
                     int32 bp = aurEff->GetAmount();
-                    bp = target->SpellDamageBonusTaken(caster, aurEff->GetSpellInfo(), aurEff->GetSpellInfo()->GetSchoolMask(), bp, DOT);
+                    bp = target->SpellDamageBonusTaken(caster, aurEff->GetSpellInfo(), bp, DOT, 1, aurEff->GetSpellEffectInfo());
                     bp *= 9;
 
                     // backfire damage and silence

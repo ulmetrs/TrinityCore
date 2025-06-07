@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AUCTION_HOUSE_COMMON_H
-#define AUCTION_HOUSE_COMMON_H
+#ifndef AUCTION_HOUSE_DEFINES_H
+#define AUCTION_HOUSE_DEFINES_H
 
 #include "Common.h"
 #include "ObjectGuid.h"
@@ -214,20 +214,6 @@ struct AuctionHouseSearchInfo
 };
 
 typedef std::map<uint32, AuctionEntry*> AuctionEntryMap;
-typedef std::vector<AuctionSortInfo> AuctionSortOrderVector;
-typedef std::unordered_map<uint32, std::shared_ptr<SearchableAuctionEntry>> SearchableAuctionEntriesMap;
-typedef std::vector<SearchableAuctionEntry*> SortableAuctionEntriesList;
-
-class AuctionSorter
-{
-public:
-    AuctionSorter(AuctionSortOrderVector const* sort, int loc_idx) : _sort(sort), _loc_idx(loc_idx) {}
-    bool operator()(SearchableAuctionEntry const* auc1, SearchableAuctionEntry const* auc2) const;
-
-private:
-    AuctionSortOrderVector const* _sort;
-    int _loc_idx;
-};
 
 class TC_GAME_API AuctionHouseObject
 {
@@ -245,19 +231,14 @@ public:
         AuctionEntryMap::const_iterator itr = AuctionsMap.find(id);
         return itr != AuctionsMap.end() ? itr->second : nullptr;
     }
-    SearchableAuctionEntriesMap& GetSearchableAuctionMap() const { return searchableAuctionMap_; }
-    std::shared_mutex& GetMapMutex() const { return mapMutex_; }
-
     void AddAuction(AuctionEntry* auction);
     bool RemoveAuction(AuctionEntry* auction);
 
 private:
     AuctionEntryMap AuctionsMap;
-    mutable SearchableAuctionEntriesMap searchableAuctionMap_;
-    mutable std::shared_mutex mapMutex_;
 
 };
 
 typedef std::map<uint8, std::unique_ptr<AuctionHouseObject>> AuctionHouseMap;
 
-#endif // AUCTION_HOUSE_COMMON_H
+#endif // AUCTION_HOUSE_DEFINES_H

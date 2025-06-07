@@ -519,19 +519,7 @@ m_caster((info->HasAttribute(SPELL_ATTR6_CAST_BY_CHARMER) && caster->GetCharmerO
     m_auraScaleMask = 0;
     memset(m_damageMultipliers, 0, sizeof(m_damageMultipliers));
 
-    // Get data for type of attack
     m_attackType = info->GetAttackType();
-
-    m_spellSchoolMask = info->GetSchoolMask();           // Can be override for some spell (wand shoot for example)
-
-    if (Player const* playerCaster = m_caster->ToPlayer())
-    {
-        // wand case
-        if (m_attackType == RANGED_ATTACK)
-            if ((playerCaster->GetClassMask() & CLASSMASK_WAND_USERS) != 0)
-                if (Item* pItem = playerCaster->GetWeaponForAttack(RANGED_ATTACK))
-                    m_spellSchoolMask = SpellSchoolMask(1 << pItem->GetTemplate()->Damage[0].DamageType);
-    }
 
     if (originalCasterGUID)
         m_originalCasterGUID = originalCasterGUID;
@@ -629,6 +617,19 @@ Spell::~Spell()
 
     // missing cleanup somewhere, mem leaks so let's crash
     AssertEffectExecuteData();
+}
+
+// Returns the school mask to use for final spell damage
+SpellSchoolMask Spell::GetDamageSchoolMask() const
+{
+    if (Player const* playerCaster = m_caster->ToPlayer())
+    {
+        // wand/bow/gun shoot/auto attack.  these spells are effectively auto attacks and should use the weapons primary damage type
+        if (m_spellInfo->Id == 75 || m_spellInfo->Id == 3018 || m_spellInfo->Id == 5019)
+            if (Item* pItem = playerCaster->GetWeaponForAttack(RANGED_ATTACK))
+                return SpellSchoolMask(1 << pItem->GetTemplate()->Damage[0].DamageType);
+    }
+    return m_spellInfo->GetSchoolMask();
 }
 
 void Spell::InitExplicitTargets(SpellCastTargets const& targets)
@@ -2582,11 +2583,12 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
 
         // Do damage
         bool hasDamage = false;
+        SpellSchoolMask damageSchoolMask = spell->GetDamageSchoolMask();
         if (spell->m_damage > 0)
         {
             hasDamage = true;
             // Fill base damage struct (unitTarget - is real spell target)
-            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, spell->m_spellSchoolMask);
+            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, damageSchoolMask);
             // Check damage immunity
             if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo))
             {
@@ -2625,7 +2627,7 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
         if (!hasHealing && !hasDamage)
         {
             // Fill base damage struct (unitTarget - is real spell target)
-            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, spell->m_spellSchoolMask);
+            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, damageSchoolMask);
             hitMask |= createProcHitMask(&damageInfo, MissCondition);
             // Do triggers for unit
             if (canEffectTrigger)
@@ -2804,11 +2806,9 @@ SpellMissInfo Spell::PreprocessSpellHit(Unit* unit, bool scaleAura, TargetInfo& 
         if (creatureTarget->IsEvadingAttacks())
             return SPELL_MISS_EVADE;
 
-    /** @epoch-start */
-    // properly catch wands spell school.
-    if (m_spellInfo->Speed && ((m_damage > 0 && unit->IsImmunedToDamage(m_spellInfo) || unit->IsImmunedToDamage(m_spellSchoolMask) || unit->IsImmunedToSpell(m_spellInfo, m_caster))))
+    SpellSchoolMask damageSchoolMask = GetDamageSchoolMask();
+    if (m_spellInfo->Speed && ((m_damage > 0 && unit->IsImmunedToDamage(m_spellInfo, damageSchoolMask) || unit->IsImmunedToDamage(damageSchoolMask) || unit->IsImmunedToSpell(m_spellInfo, m_caster))))
         return SPELL_MISS_IMMUNE;
-    /** @epoch-end */
 
     if (Player* player = unit->ToPlayer())
     {
@@ -3178,7 +3178,7 @@ SpellCastResult Spell::prepare(SpellCastTargets const& targets, AuraEffect const
     LoadScripts();
 
     // Fill cost data (do not use power for item casts)
-    m_powerCost = m_CastItem ? 0 : m_spellInfo->CalcPowerCost(m_caster, m_spellSchoolMask, this);
+    m_powerCost = m_CastItem ? 0 : m_spellInfo->CalcPowerCost(m_caster, m_spellInfo->GetSchoolMask(), this);
 
     // Set combo point requirement
     if ((_triggeredCastFlags & TRIGGERED_IGNORE_COMBO_POINTS) || m_CastItem)
@@ -3553,6 +3553,11 @@ void Spell::_cast(bool skipCheck)
 
     if (!(_triggeredCastFlags & TRIGGERED_IGNORE_POWER_AND_REAGENT_COST))
     {
+        /** @epoch-start  */
+        // recalculate cost one final time to handle clearcasting better
+        m_powerCost = m_CastItem ? 0 : m_spellInfo->CalcPowerCost(m_caster, m_spellInfo->GetSchoolMask(), this);
+        /** @epoch-end */
+
         // Powers have to be taken before SendSpellGo
         TakePower();
         TakeReagents();                                         // we must remove reagents before HandleEffects to allow place crafted item in same slot
@@ -6367,7 +6372,7 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
 
     // check power requirement
     // this would be zero until ::prepare normally, we set it here (it gets reset in ::prepare)
-    m_powerCost = m_spellInfo->CalcPowerCost(m_caster, m_spellSchoolMask);
+    m_powerCost = m_spellInfo->CalcPowerCost(m_caster, m_spellInfo->GetSchoolMask());
     SpellCastResult failReason = CheckPower();
     if (failReason != SPELL_CAST_OK)
         return failReason;
@@ -7923,8 +7928,8 @@ void Spell::PreprocessSpellLaunch(TargetInfo& targetInfo)
     if (m_originalCaster)
     {
         if (!critChance)
-            critChance = m_originalCaster->SpellCritChanceDone(m_spellInfo, m_spellSchoolMask, m_attackType);
-        critChance = unit->SpellCritChanceTaken(m_originalCaster, m_spellInfo, m_spellSchoolMask, critChance, m_attackType);
+            critChance = m_originalCaster->SpellCritChanceDone(m_spellInfo, m_spellInfo->GetSchoolMask(), m_attackType);
+        critChance = unit->SpellCritChanceTaken(m_originalCaster, m_spellInfo, m_spellInfo->GetSchoolMask(), critChance, m_attackType);
     }
 
     // @tswow-begin

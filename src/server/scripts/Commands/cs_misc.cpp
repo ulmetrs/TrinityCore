@@ -72,7 +72,7 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "additem",          HandleAddItemCommand,          rbac::RBAC_PERM_COMMAND_ADDITEM,          Console::No },
+            { "additem",          HandleAddItemCommand,          rbac::RBAC_PERM_COMMAND_ADDITEM,          Console::Yes },
             { "additem to",       HandleAddItemToCommand,        rbac::RBAC_PERM_COMMAND_ADDITEM,          Console::No },
             { "additem set",      HandleAddItemSetCommand,       rbac::RBAC_PERM_COMMAND_ADDITEMSET,       Console::No },
             { "appear",           HandleAppearCommand,           rbac::RBAC_PERM_COMMAND_APPEAR,           Console::No },
@@ -1161,6 +1161,17 @@ public:
             return false;
 
         uint32 itemId = 0;
+        std::string playerName;
+        char const* ccount = nullptr;
+
+        // Check if first argument is a player name
+        if (args[0] != '[' && !strchr(args, '|') && isalpha(args[0]))
+        {
+            playerName = strtok((char*)args, " ");
+            args = strtok(nullptr, "");
+            if (!args)
+                return false;
+        }
 
         if (args[0] == '[')                                        // [name] manual form
         {
@@ -1195,7 +1206,7 @@ public:
             itemId = Trinity::StringTo<uint32>(id).value_or(0);
         }
 
-        char const* ccount = strtok(nullptr, " ");
+        ccount = strtok(nullptr, " ");
 
         int32 count = 1;
 
@@ -1206,9 +1217,19 @@ public:
             count = 1;
 
         Player* player = handler->GetSession()->GetPlayer();
-        Player* playerTarget = handler->getSelectedPlayer();
-        if (!playerTarget)
-            playerTarget = player;
+        Player* playerTarget = nullptr;
+        if (!playerName.empty())
+        {
+            playerTarget = ObjectAccessor::FindPlayerByName(playerName);
+            if (!playerTarget)
+            {
+                handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
+        else
+            playerTarget = handler->getSelectedPlayer() ? handler->getSelectedPlayer() : player;
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
         if (!itemTemplate)

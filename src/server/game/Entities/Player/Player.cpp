@@ -83,6 +83,7 @@
 #include "QuestPools.h"
 #include "Realm.h"
 #include "ReputationMgr.h"
+#include "SharedDefines.h"
 #include "SkillDiscovery.h"
 #include "SocialMgr.h"
 #include "Spell.h"
@@ -5342,7 +5343,7 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
                     break;
                 case ITEM_ENCHANTMENT_TYPE_TOTEM:
                     if (GetClass() == CLASS_SHAMAN)
-                        amount += enchantmentEntry->EffectPointsMin[i] * item->GetTemplate()->Delay / 1000.0f;
+                        amount += enchantmentEntry->EffectPointsMin[i] * item->GetTemplate()->Delay / 1000.0f; // Wrath Rockbiter increases dps by flat amount
                     break;
                 default:
                     break;
@@ -5350,7 +5351,9 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
         }
     }
 
-    HandleStatFlatModifier(unitMod, TOTAL_VALUE, amount, true);
+    // For +damage enchants and rockbiter we add flat mods to the primary weapon's spell school
+    SpellSchools school = GetMeleeDamageSchool(attackType, 0);
+    HandleDamageFlatModifier(unitMod, school, amount, true);
 }
 
 void Player::UpdateBaseModGroup(BaseModGroup modGroup)
@@ -7800,10 +7803,15 @@ void Player::_ApplyWeaponDamage(uint8 slot, ItemTemplate const* proto, bool appl
 
 SpellSchoolMask Player::GetMeleeDamageSchoolMask(WeaponAttackType attackType /*= BASE_ATTACK*/, uint8 damageIndex /*= 0*/) const
 {
-    if (Item const* weapon = GetWeaponForAttack(attackType, true))
-        return SpellSchoolMask(1 << weapon->GetTemplate()->Damage[damageIndex].DamageType);
+    return SpellSchoolMask(1 << GetMeleeDamageSchool(attackType, damageIndex));
+}
 
-    return SPELL_SCHOOL_MASK_NORMAL;
+SpellSchools Player::GetMeleeDamageSchool(WeaponAttackType attackType /*= BASE_ATTACK*/, uint8 damageIndex /*= 0*/) const
+{
+    if (Item const* weapon = GetWeaponForAttack(attackType, true))
+        return SpellSchools(weapon->GetTemplate()->Damage[damageIndex].DamageType);
+
+    return SPELL_SCHOOL_NORMAL;
 }
 
 void Player::CastAllObtainSpells()
