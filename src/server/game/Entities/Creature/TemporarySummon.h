@@ -38,8 +38,8 @@ class TC_GAME_API TempSummon : public Creature
         explicit TempSummon(SummonPropertiesEntry const* properties, WorldObject* owner, bool isWorldObject);
         virtual ~TempSummon() { }
         void Update(uint32 time) override;
-        // I cannot provide a default parameter as tswow TotemCreature hooks onto a specific signature, so I need to define
-        // two versions of InitStats in order to keep supporting that
+        // tswow TotemCreature hooks onto a specific signature,
+        // so we need to define two versions of InitStats in order to keep supporting that
         virtual void InitStats(uint32 lifetime) { InitStats(lifetime, 0); }
         virtual void InitStats(uint32 lifetime, uint8 levelOverride);
         virtual void InitSummon();
