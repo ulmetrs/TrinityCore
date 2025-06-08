@@ -481,7 +481,7 @@ void Guardian::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
 
     if (levelOverride)
         level = levelOverride;
-    else if (!(m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL))
+    else if (m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL)
         level = GetOwner()->GetLevel();
 
     InitStatsForLevel(level);
