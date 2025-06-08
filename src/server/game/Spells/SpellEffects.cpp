@@ -20,6 +20,8 @@
 #include "TSQuest.h"
 #include "TSEvents.h"
 #include "TSSpell.h"
+#include "TSSpellInfo.h"
+#include "TSMutable.h"
 // @tswow-end
 #include "Spell.h"
 #include "AccountMgr.h"
@@ -705,6 +707,17 @@ void Spell::EffectSchoolDMG()
                 break;
             }
         }
+
+        // @epoch-begin
+        FIRE_ID(
+            m_spellInfo->events.id
+            , Spell,OnCalcDamage
+            , TSSpell(this)
+            , TSMutableNumber<int32>(&damage)
+            , TSSpellInfo(m_spellInfo)
+            , TSSpellEffectInfo(effectInfo)
+        );
+        // @epoch-end
 
         if (unitCaster && damage > 0 && apply_direct_bonus)
         {

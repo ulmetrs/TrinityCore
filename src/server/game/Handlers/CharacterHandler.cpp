@@ -61,6 +61,7 @@
 #include "TSPlayer.h"
 #include "TSEvents.h"
 #include "TSProfile.h"
+#include "TSMutable.h"
 // @tswow-end
 
 class LoginQueryHolder : public CharacterDatabaseQueryHolder
@@ -598,8 +599,16 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
                 newChar->setCinematic(1);                         // not show intro
 
             newChar->SetAtLoginFlag(AT_LOGIN_FIRST);              // First login
+
             // @tswow-begin
-            FIRE(Player,OnCreateEarly,TSPlayer(newChar.get()));
+            bool cancel = false;
+            uint32 result_code = CHAR_CREATE_FAILED;
+            FIRE(Player,OnCreateEarly,TSPlayer(newChar.get()), TSMutable<bool,bool>(&cancel), TSMutableNumber<uint32>(&result_code));
+            if (cancel)
+            {
+                SendCharCreate(static_cast<ResponseCodes>(result_code));
+                return;
+            }
             // @tswow-end
 
             CharacterDatabaseTransaction characterTransaction = CharacterDatabase.BeginTransaction();
