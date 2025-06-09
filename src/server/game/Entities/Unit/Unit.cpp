@@ -8173,7 +8173,7 @@ bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo, SpellSchoolMask damageS
     return false;
 }
 
-bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute /*= false*/) const
+bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NONE*/, bool requireImmunityPurgesEffectAttribute /*= false*/) const
 {
     if (!spellInfo)
         return false;
@@ -8235,7 +8235,10 @@ bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caste
     if (immuneToAllEffects) //Return immune only if the target is immune to all spell effects.
         return true;
 
-    if (uint32 schoolMask = spellInfo->GetSchoolMask())
+    if (damageSchoolMask == SPELL_SCHOOL_MASK_NONE)
+        damageSchoolMask = spellInfo->GetSchoolMask();
+
+    if (uint32 schoolMask = damageSchoolMask)
     {
         uint32 schoolImmunityMask = 0;
         SpellImmuneContainer const& schoolList = m_spellImmune[IMMUNITY_SCHOOL];

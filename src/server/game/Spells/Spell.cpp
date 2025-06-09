@@ -2806,7 +2806,8 @@ SpellMissInfo Spell::PreprocessSpellHit(Unit* unit, bool scaleAura, TargetInfo& 
         if (creatureTarget->IsEvadingAttacks())
             return SPELL_MISS_EVADE;
 
-    if (m_spellInfo->Speed && unit->IsImmunedToSpell(m_spellInfo, m_caster))
+    SpellSchoolMask damageSchoolMask = GetDamageSchoolMask();
+    if (m_spellInfo->Speed && unit->IsImmunedToSpell(m_spellInfo, m_caster, damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 
     if (Player* player = unit->ToPlayer())

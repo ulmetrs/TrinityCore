@@ -2450,7 +2450,7 @@ void Creature::LoadTemplateImmunities()
     }
 }
 
-bool Creature::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute /*= false*/) const
+bool Creature::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NONE*/, bool requireImmunityPurgesEffectAttribute /*= false*/) const
 {
     if (!spellInfo)
         return false;
@@ -2468,7 +2468,7 @@ bool Creature::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* c
     if (immunedToAllEffects)
         return true;
 
-    return Unit::IsImmunedToSpell(spellInfo, caster, requireImmunityPurgesEffectAttribute);
+    return Unit::IsImmunedToSpell(spellInfo, caster, damageSchoolMask, requireImmunityPurgesEffectAttribute);
 }
 
 bool Creature::IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo const& spellEffectInfo, WorldObject const* caster,
