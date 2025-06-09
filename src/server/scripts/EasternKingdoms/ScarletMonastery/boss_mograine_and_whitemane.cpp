@@ -194,6 +194,10 @@ public:
 
                 me->RemoveUnitFlag(UNIT_FLAG_UNINTERACTIBLE);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
+
+                // Cast Lay on Hands on Whitemane
+                if (Creature* whitemane = instance->GetCreature(DATA_WHITEMANE))
+                    DoCast(whitemane, SPELL_LAY_ONHANDS);
             });
 
             scheduler.Schedule(5s, [this](TaskContext /*context*/)
@@ -262,6 +266,7 @@ public:
         _killYellTimer.Reset(0s);
 
         DoCastSelf(SPELL_RETRIBUTION_AURA);
+        me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
         me->SetReactState(REACT_AGGRESSIVE);
     }
 
@@ -350,11 +355,13 @@ public:
 
     void DamageTaken(Unit* /*who*/, uint32& damage, DamageEffectType /*damageType*/, SpellInfo const* /*spellInfo = nullptr*/) override
     {
-        // When Whitemane falls below 50% cast Deep sleep and schedule to ressurrect
+        // When Whitemane falls below 50% cast Deep sleep and schedule to resurrect
         if (me->HealthBelowPctDamaged(50, damage) && !_ressurectionInProgress)
         {
             _ressurectionInProgress = true;
             _canDie = false;
+            // Set non attackable if player somehow gets around the sleep they cannot prevent the resurrect
+            me->SetUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
 
             // Cancel all combat events
             _events.CancelEvent(EVENT_HEAL);
@@ -418,7 +425,8 @@ private:
         _events.ScheduleEvent(EVENT_HOLY_SMITE, 6s);
 
         _canDie = true;
-
+        // Remove non attackable flag when resurrect lands
+        me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
         me->SetReactState(REACT_AGGRESSIVE);
 
         if (me->GetVictim())
