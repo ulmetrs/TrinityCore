@@ -8173,7 +8173,7 @@ bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo, SpellSchoolMask damageS
     return false;
 }
 
-bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NONE*/, bool requireImmunityPurgesEffectAttribute /*= false*/) const
+bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute /*= false*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NONE*/) const
 {
     if (!spellInfo)
         return false;

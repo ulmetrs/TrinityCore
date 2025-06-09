@@ -650,7 +650,7 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
         {
             // needs readding - remove now, will be applied in next update cycle
             // (dbcs do not have auras which apply on same type of targets but have different radius, so this is not really needed)
-            if (itr->first->IsImmunedToSpell(GetSpellInfo(), caster, GetSpellInfo()->GetSchoolMask(), true) || !CanBeAppliedOn(itr->first))
+            if (itr->first->IsImmunedToSpell(GetSpellInfo(), caster, true) || !CanBeAppliedOn(itr->first))
             {
                 targetsToRemove.push_back(applicationPair.second->GetTarget());
                 continue;
