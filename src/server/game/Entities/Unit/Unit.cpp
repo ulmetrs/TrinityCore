@@ -871,7 +871,6 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
             damage = health - 1;
 
         duel_hasEnded = true;
-        TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel has ended, final damage {}", damage);
     }
     else if (victim->IsVehicle() && damage >= (health-1) && victim->GetCharmer() && victim->GetCharmer()->GetTypeId() == TYPEID_PLAYER)
     {
@@ -1005,8 +1004,9 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
 
             he->duel->Opponent->CombatStopWithPets(true);
             he->CombatStopWithPets(true);
+            // makes spells cast before this time fizzle
+            he->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
 
-            TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel has ended, cast beg and call DuelComplete on Victim");
             he->CastSpell(he, 7267, true);                  // beg
             he->DuelComplete(DUEL_WON);
         }
