@@ -866,7 +866,6 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
         if (!attacker)
             return 0;
 
-        TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel Opponent is Attacker? {}", victim->ToPlayer()->duel->Opponent == attacker->GetControllingPlayer());
         // prevent kill only if killed in duel and killed by opponent or opponent controlled creature
         if (victim->ToPlayer()->duel->Opponent == attacker->GetControllingPlayer())
             damage = health - 1;
@@ -995,12 +994,6 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
         // last damage from duel opponent
         if (duel_hasEnded)
         {
-            // Copied from sanctuary to fix in flight spells stun/sleep/killing duelist
-            victim->InterruptSpellsCastedOnMe(true);
-            victim->InterruptAttacksOnMe(0.0f);
-            // makes spells cast before this time fizzle
-            victim->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
-
             Player* he = duel_wasMounted ? victim->GetCharmer()->ToPlayer() : victim->ToPlayer();
 
             ASSERT_NODEBUGINFO(he && he->duel);
@@ -1010,7 +1003,9 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
             else
                 he->SetHealth(1);
 
+            he->duel->Opponent->CombatStop();
             he->duel->Opponent->CombatStopWithPets(true);
+            he->CombatStop();
             he->CombatStopWithPets(true);
 
             TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel has ended, cast beg and call DuelComplete on Victim");
