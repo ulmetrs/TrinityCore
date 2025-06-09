@@ -1003,9 +1003,7 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
             else
                 he->SetHealth(1);
 
-            he->duel->Opponent->CombatStop();
             he->duel->Opponent->CombatStopWithPets(true);
-            he->CombatStop();
             he->CombatStopWithPets(true);
 
             TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel has ended, cast beg and call DuelComplete on Victim");

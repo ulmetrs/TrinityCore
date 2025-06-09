@@ -7400,9 +7400,6 @@ void Player::DuelComplete(DuelCompleteType type)
     SetUInt32Value(PLAYER_DUEL_TEAM, 0);
     opponent->SetGuidValue(PLAYER_DUEL_ARBITER, ObjectGuid::Empty);
     opponent->SetUInt32Value(PLAYER_DUEL_TEAM, 0);
-
-    opponent->duel.reset(nullptr);
-    duel.reset(nullptr);
 }
 
 //---------------------------------------------------------//
@@ -20988,6 +20985,12 @@ void Player::UpdateDuelFlag(time_t currTime)
 
         duel->State = DUEL_STATE_IN_PROGRESS;
         duel->Opponent->duel->State = DUEL_STATE_IN_PROGRESS;
+    }
+
+    if (duel && duel->State == DUEL_STATE_COMPLETED)
+    {
+        // Delay duel reset until UpdateDuelFlag so that extra attacks like sword spec do not kill duelist
+        duel.reset(nullptr);
     }
 }
 
