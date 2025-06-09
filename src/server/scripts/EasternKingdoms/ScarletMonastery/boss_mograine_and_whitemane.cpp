@@ -17,6 +17,7 @@
 
 #include "scarlet_monastery.h"
 #include "InstanceScript.h"
+#include "Log.h"
 #include "MotionMaster.h"
 #include "ScriptedCreature.h"
 #include "ScriptMgr.h"
