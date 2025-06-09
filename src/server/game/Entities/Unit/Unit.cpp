@@ -859,16 +859,20 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
     // duel ends when player has 1 or less hp
     bool duel_hasEnded = false;
     bool duel_wasMounted = false;
+    TC_LOG_DEBUG("duels", "Unit::DealDamage: Player to take damage of {} and has duel? {}", damage, victim->GetTypeId() == TYPEID_PLAYER && victim->ToPlayer()->duel);
     if (victim->GetTypeId() == TYPEID_PLAYER && victim->ToPlayer()->duel && damage >= (health-1))
     {
+        TC_LOG_DEBUG("duels", "Unit::DealDamage: Final Damage of Duel {} Health Remaining {}", damage, health);
         if (!attacker)
             return 0;
 
+        TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel Opponent is Attacker? {}", victim->ToPlayer()->duel->Opponent == attacker->GetControllingPlayer());
         // prevent kill only if killed in duel and killed by opponent or opponent controlled creature
         if (victim->ToPlayer()->duel->Opponent == attacker->GetControllingPlayer())
             damage = health - 1;
 
         duel_hasEnded = true;
+        TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel has ended, final damage {}", damage);
     }
     else if (victim->IsVehicle() && damage >= (health-1) && victim->GetCharmer() && victim->GetCharmer()->GetTypeId() == TYPEID_PLAYER)
     {
@@ -1009,6 +1013,7 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
             he->duel->Opponent->CombatStopWithPets(true);
             he->CombatStopWithPets(true);
 
+            TC_LOG_DEBUG("duels", "Unit::DealDamage: Duel has ended, cast beg and call DuelComplete on Victim");
             he->CastSpell(he, 7267, true);                  // beg
             he->DuelComplete(DUEL_WON);
         }

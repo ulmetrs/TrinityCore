@@ -7295,6 +7295,7 @@ void Player::DuelComplete(DuelCompleteType type)
     if (!duel)
         return;
 
+    TC_LOG_DEBUG("duels", "Player::DuelComplete: State of duel {}", duel->State);
     // Check if DuelComplete() has been called already up in the stack and in that case don't do anything else here
     if (duel->State == DUEL_STATE_COMPLETED)
         return;
@@ -7403,6 +7404,7 @@ void Player::DuelComplete(DuelCompleteType type)
 
     opponent->duel.reset(nullptr);
     duel.reset(nullptr);
+    TC_LOG_DEBUG("duels", "Player::DuelComplete: All auras removed and reset called on duel");
 }
 
 //---------------------------------------------------------//
