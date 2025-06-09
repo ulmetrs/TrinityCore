@@ -271,7 +271,7 @@ public:
         _killYellTimer.Reset(0s);
 
         DoCastSelf(SPELL_RETRIBUTION_AURA);
-        //me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+        me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
         me->SetReactState(REACT_AGGRESSIVE);
     }
 
@@ -366,7 +366,7 @@ public:
             _ressurectionInProgress = true;
             _canDie = false;
             // Set non attackable if player somehow gets around the sleep they cannot prevent the resurrect
-            //me->SetUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+            me->SetUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
 
             // Cancel all combat events
             _events.CancelEvent(EVENT_HEAL);
@@ -431,7 +431,7 @@ private:
 
         _canDie = true;
         // Remove non attackable flag when resurrect lands
-        //me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+        me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
         me->SetReactState(REACT_AGGRESSIVE);
 
         if (me->GetVictim())
