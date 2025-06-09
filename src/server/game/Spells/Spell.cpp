@@ -2590,8 +2590,9 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
             // Fill base damage struct (unitTarget - is real spell target)
             SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, damageSchoolMask);
             // Check damage immunity
-            if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo))
+            if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo, damageSchoolMask))
             {
+                TC_LOG_DEBUG("spellimmune", "Target is immune to spell damage so DO NOT set last damage target guid");
                 hitMask = PROC_HIT_IMMUNE;
                 spell->m_damage = 0;
 
@@ -2599,6 +2600,7 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
             }
             else
             {
+                TC_LOG_DEBUG("spellimmune", "Target is not immune to spell damage so set last damage target guid");
                 caster->SetLastDamagedTargetGuid(spell->unitTarget->GetGUID());
 
                 // Add bonuses and fill damageInfo struct
@@ -2807,7 +2809,7 @@ SpellMissInfo Spell::PreprocessSpellHit(Unit* unit, bool scaleAura, TargetInfo& 
             return SPELL_MISS_EVADE;
 
     SpellSchoolMask damageSchoolMask = GetDamageSchoolMask();
-    if (m_spellInfo->Speed && ((m_damage > 0 && unit->IsImmunedToDamage(m_spellInfo, damageSchoolMask) || unit->IsImmunedToDamage(damageSchoolMask) || unit->IsImmunedToSpell(m_spellInfo, m_caster))))
+    if (m_spellInfo->Speed && ((m_damage > 0 && unit->IsImmunedToDamage(m_spellInfo, damageSchoolMask) || unit->IsImmunedToSpell(m_spellInfo, m_caster))))
         return SPELL_MISS_IMMUNE;
 
     if (Player* player = unit->ToPlayer())
