@@ -2592,7 +2592,6 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
             // Check damage immunity
             if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo, damageSchoolMask))
             {
-                TC_LOG_DEBUG("spellimmune", "Target is immune to spell damage so DO NOT set last damage target guid");
                 hitMask = PROC_HIT_IMMUNE;
                 spell->m_damage = 0;
 
@@ -2600,7 +2599,6 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
             }
             else
             {
-                TC_LOG_DEBUG("spellimmune", "Target is not immune to spell damage so set last damage target guid");
                 caster->SetLastDamagedTargetGuid(spell->unitTarget->GetGUID());
 
                 // Add bonuses and fill damageInfo struct
