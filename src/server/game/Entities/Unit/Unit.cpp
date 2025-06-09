@@ -991,6 +991,12 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
         // last damage from duel opponent
         if (duel_hasEnded)
         {
+            // Copied from sanctuary to fix in flight spells stun/sleep/killing duelist
+            victim->InterruptSpellsCastedOnMe(true);
+            victim->InterruptAttacksOnMe(0.0f);
+            // makes spells cast before this time fizzle
+            victim->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
+
             Player* he = duel_wasMounted ? victim->GetCharmer()->ToPlayer() : victim->ToPlayer();
 
             ASSERT_NODEBUGINFO(he && he->duel);
