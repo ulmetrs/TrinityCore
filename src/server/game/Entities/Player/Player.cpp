@@ -5321,7 +5321,7 @@ void Player::UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchant
     }
 
     float amount = 0.0f;
-    Item* item = GetWeaponForAttack(attackType, true);
+    Item* item = GetWeaponForDamageMods(attackType);
     if (!item)
         return;
 
@@ -10109,6 +10109,27 @@ Item* Player::GetWeaponForAttack(WeaponAttackType attackType, bool useable /*= f
         return item;
 
     if (item->IsBroken() || IsInFeralForm())
+        return nullptr;
+
+    return item;
+}
+
+Item* Player::GetWeaponForDamageMods(WeaponAttackType attackType) const
+{
+    uint8 slot;
+    switch (attackType)
+    {
+        case BASE_ATTACK:   slot = EQUIPMENT_SLOT_MAINHAND; break;
+        case OFF_ATTACK:    slot = EQUIPMENT_SLOT_OFFHAND;  break;
+        case RANGED_ATTACK: slot = EQUIPMENT_SLOT_RANGED;   break;
+        default: return nullptr;
+    }
+
+    Item* item = GetUseableItemByPos(INVENTORY_SLOT_BAG_0, slot);
+    if (!item || item->GetTemplate()->Class != ITEM_CLASS_WEAPON)
+        return nullptr;
+
+    if (item->IsBroken())
         return nullptr;
 
     return item;
