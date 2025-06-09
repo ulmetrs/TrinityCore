@@ -859,10 +859,8 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
     // duel ends when player has 1 or less hp
     bool duel_hasEnded = false;
     bool duel_wasMounted = false;
-    TC_LOG_DEBUG("duels", "Unit::DealDamage: Player to take damage of {} and has duel? {}", damage, victim->GetTypeId() == TYPEID_PLAYER && victim->ToPlayer()->duel);
     if (victim->GetTypeId() == TYPEID_PLAYER && victim->ToPlayer()->duel && damage >= (health-1))
     {
-        TC_LOG_DEBUG("duels", "Unit::DealDamage: Final Damage of Duel {} Health Remaining {}", damage, health);
         if (!attacker)
             return 0;
 
