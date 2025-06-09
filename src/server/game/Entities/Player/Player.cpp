@@ -20990,6 +20990,7 @@ void Player::UpdateDuelFlag(time_t currTime)
     if (duel && duel->State == DUEL_STATE_COMPLETED)
     {
         // Delay duel reset until UpdateDuelFlag so that extra attacks like sword spec do not kill duelist
+        duel->Opponent->duel.reset(nullptr);
         duel.reset(nullptr);
     }
 }
