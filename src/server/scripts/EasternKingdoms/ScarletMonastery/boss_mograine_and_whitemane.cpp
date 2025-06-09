@@ -194,10 +194,16 @@ public:
 
                 me->RemoveUnitFlag(UNIT_FLAG_UNINTERACTIBLE);
                 me->SetStandState(UNIT_STAND_STATE_STAND);
+            });
 
+            scheduler.Schedule(4s, [this](TaskContext /*context*/)
+            {
                 // Cast Lay on Hands on Whitemane
                 if (Creature* whitemane = instance->GetCreature(DATA_WHITEMANE))
+                {
                     DoCast(whitemane, SPELL_LAY_ONHANDS);
+                    TC_LOG_DEBUG("whitemane", "Mograine DoCast SPELL_LAY_ONHANDS");
+                }
             });
 
             scheduler.Schedule(5s, [this](TaskContext /*context*/)
