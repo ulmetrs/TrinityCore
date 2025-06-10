@@ -2152,7 +2152,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
             effectMask &= ~(1 << spellEffectInfo.EffectIndex);
 
     ObjectGuid targetGUID = target->GetGUID();
-    
+
     // Lookup target in already in list
     auto ihit = std::find_if(std::begin(m_UniqueTargetInfo), std::end(m_UniqueTargetInfo), [targetGUID](TargetInfo const& target) { return target.TargetGUID == targetGUID; });
     if (ihit != std::end(m_UniqueTargetInfo)) // Found in list
