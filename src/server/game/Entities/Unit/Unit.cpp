@@ -1005,7 +1005,6 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
             // makes spells cast before this time fizzle
             he->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
 
-            he->CastSpell(he, 7267, true);                  // beg
             he->DuelComplete(DUEL_WON);
         }
     }

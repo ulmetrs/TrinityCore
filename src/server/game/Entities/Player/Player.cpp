@@ -7358,6 +7358,10 @@ void Player::DuelComplete(DuelCompleteType type)
             break;
     }
 
+    // Beg emote spell
+    if (type == DUEL_WON)
+        CastSpell(this, 7267, true);
+
     // Victory emote spell
     if (type != DUEL_INTERRUPTED)
         opponent->CastSpell(opponent, 52852, true);
