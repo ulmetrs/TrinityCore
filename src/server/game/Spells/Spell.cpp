@@ -2152,6 +2152,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
             effectMask &= ~(1 << spellEffectInfo.EffectIndex);
 
     ObjectGuid targetGUID = target->GetGUID();
+    
     // Lookup target in already in list
     auto ihit = std::find_if(std::begin(m_UniqueTargetInfo), std::end(m_UniqueTargetInfo), [targetGUID](TargetInfo const& target) { return target.TargetGUID == targetGUID; });
     if (ihit != std::end(m_UniqueTargetInfo)) // Found in list
@@ -2188,7 +2189,6 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
 
     // Calculate hit result
     WorldObject* caster = m_originalCaster ? m_originalCaster : m_caster;
-
     targetInfo.MissCondition = caster->SpellHitResult(target, m_spellInfo, m_damageSchoolMask, m_canReflect && !(IsPositive() && m_caster->IsFriendlyTo(target)));
 
     // @tswow-begin
