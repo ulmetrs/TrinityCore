@@ -486,7 +486,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         virtual float MeleeSpellMissChance(Unit const* victim, WeaponAttackType attType, int32 skillDiff, uint32 spellId) const;
         virtual SpellMissInfo MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo) const;
         SpellMissInfo MagicSpellHitResult(Unit* victim, SpellInfo const* spellInfo) const;
-        SpellMissInfo SpellHitResult(Unit* victim, SpellInfo const* spellInfo, bool canReflect = false) const;
+        SpellMissInfo SpellHitResult(Unit* victim, SpellInfo const* spellInfo, SpellSchoolMask damageSchoolMask, bool canReflect = false) const;
         void SendSpellMiss(Unit* target, uint32 spellID, SpellMissInfo missInfo);
 
         virtual uint32 GetFaction() const = 0;

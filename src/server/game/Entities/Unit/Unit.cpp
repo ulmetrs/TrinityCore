@@ -1628,7 +1628,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
             SpellInfo const* spellInfo = aurEff->GetSpellInfo();
 
             // Damage shield can be resisted...
-            SpellMissInfo missInfo = victim->SpellHitResult(this, spellInfo, false);
+            SpellMissInfo missInfo = victim->SpellHitResult(this, spellInfo, spellInfo->GetSchoolMask(), false);
             if (missInfo != SPELL_MISS_NONE)
             {
                 victim->SendSpellMiss(this, spellInfo->Id, missInfo);
