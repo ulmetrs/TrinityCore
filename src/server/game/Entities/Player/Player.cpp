@@ -7153,6 +7153,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
     if (!IsInWorld())
         return;
 
+    TC_LOG_DEBUG("pvp", "Player::UpdateZone with zone {} and area {}", newZone, newArea);
     uint32 const oldZone = m_zoneUpdateId;
     m_zoneUpdateId = newZone;
     m_zoneUpdateTimer = ZONE_UPDATE_INTERVAL;
@@ -7191,6 +7192,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
         , OnCheckAreaIsPvP, TSPlayer(this)
         , TSMutable<bool, bool>(&pvparea)
     );
+    TC_LOG_DEBUG("pvp", "Player::UpdateZone OnCheckAreaIsPvP PvpArea? {}", pvparea);
     switch (zone->FactionGroupMask)
     {
         case AREATEAM_ALLY:
@@ -7209,18 +7211,26 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
             break;
     }
 
+    TC_LOG_DEBUG("pvp", "Player::UpdateZone ZoneFlags {} AREA_FLAG_LINKED_CHAT {} IsInHostileArea? {} HavePvPForcingQuest? {} PvpArea? {}", uint32(zone->Flags), uint32(AREA_FLAG_LINKED_CHAT), pvpInfo.IsInHostileArea, HasPvPForcingQuest(), pvparea);
+
     // Treat players having a quest flagging for PvP as always in hostile area
     pvpInfo.IsHostile = pvpInfo.IsInHostileArea || HasPvPForcingQuest() || pvparea;
 
     if (zone->Flags & AREA_FLAG_LINKED_CHAT)                     // Is in a capital city
     {
         if (!pvpInfo.IsHostile || zone->IsSanctuary())
+        {
+            TC_LOG_DEBUG("pvp", "Player::UpdateZone SetRestFlag {}", uint32(REST_FLAG_IN_CITY));
             SetRestFlag(REST_FLAG_IN_CITY);
+        }
 
         pvpInfo.IsInNoPvPArea = true;
     }
     else
+    {
+        TC_LOG_DEBUG("pvp", "Player::UpdateZone RemoveRestFlag {}", uint32(REST_FLAG_IN_CITY));
         RemoveRestFlag(REST_FLAG_IN_CITY); // Recently left a capital city
+    }
 
     UpdatePvPState();
 
@@ -22412,6 +22422,7 @@ void Player::UpdatePvPState(bool onlyFFA)
 
 void Player::SetPvP(bool state)
 {
+    TC_LOG_DEBUG("pvp", "Player::SetPvP with state {}", state);
     Unit::SetPvP(state);
     for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
         (*itr)->SetPvP(state);
@@ -22419,6 +22430,7 @@ void Player::SetPvP(bool state)
 
 bool Player::UpdatePvP(bool state, bool _override, WorldObject const* source)
 {
+    TC_LOG_DEBUG("pvp", "Player::UpdatePvP with state {}", state);
     if (IsCharmed())
         return false;
 
