@@ -2189,7 +2189,6 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
     // Calculate hit result
     WorldObject* caster = m_originalCaster ? m_originalCaster : m_caster;
 
-    TC_LOG_DEBUG("immunity", "Spell::AddUnitTarget setting target info MissCondition from SpellHitResult");
     targetInfo.MissCondition = caster->SpellHitResult(target, m_spellInfo, m_damageSchoolMask, m_canReflect && !(IsPositive() && m_caster->IsFriendlyTo(target)));
 
     // @tswow-begin
@@ -2587,7 +2586,6 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
             // Fill base damage struct (unitTarget - is real spell target)
             SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, spell->GetDamageSchoolMask());
             // Check damage immunity
-            TC_LOG_DEBUG("immunity", "Spell::TargetInfo::DoDamageAndTriggers DamageSchoolMask {} and IsImmunedToDamage? {}", uint8(spell->GetDamageSchoolMask()), spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo, spell->GetDamageSchoolMask()));
             if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo, spell->GetDamageSchoolMask()))
             {
                 hitMask = PROC_HIT_IMMUNE;
@@ -2804,7 +2802,6 @@ SpellMissInfo Spell::PreprocessSpellHit(Unit* unit, bool scaleAura, TargetInfo& 
         if (creatureTarget->IsEvadingAttacks())
             return SPELL_MISS_EVADE;
 
-    TC_LOG_DEBUG("immunity", "Spell::PreprocessSpellHit Speed {} and DamageSchoolMask {} and ImmunedToSpell? {}", m_spellInfo->Speed, uint8(m_damageSchoolMask), unit->IsImmunedToSpell(m_spellInfo, m_caster, false, m_damageSchoolMask));
     if (m_spellInfo->Speed && unit->IsImmunedToSpell(m_spellInfo, m_caster, false, m_damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 

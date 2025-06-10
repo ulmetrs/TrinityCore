@@ -2676,18 +2676,15 @@ SpellMissInfo WorldObject::MagicSpellHitResult(Unit* victim, SpellInfo const* sp
 //   Resist
 SpellMissInfo WorldObject::SpellHitResult(Unit* victim, SpellInfo const* spellInfo, SpellSchoolMask damageSchoolMask, bool canReflect /*= false*/) const
 {
-    TC_LOG_DEBUG("immunity", "WorldObject::SpellHitResult damageSchoolMask {} spell immune {}", uint32(damageSchoolMask), victim->IsImmunedToSpell(spellInfo, this, false, damageSchoolMask));
     // Check for immune
     if (victim->IsImmunedToSpell(spellInfo, this, false, damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 
-    TC_LOG_DEBUG("immunity", "WorldObject::SpellHitResult damageSchoolMask {} damage immune {}", uint32(damageSchoolMask), victim->IsImmunedToDamage(spellInfo, damageSchoolMask));
     // Damage immunity is only checked if the spell has damage effects, this immunity must not prevent aura apply
     // returns SPELL_MISS_IMMUNE in that case, for other spells, the SMSG_SPELL_GO must show hit
     if (spellInfo->HasOnlyDamageEffects() && victim->IsImmunedToDamage(spellInfo, damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 
-    TC_LOG_DEBUG("immunity", "WorldObject::SpellHitResult passed immunes");
     // All positive spells can`t miss
     /// @todo client not show miss log for this spells - so need find info for this in dbc and use it!
     if (spellInfo->IsPositive() && !IsHostileTo(victim)) // prevent from affecting enemy by "positive" spell
