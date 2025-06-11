@@ -138,6 +138,7 @@ void OnLoginCmdMgr::AddCommand(ObjectGuid playerGuid, std::string const& command
 
 const std::vector<OnLoginCmd*>& OnLoginCmdMgr::GetCommandsForPlayer(ObjectGuid const& guid) const
 {
+    TC_LOG_DEBUG("onlogin", "OnLoginCmdMgr::GetCommandsForPlayer {}", guid);
     static const std::vector<OnLoginCmd*> empty;
     auto itr = _onLoginCommandList.find(guid);
     return itr != _onLoginCommandList.end() ? itr->second : empty;
@@ -145,6 +146,7 @@ const std::vector<OnLoginCmd*>& OnLoginCmdMgr::GetCommandsForPlayer(ObjectGuid c
 
 void OnLoginCmdMgr::ClearCommandsForPlayer(ObjectGuid const& guid)
 {
+    TC_LOG_DEBUG("onlogin", "OnLoginCmdMgr::ClearCommandsForPlayer {}", guid);
     auto itr = _onLoginCommandList.find(guid);
     if (itr == _onLoginCommandList.end())
         return;
