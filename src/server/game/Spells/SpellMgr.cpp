@@ -3855,7 +3855,9 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     ApplySpellFix({
-        17364, // Stormstrike
+        // @epoch-start
+        //17364, // Stormstrike
+        // @epoch-end
         48278, // Paralyze
         53651  // Light's Beacon
     }, [](SpellInfo* spellInfo)
