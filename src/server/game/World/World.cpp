@@ -71,6 +71,7 @@
 #include "MMapFactory.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
+#include "OnLoginCmdMgr.h"
 #include "OutdoorPvPMgr.h"
 #include "PetitionMgr.h"
 #include "Player.h"
@@ -2191,6 +2192,9 @@ void World::SetInitialWorldSettings()
 
     TC_LOG_INFO("server.loading", "Loading GM surveys...");
     sTicketMgr->LoadSurveys();
+
+    TC_LOG_INFO("server.loading", "Loading on login commands...");
+    sOnLoginCmdMgr->LoadCommands();
 
     TC_LOG_INFO("server.loading", "Loading client addons...");
     AddonMgr::LoadFromDB();

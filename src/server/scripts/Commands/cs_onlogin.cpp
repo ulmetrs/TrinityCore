@@ -28,6 +28,7 @@ EndScriptData */
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
+#include "OnLoginCmdMgr.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include <unordered_map>
@@ -53,8 +54,6 @@ public:
         };
         return commandTable;
     }
-
-    static std::unordered_map<uint32, std::vector<std::string>> s_pendingCommands;
 
     static bool HandleOnLoginCommand(ChatHandler* handler, char const* args)
     {
@@ -91,13 +90,11 @@ public:
             return true;
         }
 
-        s_pendingCommands[guid.GetCounter()].emplace_back(argCommand);
+        sOnLoginCmdMgr->AddCommand(guid, argCommand);
         handler->PSendSysMessage("Command stored for %s: %s", playerName.c_str(), argCommand.c_str());
         return true;
     }
 };
-
-std::unordered_map<uint32, std::vector<std::string>> onlogin_commandscript::s_pendingCommands;
 
 class OnLoginPlayerScript : public PlayerScript
 {
@@ -106,18 +103,13 @@ public:
 
     void OnLogin(Player* player, bool loginFirst) override
     {
-        ObjectGuid guid = player->GetGUID();
-        auto itr = onlogin_commandscript::s_pendingCommands.find(guid.GetCounter());
-        if (itr != onlogin_commandscript::s_pendingCommands.end())
+        auto& cmds = sOnLoginCmdMgr->GetCommandsForPlayer(player->GetGUID());
+        for (OnLoginCmd* cmd : cmds)
         {
-            for (const std::string& cmd : itr->second)
-            {
-                // Execute as server console (admin permissions)
-                CliHandler cliHandler(nullptr, nullptr);
-                cliHandler.ParseCommands(cmd);
-            }
-            onlogin_commandscript::s_pendingCommands.erase(itr);
+            CliHandler cliHandler(nullptr, nullptr);
+            cliHandler.ParseCommands(cmd->GetCommand());
         }
+        sOnLoginCmdMgr->ClearCommandsForPlayer(player->GetGUID());
     }
 };
 

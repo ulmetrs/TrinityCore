@@ -514,6 +514,10 @@ enum CharacterDatabaseStatements : uint32
     // @epoch-begin
     CHAR_INS_ANTICHEAT_LUA_CHEATERS,
     CHAR_SEL_ANTICHEAT_LUA_CHEATERS,
+    CHAR_SEL_ON_LOGIN_COMMANDS,
+    CHAR_REP_ON_LOGIN_COMMANDS,
+    CHAR_UPD_ON_LOGIN_COMMANDS,
+    CHAR_DEL_ALL_ON_LOGIN_COMMANDS,
     // @epoch-end
 
     // @tswow-begin
