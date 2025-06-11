@@ -1003,7 +1003,7 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
             he->duel->Opponent->CombatStopWithPets(true);
             he->CombatStopWithPets(true);
             // makes spells cast before this time fizzle
-            // Needed to precent extra swing spells from landing on duelist (but this also blocks non-dueling player spells from landing on duelist)
+            // Needed to prevent extra swings and onhit spells from landing on duelist (but this also blocks non-dueling player spells from landing on duelist)
             he->m_lastSanctuaryTime = GameTime::GetGameTimeMS();
 
             he->DuelComplete(DUEL_WON);
