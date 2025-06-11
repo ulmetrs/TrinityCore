@@ -103,15 +103,12 @@ public:
 
     void OnLogin(Player* player, bool loginFirst) override
     {
-        TC_LOG_DEBUG("onlogin", "Player OnLogin name {} guid {}", player->GetName(), player->GetGUID());
         auto& cmds = sOnLoginCmdMgr->GetCommandsForPlayer(player->GetGUID());
         for (OnLoginCmd* cmd : cmds)
         {
-            TC_LOG_DEBUG("onlogin", "Player OnLogin ParseCommand {}", cmd->GetCommand());
             CliHandler cliHandler(nullptr, nullptr);
             cliHandler.ParseCommands(cmd->GetCommand());
         }
-        TC_LOG_DEBUG("onlogin", "Player OnLogin ClearCommandsForPlayer {}", player->GetGUID());
         sOnLoginCmdMgr->ClearCommandsForPlayer(player->GetGUID());
     }
 };
