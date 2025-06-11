@@ -91,12 +91,10 @@ public:
         }
 
         // Insert command into database
-        TC_LOG_DEBUG("onlogin", "Inserting command {} for player {}", argCommand, playerName);
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ON_LOGIN_COMMANDS);
         stmt->setUInt32(0, guid.GetCounter());
         stmt->setString(1, argCommand);
         CharacterDatabase.Execute(stmt);
-        TC_LOG_DEBUG("onlogin", "Inserted command {} for player {}", argCommand, playerName);
 
         handler->PSendSysMessage("Command stored for %s: %s", playerName.c_str(), argCommand.c_str());
         return true;
@@ -128,6 +126,7 @@ public:
             CliHandler cliHandler(nullptr, nullptr);
             cliHandler.ParseCommands(command);
 
+            // Update command in database (mark as deleted)
             CharacterDatabasePreparedStatement* updateStmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ON_LOGIN_COMMANDS);
             updateStmt->setUInt32(0, id);
             CharacterDatabase.ExecuteOrAppend(trans, updateStmt);
