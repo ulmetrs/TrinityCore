@@ -607,7 +607,7 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_INS_ANTICHEAT_LUA_CHEATERS, "INSERT IGNORE INTO `lua_cheaters` (guid, account, macro) VALUES (?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_ANTICHEAT_LUA_CHEATERS, "SELECT guid, account FROM lua_cheaters WHERE account = ?", CONNECTION_SYNCH);
     // OnLogin Commands
-    PrepareStatement(CHAR_SEL_ON_LOGIN_COMMANDS, "SELECT id, player_guid, command, created_at, updated_at, deleted_at FROM on_login_commands WHERE deleted_at = 0", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_SEL_ON_LOGIN_COMMANDS, "SELECT id, player_guid, command, created_at, updated_at, deleted_at FROM on_login_commands ORDER BY id ASC", CONNECTION_SYNCH);
     PrepareStatement(CHAR_REP_ON_LOGIN_COMMANDS, "REPLACE INTO on_login_commands (id, player_guid, command, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_UPD_ON_LOGIN_COMMANDS, "UPDATE on_login_commands SET updated_at = UNIX_TIMESTAMP(), deleted_at = UNIX_TIMESTAMP() WHERE id = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_ALL_ON_LOGIN_COMMANDS, "TRUNCATE TABLE on_login_commands", CONNECTION_ASYNC);

@@ -117,10 +117,21 @@ void OnLoginCmdMgr::LoadCommands()
             continue;
         }
 
-        // Update max command id if necessary
+        // Keep new command ids synced with database
         uint32 id = cmd->GetId();
         if (_lastCommandId < id)
             _lastCommandId = id;
+
+        // Remove deleted commands: We need to load all deleted commands on select in order to update _lastCommandId
+        // We could filter these out in the select but we would need to add another unique id column to the table to key
+        // off of for updates. (The statements are executed asnyc and so we cannot get the auto increment id on insert)
+        // For now, we are relying on GenerateCommandId to match our auto increment id so that updates will operate on the correct
+        // record.  This strategy is copied from the gm_ticket system.
+        if (cmd->GetDeletedAt() > 0)
+        {
+            delete cmd;
+            continue;
+        }
 
         _onLoginCommandList[cmd->GetPlayerGuid()].push_back(cmd);
         ++count;
