@@ -607,10 +607,9 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_INS_ANTICHEAT_LUA_CHEATERS, "INSERT IGNORE INTO `lua_cheaters` (guid, account, macro) VALUES (?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_ANTICHEAT_LUA_CHEATERS, "SELECT guid, account FROM lua_cheaters WHERE account = ?", CONNECTION_SYNCH);
     // OnLogin Commands
-    PrepareStatement(CHAR_SEL_ON_LOGIN_COMMANDS, "SELECT id, player_guid, command, created_at, updated_at, deleted_at FROM on_login_commands", CONNECTION_SYNCH);
-    PrepareStatement(CHAR_REP_ON_LOGIN_COMMANDS, "REPLACE INTO on_login_commands (id, player_guid, command, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_INS_ON_LOGIN_COMMANDS, "INSERT INTO on_login_commands (player_guid, command, created_at, updated_at) VALUES (?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_SEL_ON_LOGIN_COMMANDS_BY_GUID, "SELECT id, player_guid, command FROM on_login_commands WHERE player_guid = ? AND deleted_at IS NOT NULL", CONNECTION_SYNCH);
     PrepareStatement(CHAR_UPD_ON_LOGIN_COMMANDS, "UPDATE on_login_commands SET updated_at = UNIX_TIMESTAMP(), deleted_at = UNIX_TIMESTAMP() WHERE id = ?", CONNECTION_ASYNC);
-    PrepareStatement(CHAR_DEL_ALL_ON_LOGIN_COMMANDS, "TRUNCATE TABLE on_login_commands", CONNECTION_ASYNC);
     // @epoch-end
 
     // @tswow-begin CustomItemReloading

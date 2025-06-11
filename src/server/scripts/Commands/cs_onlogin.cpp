@@ -24,11 +24,11 @@ EndScriptData */
 
 #include "CharacterCache.h"
 #include "Chat.h"
+#include "DatabaseEnv.h"
 #include "Language.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
-#include "OnLoginCmdMgr.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include <unordered_map>
@@ -90,7 +90,14 @@ public:
             return true;
         }
 
-        sOnLoginCmdMgr->AddCommand(guid, argCommand);
+        // Insert command into database
+        TC_LOG_DEBUG("onlogin", "Inserting command {} for player {}", argCommand, playerName);
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ON_LOGIN_COMMANDS);
+        stmt->setUInt32(0, guid.GetCounter());
+        stmt->setString(1, argCommand);
+        CharacterDatabase.Execute(stmt);
+        TC_LOG_DEBUG("onlogin", "Inserted command {} for player {}", argCommand, playerName);
+
         handler->PSendSysMessage("Command stored for %s: %s", playerName.c_str(), argCommand.c_str());
         return true;
     }
@@ -103,13 +110,32 @@ public:
 
     void OnLogin(Player* player, bool loginFirst) override
     {
-        auto& cmds = sOnLoginCmdMgr->GetCommandsForPlayer(player->GetGUID());
-        for (OnLoginCmd* cmd : cmds)
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ON_LOGIN_COMMANDS_BY_GUID);
+        stmt->setUInt32(0, player->GetGUID().GetCounter());
+        PreparedQueryResult result = CharacterDatabase.Query(stmt);
+        if (!result)
+            return;
+
+        // Start a transaction
+        SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+        do
         {
+            Field* fields = result->Fetch();
+            uint32 id = fields[0].GetUInt32();
+            std::string command = fields[2].GetString();
+
             CliHandler cliHandler(nullptr, nullptr);
-            cliHandler.ParseCommands(cmd->GetCommand());
-        }
-        sOnLoginCmdMgr->ClearCommandsForPlayer(player->GetGUID());
+            cliHandler.ParseCommands(command);
+
+            CharacterDatabasePreparedStatement* updateStmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ON_LOGIN_COMMANDS);
+            updateStmt->setUInt32(0, id);
+            CharacterDatabase.ExecuteOrAppend(trans, updateStmt);
+
+        } while (result->NextRow());
+
+        // Commit the transaction
+        CharacterDatabase.CommitTransaction(trans);
     }
 };
 
