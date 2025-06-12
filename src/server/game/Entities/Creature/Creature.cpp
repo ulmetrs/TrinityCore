@@ -1182,11 +1182,6 @@ void Creature::Motion_Initialize()
     {
         if (m_formation->GetLeader() == this)
             m_formation->FormationReset(false);
-        else if (m_formation->IsFormed())
-        {
-            GetMotionMaster()->MoveIdle(); // wait the order of leader
-            return;
-        }
     }
 
     GetMotionMaster()->Initialize();
