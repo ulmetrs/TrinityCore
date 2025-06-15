@@ -1130,6 +1130,11 @@ bool GameObject::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap
     }
 
     uint32 entry = data->id;
+
+    // @epoch-start
+    FIRE(GameObject,OnCreateEarly,TSMutableNumber<uint32>(&entry));
+    // @epoch-end
+
     //uint32 map_id = data->mapid;                          // already used before call
     uint32 phaseMask = data->phaseMask;
 

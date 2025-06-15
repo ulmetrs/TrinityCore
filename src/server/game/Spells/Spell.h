@@ -300,7 +300,6 @@ class TC_GAME_API Spell
         Spell(WorldObject* caster, SpellInfo const* info, TriggerCastFlags triggerFlags, ObjectGuid originalCasterGUID = ObjectGuid::Empty);
         ~Spell();
 
-        SpellSchoolMask GetDamageSchoolMask() const;
         void InitExplicitTargets(SpellCastTargets const& targets);
         void SelectExplicitTargets();
 
@@ -412,6 +411,7 @@ class TC_GAME_API Spell
         void HandleThreatSpells();
 
         SpellInfo const* const m_spellInfo;
+        SpellSchoolMask m_damageSchoolMask;
         Item* m_CastItem;
         ObjectGuid m_castItemGUID;
         uint32 m_castItemEntry;
@@ -473,6 +473,7 @@ class TC_GAME_API Spell
         WorldObject* GetCaster() const { return m_caster; }
         Unit* GetOriginalCaster() const { return m_originalCaster; }
         SpellInfo const* GetSpellInfo() const { return m_spellInfo; }
+        SpellSchoolMask GetDamageSchoolMask() const { return m_damageSchoolMask; }
         int32 GetPowerCost() const { return m_powerCost; }
 
         bool UpdatePointers();                              // must be used at call Spell code after time delay (non triggered spell cast/update spell call/etc)

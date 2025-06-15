@@ -521,6 +521,16 @@ m_caster((info->HasAttribute(SPELL_ATTR6_CAST_BY_CHARMER) && caster->GetCharmerO
 
     m_attackType = info->GetAttackType();
 
+    m_damageSchoolMask = info->GetSchoolMask();           // Can be override for some spell (wand shoot for example)
+
+    if (Player const* playerCaster = m_caster->ToPlayer())
+    {
+        // wand/bow/gun shoot/auto attack. these spells are effectively auto attacks and should use the weapon's damage type
+        if (m_spellInfo->Id == 75 || m_spellInfo->Id == 3018 || m_spellInfo->Id == 5019)
+            if (Item* pItem = playerCaster->GetWeaponForAttack(RANGED_ATTACK))
+                m_damageSchoolMask = SpellSchoolMask(1 << pItem->GetTemplate()->Damage[0].DamageType);
+    }
+
     if (originalCasterGUID)
         m_originalCasterGUID = originalCasterGUID;
     else
@@ -617,19 +627,6 @@ Spell::~Spell()
 
     // missing cleanup somewhere, mem leaks so let's crash
     AssertEffectExecuteData();
-}
-
-// Returns the school mask to use for final spell damage
-SpellSchoolMask Spell::GetDamageSchoolMask() const
-{
-    if (Player const* playerCaster = m_caster->ToPlayer())
-    {
-        // wand/bow/gun shoot/auto attack.  these spells are effectively auto attacks and should use the weapons primary damage type
-        if (m_spellInfo->Id == 75 || m_spellInfo->Id == 3018 || m_spellInfo->Id == 5019)
-            if (Item* pItem = playerCaster->GetWeaponForAttack(RANGED_ATTACK))
-                return SpellSchoolMask(1 << pItem->GetTemplate()->Damage[0].DamageType);
-    }
-    return m_spellInfo->GetSchoolMask();
 }
 
 void Spell::InitExplicitTargets(SpellCastTargets const& targets)
@@ -1021,7 +1018,7 @@ void Spell::SelectImplicitChannelTargets(SpellEffectInfo const& spellEffectInfo,
         {
             WorldObject* target = ObjectAccessor::GetUnit(*m_caster, m_originalCaster->GetChannelObjectGuid());
             CallScriptObjectTargetSelectHandlers(target, spellEffectInfo.EffectIndex, targetType);
-            // unit target may be no longer avalible - teleported out of map for example
+            // unit target may be no longer available - teleported out of map for example
             if (target && target->ToUnit())
                 AddUnitTarget(target->ToUnit(), effMask);
             else
@@ -2192,7 +2189,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
 
     // Calculate hit result
     WorldObject* caster = m_originalCaster ? m_originalCaster : m_caster;
-    targetInfo.MissCondition = caster->SpellHitResult(target, m_spellInfo, m_canReflect && !(IsPositive() && m_caster->IsFriendlyTo(target)));
+    targetInfo.MissCondition = caster->SpellHitResult(target, m_spellInfo, m_damageSchoolMask, m_canReflect && !(IsPositive() && m_caster->IsFriendlyTo(target)));
 
     // @tswow-begin
     uint32 miss = targetInfo.MissCondition;
@@ -2238,7 +2235,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
         // Calculate reflected spell result on caster
         SpellCastResult castResult = m_spellInfo->CheckTarget(target, unitCaster, implicit);
         if (castResult == SPELL_CAST_OK || castResult == SPELL_FAILED_TARGET_AURASTATE)
-            targetInfo.ReflectResult = unitCaster->SpellHitResult(unitCaster, m_spellInfo, false); // can't reflect twice
+            targetInfo.ReflectResult = unitCaster->SpellHitResult(unitCaster, m_spellInfo, m_damageSchoolMask, false); // can't reflect twice
         else
             targetInfo.ReflectResult = SPELL_MISS_IMMUNE;
 
@@ -2583,14 +2580,13 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
 
         // Do damage
         bool hasDamage = false;
-        SpellSchoolMask damageSchoolMask = spell->GetDamageSchoolMask();
         if (spell->m_damage > 0)
         {
             hasDamage = true;
             // Fill base damage struct (unitTarget - is real spell target)
-            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, damageSchoolMask);
+            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, spell->GetDamageSchoolMask());
             // Check damage immunity
-            if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo))
+            if (spell->unitTarget->IsImmunedToDamage(spell->m_spellInfo, spell->GetDamageSchoolMask()))
             {
                 hitMask = PROC_HIT_IMMUNE;
                 spell->m_damage = 0;
@@ -2627,7 +2623,7 @@ void Spell::TargetInfo::DoDamageAndTriggers(Spell* spell)
         if (!hasHealing && !hasDamage)
         {
             // Fill base damage struct (unitTarget - is real spell target)
-            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, damageSchoolMask);
+            SpellNonMeleeDamage damageInfo(caster, spell->unitTarget, spell->m_spellInfo->Id, spell->GetDamageSchoolMask());
             hitMask |= createProcHitMask(&damageInfo, MissCondition);
             // Do triggers for unit
             if (canEffectTrigger)
@@ -2806,8 +2802,7 @@ SpellMissInfo Spell::PreprocessSpellHit(Unit* unit, bool scaleAura, TargetInfo& 
         if (creatureTarget->IsEvadingAttacks())
             return SPELL_MISS_EVADE;
 
-    SpellSchoolMask damageSchoolMask = GetDamageSchoolMask();
-    if (m_spellInfo->Speed && ((m_damage > 0 && unit->IsImmunedToDamage(m_spellInfo, damageSchoolMask) || unit->IsImmunedToDamage(damageSchoolMask) || unit->IsImmunedToSpell(m_spellInfo, m_caster))))
+    if (m_spellInfo->Speed && unit->IsImmunedToSpell(m_spellInfo, m_caster, false, m_damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 
     if (Player* player = unit->ToPlayer())

@@ -148,7 +148,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         bool CanResetTalents(Player* player, bool pet) const;
         bool CanCreatureAttack(Unit const* victim, bool force = true, bool checkAccessible = true) const;
         void LoadTemplateImmunities();
-        bool IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute = false) const override;
+        bool IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute = false, SpellSchoolMask damageSchoolMask = SPELL_SCHOOL_MASK_NONE) const override;
         bool IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo const& spellEffectInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute = false) const override;
         bool isElite() const;
         bool isWorldBoss() const;

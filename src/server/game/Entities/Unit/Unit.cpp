@@ -1630,7 +1630,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
             SpellInfo const* spellInfo = aurEff->GetSpellInfo();
 
             // Damage shield can be resisted...
-            SpellMissInfo missInfo = victim->SpellHitResult(this, spellInfo, false);
+            SpellMissInfo missInfo = victim->SpellHitResult(this, spellInfo, spellInfo->GetSchoolMask(), false);
             if (missInfo != SPELL_MISS_NONE)
             {
                 victim->SendSpellMiss(this, spellInfo->Id, missInfo);
@@ -8175,7 +8175,7 @@ bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo, SpellSchoolMask damageS
     return false;
 }
 
-bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute /*= false*/) const
+bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caster, bool requireImmunityPurgesEffectAttribute /*= false*/, SpellSchoolMask damageSchoolMask /*= SPELL_SCHOOL_MASK_NONE*/) const
 {
     if (!spellInfo)
         return false;
@@ -8237,7 +8237,10 @@ bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo, WorldObject const* caste
     if (immuneToAllEffects) //Return immune only if the target is immune to all spell effects.
         return true;
 
-    if (uint32 schoolMask = spellInfo->GetSchoolMask())
+    if (damageSchoolMask == SPELL_SCHOOL_MASK_NONE)
+        damageSchoolMask = spellInfo->GetSchoolMask();
+
+    if (uint32 schoolMask = damageSchoolMask)
     {
         uint32 schoolImmunityMask = 0;
         SpellImmuneContainer const& schoolList = m_spellImmune[IMMUNITY_SCHOOL];

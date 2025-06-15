@@ -2675,15 +2675,15 @@ SpellMissInfo WorldObject::MagicSpellHitResult(Unit* victim, SpellInfo const* sp
 //   Parry
 // For spells
 //   Resist
-SpellMissInfo WorldObject::SpellHitResult(Unit* victim, SpellInfo const* spellInfo, bool canReflect /*= false*/) const
+SpellMissInfo WorldObject::SpellHitResult(Unit* victim, SpellInfo const* spellInfo, SpellSchoolMask damageSchoolMask, bool canReflect /*= false*/) const
 {
     // Check for immune
-    if (victim->IsImmunedToSpell(spellInfo, this))
+    if (victim->IsImmunedToSpell(spellInfo, this, false, damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 
     // Damage immunity is only checked if the spell has damage effects, this immunity must not prevent aura apply
     // returns SPELL_MISS_IMMUNE in that case, for other spells, the SMSG_SPELL_GO must show hit
-    if (spellInfo->HasOnlyDamageEffects() && victim->IsImmunedToDamage(spellInfo))
+    if (spellInfo->HasOnlyDamageEffects() && victim->IsImmunedToDamage(spellInfo, damageSchoolMask))
         return SPELL_MISS_IMMUNE;
 
     // All positive spells can`t miss
@@ -2702,7 +2702,7 @@ SpellMissInfo WorldObject::SpellHitResult(Unit* victim, SpellInfo const* spellIn
     if (canReflect)
     {
         int32 reflectchance = victim->GetTotalAuraModifier(SPELL_AURA_REFLECT_SPELLS);
-        reflectchance += victim->GetTotalAuraModifierByMiscMask(SPELL_AURA_REFLECT_SPELLS_SCHOOL, spellInfo->GetSchoolMask());
+        reflectchance += victim->GetTotalAuraModifierByMiscMask(SPELL_AURA_REFLECT_SPELLS_SCHOOL, damageSchoolMask);
         // @tswow-begin
         FIRE_ID(
               spellInfo->events.id
