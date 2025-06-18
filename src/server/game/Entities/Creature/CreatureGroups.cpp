@@ -21,10 +21,10 @@
 #include "CreatureAI.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
-#include "Map.h"
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
 #include "ObjectMgr.h"
+#include <winscard.h>
 
 #define MAX_DESYNC 5.0f
 
@@ -40,6 +40,14 @@ FormationMgr* FormationMgr::instance()
 {
     static FormationMgr instance;
     return &instance;
+}
+
+CreatureGroup* FormationMgr::GetCreatureGroup(ObjectGuid::LowType leaderSpawnId, Map* map)
+{
+    auto itr = map->CreatureGroupHolder.find(leaderSpawnId);
+    if (itr != map->CreatureGroupHolder.end())
+        return itr->second;
+    return nullptr;
 }
 
 void FormationMgr::AddCreatureToGroup(ObjectGuid::LowType leaderSpawnId, Creature* creature)
@@ -189,7 +197,8 @@ void FormationMgr::AddFormationMember(ObjectGuid::LowType spawnId, float followA
     _creatureGroupMap.emplace(spawnId, std::move(member));
 }
 
-CreatureGroup::CreatureGroup(ObjectGuid::LowType leaderSpawnId) : _leader(nullptr), _members(), _leaderSpawnId(leaderSpawnId), _formed(false), _engaging(false)
+CreatureGroup::CreatureGroup(ObjectGuid::LowType leaderSpawnId) : _leader(nullptr), _members(),
+_leaderSpawnId(leaderSpawnId), _tempLeaderDefaultMovementType(IDLE_MOTION_TYPE), _engaging(false), _disengaging(false)
 {
 }
 
@@ -199,28 +208,106 @@ CreatureGroup::~CreatureGroup()
 
 void CreatureGroup::AddMember(Creature* member)
 {
-    TC_LOG_DEBUG("entities.unit", "CreatureGroup::AddMember: Adding unit {}.", member->GetGUID().ToString());
-
-    //Check if it is a leader
-    if (member->GetSpawnId() == _leaderSpawnId)
-    {
-        TC_LOG_DEBUG("entities.unit", "Unit {} is formation leader. Adding group.", member->GetGUID().ToString());
-        _leader = member;
-    }
-
-    // formation must be registered at this point
     FormationInfo* formationInfo = ASSERT_NOTNULL(sFormationMgr->GetFormationInfo(member->GetSpawnId()));
     _members.emplace(member, formationInfo);
     member->SetFormation(this);
+
+    // If the new member is not the default leader
+    if (member->GetSpawnId() != _leaderSpawnId)
+    {
+        // If the leader is engaged, we need to set the member as engaged with the same target (which also overrides movement)
+        if (_leader && _leader->IsEngaged())
+        {
+            member->EngageWithTarget(_leader->GetThreatManager().GetCurrentVictim());
+            member->SetHomePosition(_leader->GetHomePosition());
+        }
+            
+        // No need to do anything else
+        return;
+    }
+
+    // Just to make the logic legible
+    Creature* defaultLeader = member;
+
+    // If the group is not yet formed then form it
+    if (!_leader)
+    {
+        _leader = defaultLeader;
+        if (defaultLeader->GetWaypointPath())
+            _leaderPathId = defaultLeader->GetWaypointPath();
+
+        // The motion is already initialized to the default so simply return
+        return;
+    }
+    
+    // If waypoint moving formation
+    if (_leaderPathId)
+    {
+        // Copy the temp leaders waypoint info back to the default leader
+        defaultLeader->UpdateCurrentWaypointInfo(_leader->GetCurrentWaypointInfo().first, _leader->GetCurrentWaypointInfo().second);
+
+        // If we respawn while the temp leader is in combat, we need to set the default leader as engaged with the current target
+        if (_leader->IsEngaged())
+        {
+            defaultLeader->EngageWithTarget(_leader->GetThreatManager().GetCurrentVictim());
+            defaultLeader->SetHomePosition(_leader->GetHomePosition());
+        }
+        else
+            defaultLeader->GetMotionMaster()->Initialize();
+
+        // Reset the temp leaders motion type (idle or random)
+        _leader->SetDefaultMovementType(_tempLeaderDefaultMovementType);
+        _leader->LoadPath(0);
+        // Reset temp variable
+        _tempLeaderDefaultMovementType = IDLE_MOTION_TYPE;
+        
+        // If the temp leader is not engaged, initialize the default motion
+        if (!_leader->IsEngaged())
+            _leader->GetMotionMaster()->Initialize();
+    }
+
+    // set new leader
+    _leader = defaultLeader;
 }
 
 void CreatureGroup::RemoveMember(Creature* member)
 {
-    if (_leader == member)
-        _leader = nullptr;
-
     _members.erase(member);
     member->SetFormation(nullptr);
+    if (!_leader || member != _leader)
+        return;
+
+    // If we remove the leader we need to find a new leader
+    Creature* newLeader = _members.empty() ? nullptr : _members.begin()->first;
+    // No-one left mark group as unformormed
+    if (!newLeader)
+    {
+        _leader = nullptr;
+        _leaderPathId = 0;
+        return;
+    }
+    
+    
+    if (_leaderPathId)
+    {
+        // Store the temp leaders motion type so that we can restore it later
+        _tempLeaderDefaultMovementType = newLeader->GetDefaultMovementType();
+        
+        // Copy old leaders waypoint info
+        newLeader->UpdateCurrentWaypointInfo(_leader->GetCurrentWaypointInfo().first, _leader->GetCurrentWaypointInfo().second);
+        // Override temp leaders movement
+        newLeader->SetDefaultMovementType(WAYPOINT_MOTION_TYPE);
+        newLeader->LoadPath(_leaderPathId);
+        // Re-initialize the motion if not engaged
+        if (!newLeader->IsEngaged())
+            newLeader->GetMotionMaster()->Initialize();
+    }
+    else
+        newLeader->GetMotionMaster()->Initialize(); 
+
+    // set new leader
+    _leader = newLeader;
+    
 }
 
 void CreatureGroup::MemberEngagingTarget(Creature* member, Unit* target)
@@ -259,21 +346,47 @@ void CreatureGroup::MemberEngagingTarget(Creature* member, Unit* target)
     _engaging = false;
 }
 
-void CreatureGroup::FormationReset(bool dismiss)
+void CreatureGroup::MemberDisengaging(Creature* member)
 {
+    // used to prevent recursive calls
+    if (_disengaging)
+        return;
+
+    uint8 groupAI = ASSERT_NOTNULL(sFormationMgr->GetFormationInfo(member->GetSpawnId()))->GroupAI;
+    if (!groupAI)
+        return;
+
+    // we only disengage other members if disengaging member is alive
+    if (!member->IsAlive())
+        return;
+
+    if (member == _leader)
+    {
+        if (!(groupAI & FLAG_MEMBERS_ASSIST_LEADER))
+            return;
+    }
+    else if (!(groupAI & FLAG_LEADER_ASSISTS_MEMBER))
+        return;
+
+    _disengaging = true;
+
     for (auto const& pair : _members)
     {
-        if (pair.first != _leader && pair.first->IsAlive())
+        Creature* other = pair.first;
+        if (other == member)
+            continue;
+
+        if (!other->IsAlive() || other->IsInEvadeMode())
+            continue;
+
+        if ((other != _leader && (groupAI & FLAG_MEMBERS_ASSIST_LEADER)) || (other == _leader && (groupAI & FLAG_LEADER_ASSISTS_MEMBER)))
         {
-            if (dismiss)
-                pair.first->GetMotionMaster()->Remove(FORMATION_MOTION_TYPE, MOTION_SLOT_DEFAULT);
-            else
-                pair.first->GetMotionMaster()->InitializeDefault();
-            TC_LOG_DEBUG("entities.unit", "CreatureGroup::FormationReset: Set {} movement for member {}", dismiss ? "default" : "idle", pair.first->GetGUID().ToString());
+            if (CreatureAI* ai = other->AI())
+                ai->EnterEvadeMode(CreatureAI::EVADE_REASON_OTHER);
         }
     }
 
-    _formed = !dismiss;
+    _disengaging = false;
 }
 
 void CreatureGroup::LeaderStartedMoving()

@@ -19,6 +19,7 @@
 #define _FORMATIONS_H
 
 #include "Define.h"
+#include "Map.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
 #include <map>
@@ -31,6 +32,8 @@ enum GroupAIFlags
     FLAG_MEMBERS_ASSIST_MEMBER = (FLAG_MEMBERS_ASSIST_LEADER | FLAG_LEADER_ASSISTS_MEMBER), // every member will assist if any member is attacked
     FLAG_IDLE_IN_FORMATION     = 0x00000200,                                                // The member will follow the leader when pathing idly
 };
+
+enum MovementGeneratorType : uint8;
 
 class Creature;
 class CreatureGroup;
@@ -57,6 +60,7 @@ class TC_GAME_API FormationMgr
     public:
         static FormationMgr* instance();
 
+        CreatureGroup* GetCreatureGroup(ObjectGuid::LowType leaderSpawnId, Map* map);
         void AddCreatureToGroup(ObjectGuid::LowType leaderSpawnId, Creature* creature);
         void RemoveCreatureFromGroup(CreatureGroup* group, Creature* creature);
 
@@ -73,8 +77,10 @@ class TC_GAME_API CreatureGroup
         std::unordered_map<Creature*, FormationInfo*> _members;
 
         ObjectGuid::LowType _leaderSpawnId;
-        bool _formed;
+        uint32 _leaderPathId;
+        MovementGeneratorType _tempLeaderDefaultMovementType;
         bool _engaging;
+        bool _disengaging;
 
     public:
         typedef std::unordered_map<Creature*, FormationInfo*> FormationMap;
@@ -88,16 +94,17 @@ class TC_GAME_API CreatureGroup
         FormationMap::iterator GetMembersBegin() { return _members.begin(); }
         FormationMap::iterator GetMembersEnd() { return _members.end(); }
         bool IsEmpty() const { return _members.empty(); }
-        bool IsFormed() const { return _formed; }
+        bool IsFormed() const { return _leader != nullptr; }
         bool IsLeader(Creature const* creature) const { return _leader == creature; }
 
         bool HasMember(Creature* member) const { return _members.count(member) > 0; }
         void AddMember(Creature* member);
         void RemoveMember(Creature* member);
-        void FormationReset(bool dismiss);
+        
 
         void LeaderStartedMoving();
         void MemberEngagingTarget(Creature* member, Unit* target);
+        void MemberDisengaging(Creature* member);
         bool CanLeaderStartMoving() const;
 };
 

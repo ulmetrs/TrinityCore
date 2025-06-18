@@ -552,7 +552,7 @@ void SmartAI::JustReachedHome()
         me->ResumeMovement();
     }
     else if (formation->IsFormed())
-        me->GetMotionMaster()->MoveIdle(); // wait the order of leader
+        me->GetMotionMaster()->Initialize(); // wait the order of leader
 }
 
 void SmartAI::JustEngagedWith(Unit* enemy)

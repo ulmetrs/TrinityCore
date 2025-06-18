@@ -322,8 +322,8 @@ void Creature::AddToWorld()
         TC_LOG_DEBUG("entities.unit", "Adding creature {} with DBGUID {} to world in map {}", GetGUID().ToString(), m_spawnId, GetMap()->GetId());
 
         Unit::AddToWorld();
-        SearchFormation();
         AIM_Initialize();
+        SearchFormation();
         if (IsVehicle())
             GetVehicleKit()->Install();
 
@@ -1178,12 +1178,6 @@ bool Creature::AIM_Initialize(CreatureAI* ai)
 
 void Creature::Motion_Initialize()
 {
-    if (m_formation)
-    {
-        if (m_formation->GetLeader() == this)
-            m_formation->FormationReset(false);
-    }
-
     GetMotionMaster()->Initialize();
 }
 
@@ -1843,8 +1837,16 @@ bool Creature::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap, 
     m_creatureData = data;
     m_wanderDistance = data->wander_distance;
     m_respawnDelay = data->spawntimesecs;
+    Position spawnPoint = data->spawnPoint;
 
-    if (!Create(map->GenerateLowGuid<HighGuid::Unit>(), map, data->phaseMask, data->id, data->spawnPoint, data, 0U , !m_respawnCompatibilityMode))
+    // Change our spawn/home position to the leader's position if we are in a formation
+    
+    if (FormationInfo const* formationInfo = sFormationMgr->GetFormationInfo(spawnId))
+        if (CreatureGroup* formation = sFormationMgr->GetCreatureGroup(formationInfo->LeaderSpawnId, map))
+            if (Creature* leader = formation->GetLeader())
+                spawnPoint = leader->GetPosition();
+
+    if (!Create(map->GenerateLowGuid<HighGuid::Unit>(), map, data->phaseMask, data->id, spawnPoint, data, 0U , !m_respawnCompatibilityMode))
         return false;
 
     //We should set first home position, because then AI calls home movement
@@ -2229,9 +2231,8 @@ void Creature::setDeathState(DeathState s)
         }
         /** @epoch-end */
 
-        //Dismiss group if is leader
-        if (m_formation && m_formation->GetLeader() == this)
-            m_formation->FormationReset(true);
+        if (m_formation)
+            sFormationMgr->RemoveCreatureFromGroup(m_formation, this);
 
         bool needsFalling = (IsFlying() || IsHovering()) && !IsUnderWater();
         SetHover(false, false);
@@ -3643,6 +3644,7 @@ void Creature::AtEngage(Unit* target)
     // @tswow-begin custom boss check
     sTSBossAI->OnJustEngage(this,target);
     // @tswow-end
+
     if (CreatureGroup* formation = GetFormation())
         formation->MemberEngagingTarget(this, target);
 }
@@ -3661,6 +3663,9 @@ void Creature::AtDisengage()
         UpdateSpeed(MOVE_SWIM);
         UpdateSpeed(MOVE_FLIGHT);
     }
+
+    if (CreatureGroup* formation = GetFormation())
+        formation->MemberDisengaging(this);
 }
 
 bool Creature::IsEscorted() const
