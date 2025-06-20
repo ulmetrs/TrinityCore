@@ -1160,7 +1160,7 @@ class spell_pri_vampiric_touch : public AuraScript
                 {
                     // backfire damage
                     int32 bp = aurEff->GetAmount();
-                    bp = target->SpellDamageBonusTaken(caster, aurEff->GetSpellInfo(), bp, DOT, 1, aurEff->GetSpellEffectInfo());
+                    bp = target->SpellDamageBonusTaken(caster, aurEff->GetSpellInfo(), bp, DOT, aurEff->GetSpellEffectInfo());
                     bp *= 8;
 
                     CastSpellExtraArgs args(aurEff);

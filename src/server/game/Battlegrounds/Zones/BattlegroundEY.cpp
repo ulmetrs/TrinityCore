@@ -643,7 +643,9 @@ void BattlegroundEY::EventPlayerDroppedFlag(Player* player)
     player->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
     m_FlagState = BG_EY_FLAG_STATE_ON_GROUND;
     m_FlagsTimer = BG_EY_FLAG_RESPAWN_TIME;
-    player->CastSpell(player, SPELL_RECENTLY_DROPPED_FLAG, true);
+    // @epoch-start
+    // player->CastSpell(player, SPELL_RECENTLY_DROPPED_FLAG, true);
+    // @epoch-end
     player->CastSpell(player, BG_EY_PLAYER_DROPPED_FLAG_SPELL, true);
     //this does not work correctly :((it should remove flag carrier name)
     UpdateWorldState(NETHERSTORM_FLAG_STATE_HORDE, BG_EY_FLAG_STATE_WAIT_RESPAWN);

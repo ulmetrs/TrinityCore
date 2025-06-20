@@ -1435,7 +1435,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 3790, 1))
                     {
                         int32 damage = devouringPlague->GetAmount();
-                        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT, devouringPlague->GetTotalTicks(), devouringPlague->GetSpellEffectInfo());
+                        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT, devouringPlague->GetSpellEffectInfo());
 
                         CastSpellExtraArgs args(devouringPlague), args2(devouringPlague);
                         int32 basepoints0 = CalculatePct(devouringPlague->GetTotalTicks() * static_cast<int32>(damage), aurEff->GetAmount());

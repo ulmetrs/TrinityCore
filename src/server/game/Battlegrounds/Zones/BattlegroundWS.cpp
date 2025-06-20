@@ -474,7 +474,10 @@ void BattlegroundWS::EventPlayerDroppedFlag(Player* player)
 
     if (set)
     {
-        player->CastSpell(player, SPELL_RECENTLY_DROPPED_FLAG, true);
+        // @epoch-start
+        // player->CastSpell(player, SPELL_RECENTLY_DROPPED_FLAG, true);
+        // @epoch-end
+        
         UpdateFlagState(player->GetTeam(), 1);
 
         if (player->GetTeam() == ALLIANCE)

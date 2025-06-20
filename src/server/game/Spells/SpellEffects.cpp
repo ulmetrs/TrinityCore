@@ -721,11 +721,8 @@ void Spell::EffectSchoolDMG()
 
         if (unitCaster && damage > 0 && apply_direct_bonus)
         {
-            uint32 totalTicks = 1;
-            if (m_triggeredByAuraIsPeriodic)
-                totalTicks = m_triggeredByAuraTotalTicks;
-            damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo, { });
-            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, totalTicks, *effectInfo);
+            damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, *effectInfo, { });
+            damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, *effectInfo);
         }
 
         m_damage += damage;
@@ -1170,8 +1167,8 @@ void Spell::EffectPowerDrain()
     // add spell damage bonus
     if (unitCaster)
     {
-        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo);
+        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, *effectInfo, { });
+        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, *effectInfo);
     }
 
     // resilience reduce mana draining effect at spell crit damage reduction (added in 2.4)
@@ -1467,13 +1464,10 @@ void Spell::EffectHeal()
     }
     // Death Pact - return pct of max health to caster
     else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && m_spellInfo->SpellFamilyFlags[0] & 0x00080000)
-        addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, int32(unitCaster->CountPctFromMaxHealth(damage)), HEAL, 1, *effectInfo, { });
+        addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, int32(unitCaster->CountPctFromMaxHealth(damage)), HEAL, *effectInfo, { });
     else
     {
-        uint32 totalTicks = 1;
-        if (m_triggeredByAuraIsPeriodic)
-            totalTicks = m_triggeredByAuraTotalTicks;
-        addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL, totalTicks, *effectInfo, { });
+        addhealth = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL, *effectInfo, { });
     }
 
     addhealth = unitTarget->SpellHealingBonusTaken(unitCaster, m_spellInfo, addhealth, HEAL);
@@ -1496,7 +1490,7 @@ void Spell::EffectHealPct()
     uint32 heal = unitTarget->CountPctFromMaxHealth(damage);
     if (Unit* unitCaster = GetUnitCasterForEffectHandlers())
     {
-        heal = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, heal, HEAL, 1, *effectInfo, { });
+        heal = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, heal, HEAL, *effectInfo, { });
         heal = unitTarget->SpellHealingBonusTaken(unitCaster, m_spellInfo, heal, HEAL);
     }
 
@@ -1514,7 +1508,7 @@ void Spell::EffectHealMechanical()
     uint32 heal = damage;
     if (Unit* unitCaster = GetUnitCasterForEffectHandlers())
     {
-        heal = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, heal, HEAL, 1, *effectInfo, { });
+        heal = unitCaster->SpellHealingBonusDone(unitTarget, m_spellInfo, heal, HEAL, *effectInfo, { });
         heal = unitTarget->SpellHealingBonusTaken(unitCaster, m_spellInfo, heal, HEAL);
     }
 
@@ -1532,8 +1526,8 @@ void Spell::EffectHealthLeech()
     Unit* unitCaster = GetUnitCasterForEffectHandlers();
     if (unitCaster)
     {
-        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, 1, *effectInfo);
+        damage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, *effectInfo, { });
+        damage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE, *effectInfo);
     }
 
     TC_LOG_DEBUG("spells", "HealthLeech :{}", damage);
@@ -1552,7 +1546,7 @@ void Spell::EffectHealthLeech()
 
     if (unitCaster && unitCaster->IsAlive())
     {
-        healthGain = unitCaster->SpellHealingBonusDone(unitCaster, m_spellInfo, healthGain, HEAL, 1, *effectInfo, { });
+        healthGain = unitCaster->SpellHealingBonusDone(unitCaster, m_spellInfo, healthGain, HEAL, *effectInfo, { });
         healthGain = unitCaster->SpellHealingBonusTaken(unitCaster, m_spellInfo, healthGain, HEAL);
 
         HealInfo healInfo(unitCaster, unitCaster, healthGain, m_spellInfo, m_spellInfo->GetSchoolMask());
@@ -3495,8 +3489,8 @@ void Spell::EffectWeaponDmg()
     // 3. If the base spell school is not physical we treat the resulting damage as a casted spell and apply the spell bonus mods
     if (weaponDamage > 0 && !(m_spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
     {
-        weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo, { });
-        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, 1, *effectInfo);
+        weaponDamage = unitCaster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, *effectInfo, { });
+        weaponDamage = unitTarget->SpellDamageBonusTaken(unitCaster, m_spellInfo, (uint32)weaponDamage, SPELL_DIRECT_DAMAGE, *effectInfo);
     }
 
     // apply spellmod to Done damage
