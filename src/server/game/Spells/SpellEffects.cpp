@@ -4500,6 +4500,7 @@ void Spell::EffectSkinning()
 
 void Spell::EffectCharge()
 {
+    TC_LOG_DEBUG("charge", "Spell::EffectCharge called");
     if (!unitTarget)
         return;
 
@@ -4509,6 +4510,7 @@ void Spell::EffectCharge()
 
     if (effectHandleMode == SPELL_EFFECT_HANDLE_LAUNCH_TARGET)
     {
+        TC_LOG_DEBUG("charge", "Spell::EffectCharge SPELL_EFFECT_HANDLE_LAUNCH_TARGET");
         // charge changes fall time
         if (unitCaster->GetTypeId() == TYPEID_PLAYER)
             unitCaster->ToPlayer()->SetFallInformation(0, unitCaster->GetPositionZ());
@@ -4517,16 +4519,21 @@ void Spell::EffectCharge()
         // Spell is not using explicit target - no generated path
         if (!m_preGeneratedPath)
         {
+            TC_LOG_DEBUG("charge", "Spell::EffectCharge No pre-generated path, using GetFirstCollisionPosition");
             //unitTarget->GetContactPoint(m_caster, pos.m_positionX, pos.m_positionY, pos.m_positionZ);
             Position pos = unitTarget->GetFirstCollisionPosition(unitTarget->GetCombatReach(), unitTarget->GetRelativeAngle(m_caster));
             unitCaster->GetMotionMaster()->MoveCharge(pos.m_positionX, pos.m_positionY, pos.m_positionZ, speed);
         }
         else
+        {
             unitCaster->GetMotionMaster()->MoveCharge(*m_preGeneratedPath, speed);
+            TC_LOG_DEBUG("charge", "Spell::EffectCharge Using pre-generated path");
+        }  
     }
 
     if (effectHandleMode == SPELL_EFFECT_HANDLE_HIT_TARGET)
     {
+        TC_LOG_DEBUG("charge", "Spell::EffectCharge SPELL_EFFECT_HANDLE_HIT_TARGET");
         // not all charge effects used in negative spells
         if (!m_spellInfo->HasAttribute(SPELL_ATTR0_STOP_ATTACK_TARGET) && !m_spellInfo->IsPositive() && m_caster->GetTypeId() == TYPEID_PLAYER)
             unitCaster->Attack(unitTarget, true);

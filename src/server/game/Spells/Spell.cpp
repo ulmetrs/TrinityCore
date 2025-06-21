@@ -5295,6 +5295,7 @@ void Spell::HandleEffects(Unit* pUnitTarget, Item* pItemTarget, GameObject* pGoT
 
 SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint32* param2 /*= nullptr*/)
 {
+    TC_LOG_DEBUG("charge", "Spell::CheckCast called");
     // check death state
     if (m_caster->ToUnit() && !m_caster->ToUnit()->IsAlive() && !m_spellInfo->IsPassive() && !(m_spellInfo->HasAttribute(SPELL_ATTR0_CASTABLE_WHILE_DEAD) || (IsTriggered() && !m_triggeredByAuraSpell)))
         return SPELL_FAILED_CASTER_DEAD;
@@ -5311,6 +5312,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     {
         if (m_caster->GetTypeId() == TYPEID_PLAYER)
         {
+            TC_LOG_DEBUG("charge", "Spell::CheckCast SPELL_FAILED_SPELL_IN_PROGRESS 1");
             //can cast triggered (by aura only?) spells while have this flag
             if (!(_triggeredCastFlags & TRIGGERED_IGNORE_CASTER_AURASTATE) && m_caster->ToPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_ALLOW_ONLY_ABILITY))
                 return SPELL_FAILED_SPELL_IN_PROGRESS;
@@ -5330,6 +5332,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 return SPELL_FAILED_NOT_READY;
         }
     }
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished cooldowns 2");
 
     if (m_spellInfo->HasAttribute(SPELL_ATTR7_IS_CHEAT_SPELL) && m_caster->IsUnit() && !m_caster->ToUnit()->HasUnitFlag2(UNIT_FLAG2_ALLOW_CHEAT_SPELLS))
     {
@@ -5349,6 +5352,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
 
     if (m_caster->GetTypeId() == TYPEID_PLAYER && VMAP::VMapFactory::createOrGetVMapManager()->isLineOfSightCalcEnabled())
     {
+        TC_LOG_DEBUG("charge", "Spell::CheckCast isLineOfSightCalcEnabled, checking indoors, outdoors");
         if (m_spellInfo->HasAttribute(SPELL_ATTR0_OUTDOORS_ONLY) &&
             !m_caster->IsOutdoors())
             return SPELL_FAILED_ONLY_OUTDOORS;
@@ -5378,8 +5382,10 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
 
             if (checkForm)
             {
+                TC_LOG_DEBUG("charge", "Spell::CheckCast checkForm");
                 // Cannot be used in this stance/form
                 SpellCastResult shapeError = m_spellInfo->CheckShapeshift(unitCaster->GetShapeshiftForm());
+                TC_LOG_DEBUG("charge", "Spell::CheckCast checkForm result {}", shapeError);
                 if (shapeError != SPELL_CAST_OK)
                     return shapeError;
 
@@ -5391,6 +5397,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
         if (unitCaster->HasAuraTypeWithMiscvalue(SPELL_AURA_BLOCK_SPELL_FAMILY, m_spellInfo->SpellFamilyName))
             return SPELL_FAILED_SPELL_UNAVAILABLE;
 
+        TC_LOG_DEBUG("charge", "Spell::CheckCast checking state auras 3");
         bool reqCombat = true;
         Unit::AuraEffectList const& stateAuras = unitCaster->GetAuraEffectsByType(SPELL_AURA_ABILITY_IGNORE_AURASTATE);
         for (Unit::AuraEffectList::const_iterator j = stateAuras.begin(); j != stateAuras.end(); ++j)
@@ -5424,11 +5431,13 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             if (reqCombat && unitCaster->IsInCombat() && !m_spellInfo->CanBeUsedInCombat())
                 return SPELL_FAILED_AFFECTING_COMBAT;
         }
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished state auras 4");
 
         // cancel autorepeat spells if cast start when moving
         // (not wand currently autorepeat cast delayed to moving stop anyway in spell update code)
         if (unitCaster->GetTypeId() == TYPEID_PLAYER && unitCaster->ToPlayer()->isMoving() && (!unitCaster->IsCharmed() || !unitCaster->GetCharmerGUID().IsCreature()))
         {
+            TC_LOG_DEBUG("charge", "Spell::CheckCast moving");
             // skip stuck spell to allow use it in falling case and apply spell limitations at movement
             if ((!unitCaster->HasUnitMovementFlag(MOVEMENTFLAG_FALLING_FAR) || !m_spellInfo->HasEffect(SPELL_EFFECT_STUCK)) &&
                 (IsAutoRepeat() || (m_spellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED) != 0))
@@ -5445,6 +5454,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             if (vehicleCheck != SPELL_CAST_OK)
                 return vehicleCheck;
         }
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished vehicle");
     }
 
     // check spell cast conditions from database
@@ -5479,10 +5489,12 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
         if (m_originalCaster && !caster->ToGameObject())
             caster = m_originalCaster;
 
+        TC_LOG_DEBUG("charge", "Spell::CheckCast checking explicit target");
         SpellCastResult castResult = m_spellInfo->CheckExplicitTarget(caster, m_targets.GetObjectTarget(), m_targets.GetItemTarget());
         if (castResult != SPELL_CAST_OK)
             return castResult;
     }
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished explicit target");
 
     if (Unit* target = m_targets.GetUnitTarget())
     {
@@ -5508,10 +5520,12 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     if (DynamicObject* dynObj = m_caster->ToUnit()->GetDynObject(m_triggeredByAuraSpell->Id))
                         losTarget = dynObj;
 
+                TC_LOG_DEBUG("charge", "Spell::CheckCast checking LOS");
                 if (!m_spellInfo->HasAttribute(SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && !m_spellInfo->HasAttribute(SPELL_ATTR5_SKIP_CHECKCAST_LOS_CHECK) && !DisableMgr::IsDisabledFor(DISABLE_TYPE_SPELL, m_spellInfo->Id, nullptr, SPELL_DISABLE_LOS) && !target->IsWithinLOSInMap(losTarget, LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::M2))
                     return SPELL_FAILED_LINE_OF_SIGHT;
             }
         }
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished los");
     }
 
     // Check for line of sight for spells with dest
@@ -5520,13 +5534,16 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
         float x, y, z;
         m_targets.GetDstPos()->GetPosition(x, y, z);
 
+        TC_LOG_DEBUG("charge", "Spell::CheckCast checking LOS dest");
         if (!m_spellInfo->HasAttribute(SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && !m_spellInfo->HasAttribute(SPELL_ATTR5_SKIP_CHECKCAST_LOS_CHECK) && !DisableMgr::IsDisabledFor(DISABLE_TYPE_SPELL, m_spellInfo->Id, nullptr, SPELL_DISABLE_LOS) && !m_caster->IsWithinLOS(x, y, z, LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::M2))
             return SPELL_FAILED_LINE_OF_SIGHT;
     }
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished los dest");
 
     // check pet presence
     if (Unit* unitCaster = m_caster->ToUnit())
     {
+        TC_LOG_DEBUG("charge", "Spell::CheckCast checking pet");
         for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
         {
             if (spellEffectInfo.TargetA.GetTarget() == TARGET_UNIT_PET)
@@ -5551,6 +5568,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 break;
             }
         }
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished pet");
     }
 
     // Spell cast only in battleground
@@ -5573,6 +5591,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
         uint32 zone, area;
         m_caster->GetZoneAndAreaId(zone, area);
 
+        TC_LOG_DEBUG("charge", "Spell::CheckCast checking location");
         SpellCastResult locRes = m_spellInfo->CheckLocation(m_caster->GetMapId(), zone, area, m_caster->ToPlayer());
         if (locRes != SPELL_CAST_OK)
             return locRes;
@@ -5589,6 +5608,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 return SPELL_FAILED_NOT_MOUNTED;
         }
     }
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished mounted");
 
     // check spell focus object
     if (m_spellInfo->RequiresSpellFocus)
@@ -5609,12 +5629,14 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
         if (castResult != SPELL_CAST_OK)
             return castResult;
     }
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished items");
 
     // Triggered spells also have range check
     /// @todo determine if there is some flag to enable/disable the check
     castResult = CheckRange(strict);
     if (castResult != SPELL_CAST_OK)
         return castResult;
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished trigger range");
 
     if (!(_triggeredCastFlags & TRIGGERED_IGNORE_POWER_AND_REAGENT_COST))
     {
@@ -5631,9 +5653,11 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     }
 
     // script hook
+    TC_LOG_DEBUG("charge", "Spell::CheckCast checking script");
     castResult = CallScriptCheckCastHandlers();
     if (castResult != SPELL_CAST_OK)
         return castResult;
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished script");
 
     bool hasDispellableAura = false;
     bool hasNonDispelEffect = false;
@@ -5685,6 +5709,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
 
     uint8 approximateAuraEffectMask = 0;
     uint8 nonAuraEffectMask = 0;
+    TC_LOG_DEBUG("charge", "Spell::CheckCast checking spell effects");
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     {
         // for effects of spells that have only one target
@@ -5811,6 +5836,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     m_preGeneratedPath->SetPathLengthLimit(range);
 
                     // first try with raycast, if it fails fall back to normal path
+                    TC_LOG_DEBUG("charge", "Spell::CheckCast checking path");
                     bool result = m_preGeneratedPath->CalculatePath(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), false);
                     if (m_preGeneratedPath->GetPathType() & PATHFIND_SHORT)
                         return SPELL_FAILED_NOPATH;
@@ -5818,7 +5844,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                         return SPELL_FAILED_NOPATH;
                     else if (m_preGeneratedPath->IsInvalidDestinationZ(target)) // Check position z, if not in a straight line
                         return SPELL_FAILED_NOPATH;
-
+                    TC_LOG_DEBUG("charge", "Spell::CheckCast finished path");
                     m_preGeneratedPath->ShortenPathUntilDist(PositionToVector3(target), objSize); // move back
                 }
                 // @epoch-begin
@@ -6278,6 +6304,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             default:
                 break;
         }
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished spell effects");
 
         // check if target already has the same type, but more powerful aura
         if (!nonAuraEffectMask && (approximateAuraEffectMask & (1 << spellEffectInfo.EffectIndex)) && !m_spellInfo->IsTargetingArea())
@@ -6297,6 +6324,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     return SPELL_FAILED_BAD_TARGETS;
             }
         }
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished aura checks");
     }
 
     // check trade slot case (last, for allow catch any another cast problems)
@@ -6339,6 +6367,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             }
         }
     }
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished combo points and all done");
 
     // all ok
     return SPELL_CAST_OK;
