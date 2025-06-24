@@ -5876,6 +5876,11 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
     uint16 SkillValue = SKILL_VALUE(data);
     uint16 MaxValue   = SKILL_MAX(data);
 
+    /** @epoch-start */
+    // If the player is completing any level appropriate craft, update achievement criteria
+    UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SKILL_SPELL, SkillId);
+    /** @epoch-end */
+
     if (!MaxValue || !SkillValue || SkillValue >= MaxValue)
         return false;
 

@@ -832,7 +832,6 @@ void World::LoadConfigSettings(bool reload)
         TC_LOG_ERROR("server.loading", "AlwaysUpdateWaypointCreatures enabled, but GridUnload also enabled. GridUnload must be disabled to enable AlwaysUpdateWaypointCreatures. AlwaysUpdateWaypointCreatures disabled");
         m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = false;
     }
-    m_bool_configs[CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS] = sConfigMgr->GetBoolDefault("DontCacheRandomMovementPaths", false);
     /** @epoch-end */
 
     m_int_configs[CONFIG_MIN_PLAYER_NAME]                     = sConfigMgr->GetIntDefault ("MinPlayerName",  2);

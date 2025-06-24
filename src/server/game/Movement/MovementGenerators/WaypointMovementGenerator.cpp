@@ -32,7 +32,7 @@
 #include "TSCreature.h"
 // @tswow-end
 
-WaypointMovementGenerator<Creature>::WaypointMovementGenerator(uint32 pathId, bool repeating) : _nextMoveTime(0), _pathId(pathId), _repeating(repeating), _loadedFromDB(true)
+WaypointMovementGenerator<Creature>::WaypointMovementGenerator(uint32 pathId, bool repeating) : _pathId(pathId), _repeating(repeating), _loadedFromDB(true), _initialPathLaunched(false), _pauseTimer(0), _waypointTimer(0)
 {
     Mode = MOTION_MODE_DEFAULT;
     Priority = MOTION_PRIORITY_NORMAL;
@@ -40,7 +40,7 @@ WaypointMovementGenerator<Creature>::WaypointMovementGenerator(uint32 pathId, bo
     BaseUnitState = UNIT_STATE_ROAMING;
 }
 
-WaypointMovementGenerator<Creature>::WaypointMovementGenerator(WaypointPath& path, bool repeating) : _nextMoveTime(0), _pathId(0), _repeating(repeating), _loadedFromDB(false)
+WaypointMovementGenerator<Creature>::WaypointMovementGenerator(WaypointPath& path, bool repeating) : _pathId(0), _repeating(repeating), _loadedFromDB(false), _initialPathLaunched(false), _pauseTimer(0), _waypointTimer(0)
 {
     _path = &path;
 
@@ -64,13 +64,12 @@ void WaypointMovementGenerator<Creature>::Pause(uint32 timer/* = 0*/)
             return;
 
         AddFlag(MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
-        _nextMoveTime.Reset(timer);
+        _pauseTimer.Reset(timer);
         RemoveFlag(MOVEMENTGENERATOR_FLAG_PAUSED);
     }
     else
     {
         AddFlag(MOVEMENTGENERATOR_FLAG_PAUSED);
-        _nextMoveTime.Reset(1); // Needed so that Update does not behave as if node was reached
         RemoveFlag(MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
     }
 }
@@ -78,10 +77,7 @@ void WaypointMovementGenerator<Creature>::Pause(uint32 timer/* = 0*/)
 void WaypointMovementGenerator<Creature>::Resume(uint32 overrideTimer/* = 0*/)
 {
     if (overrideTimer)
-        _nextMoveTime.Reset(overrideTimer);
-
-    if (_nextMoveTime.Passed())
-        _nextMoveTime.Reset(1); // Needed so that Update does not behave as if node was reached
+        _pauseTimer.Reset(overrideTimer);
 
     RemoveFlag(MOVEMENTGENERATOR_FLAG_PAUSED);
 }
@@ -104,6 +100,7 @@ bool WaypointMovementGenerator<Creature>::GetResetPosition(Unit* /*owner*/, floa
 void WaypointMovementGenerator<Creature>::DoInitialize(Creature* owner)
 {
     RemoveFlag(MOVEMENTGENERATOR_FLAG_INITIALIZATION_PENDING | MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_DEACTIVATED);
+    AddFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED);
 
     if (_loadedFromDB)
     {
@@ -121,7 +118,8 @@ void WaypointMovementGenerator<Creature>::DoInitialize(Creature* owner)
 
     owner->StopMoving();
 
-    _nextMoveTime.Reset(1000);
+    _pauseTimer.Reset(0);
+    _waypointTimer.Reset(1000);
 
     uint32 waypointId = owner->GetCurrentWaypointInfo().first;
     // TODO determine if waypointIds are just indexes
@@ -133,7 +131,7 @@ void WaypointMovementGenerator<Creature>::DoInitialize(Creature* owner)
             {
                 _currentNode = i;
                 ComputeNextNode(); // Always set _currentNode to reached node + 1
-                return;
+                break;
             }
         }
     }
@@ -143,49 +141,36 @@ void WaypointMovementGenerator<Creature>::DoReset(Creature* owner)
 {
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_DEACTIVATED);
 
+    _interruptedBeforeArrive = false;
     owner->StopMoving();
 
-    if (!HasFlag(MOVEMENTGENERATOR_FLAG_FINALIZED) && _nextMoveTime.Passed())
-        _nextMoveTime.Reset(1); // Needed so that Update does not behave as if node was reached
+    _pauseTimer.Reset(0);
+    _waypointTimer.Reset(0);
 }
 
 bool WaypointMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
 {
-    if (!owner || !owner->IsAlive())
-        return true;
-
-    if (HasFlag(MOVEMENTGENERATOR_FLAG_FINALIZED | MOVEMENTGENERATOR_FLAG_PAUSED) || !_path || _path->nodes.empty())
+    if (!owner || !owner->IsAlive() || !_path || _path->nodes.empty() || HasFlag(MOVEMENTGENERATOR_FLAG_FINALIZED | MOVEMENTGENERATOR_FLAG_PAUSED))
         return true;
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE | UNIT_STATE_LOST_CONTROL) || owner->IsMovementPreventedByCasting())
     {
-        AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
-        owner->StopMoving();
-        return true;
-    }
-
-    if (HasFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED))
-    {
-        /*
-         *  relaunch only if
-         *  - has a tiner? -> was it interrupted while not waiting aka moving? need to check both:
-         *      -> has a timer - is it because its waiting to start next node?
-         *      -> has a timer - is it because something set it while moving (like timed pause)?
-         *
-         *  - doesnt have a timer? -> is movement valid?
-         *
-         *  TODO: ((_nextMoveTime.Passed() && VALID_MOVEMENT) || (!_nextMoveTime.Passed() && !HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED)))
-         */
-        if (HasFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED) && (_nextMoveTime.Passed() || !HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED)))
+        if (!owner->movespline->Finalized())
         {
-            StartMove(owner, true);
-            return true;
+            _interruptedBeforeArrive = true;
+            AddFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
+            owner->StopMoving();
         }
 
-        RemoveFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
+        return true;
     }
+    else
+        RemoveFlag(MOVEMENTGENERATOR_FLAG_INTERRUPTED);
 
-    // if it's moving
+    _pauseTimer.Update(diff);
+    _waypointTimer.Update(diff);
+
+    // If moving timers are irrelevant
     if (!owner->movespline->Finalized())
     {
         // set home position at place (every MotionMaster::UpdateMotion)
@@ -194,38 +179,27 @@ bool WaypointMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 diff)
 
         // relaunch movement if its speed has changed
         if (HasFlag(MOVEMENTGENERATOR_FLAG_SPEED_UPDATE_PENDING))
-            StartMove(owner, true);
-    }
-    else if (!_nextMoveTime.Passed()) // it's not moving, is there a timer?
-    {
-        if (UpdateTimer(diff))
         {
-            if (!HasFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED)) // initial movement call
-            {
-                StartMove(owner);
-                return true;
-            }
-            else if (!HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED)) // timer set before node was reached, resume now
-            {
-                StartMove(owner, true);
-                return true;
-            }
-        }
-        else
-            return true; // keep waiting
-    }
-    else // not moving, no timer
-    {
-        if (HasFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED) && !HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED))
-        {
-            OnArrived(owner); // hooks and wait timer reset (if necessary)
-            AddFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED); // signals to future StartMove that it reached a node
+            _interruptedBeforeArrive = true;
+            StartMove(owner);
         }
 
-        if (_nextMoveTime.Passed()) // OnArrived might have set a timer
-            StartMove(owner); // check path status, get next point and move if necessary & can
+        return true;
     }
 
+    // Wait all timers
+    if (!_pauseTimer.Passed() || !_waypointTimer.Passed())
+        return true;
+
+    if (_initialPathLaunched && !_interruptedBeforeArrive && !HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED))
+        OnArrived(owner); // hooks and wait timer reset (if necessary)
+
+    // Wait for waypoint delay
+    if (!_waypointTimer.Passed())
+        return true;
+
+    // Start Move handles next node and final node logic
+    StartMove(owner);
     return true;
 }
 
@@ -247,23 +221,13 @@ void WaypointMovementGenerator<Creature>::DoFinalize(Creature* owner, bool activ
     }
 }
 
-void WaypointMovementGenerator<Creature>::MovementInform(Creature* owner)
-{
-    if (owner->AI())
-        owner->AI()->MovementInform(WAYPOINT_MOTION_TYPE, _currentNode);
-}
-
 void WaypointMovementGenerator<Creature>::OnArrived(Creature* owner)
 {
-    if (!_path || _path->nodes.empty())
-        return;
-
-    ASSERT(_currentNode < _path->nodes.size(), "WaypointMovementGenerator::OnArrived: tried to reference a node id (%u) which is not included in path (%u)", _currentNode, _path->id);
     WaypointNode const& waypoint = _path->nodes[_currentNode];
     if (waypoint.delay)
     {
         owner->ClearUnitState(UNIT_STATE_ROAMING_MOVE);
-        _nextMoveTime.Reset(waypoint.delay);
+        _waypointTimer.Reset(waypoint.delay);
     }
 
     // scripts can invalidate current path, store what we need
@@ -288,37 +252,34 @@ void WaypointMovementGenerator<Creature>::OnArrived(Creature* owner)
     }
 
     owner->UpdateCurrentWaypointInfo(waypointId, pathId);
+
+    AddFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED); // signals to future StartMove that it reached a node
 }
 
-void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaunch/* = false*/)
+void WaypointMovementGenerator<Creature>::StartMove(Creature* owner)
 {
-    // sanity checks
-    if (!owner || !owner->IsAlive() || HasFlag(MOVEMENTGENERATOR_FLAG_FINALIZED) || !_path || _path->nodes.empty() || (relaunch && (HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED) || !HasFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED))))
-        return;
-
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting() || (owner->IsFormationLeader() && !owner->IsFormationLeaderMoveAllowed())) // if cannot move OR cannot move because of formation
     {
-        _nextMoveTime.Reset(1000); // delay 1s
+        _waypointTimer.Reset(1000); // delay 1s
         return;
     }
 
-    bool const transportPath = owner->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) && !owner->GetTransGUID().IsEmpty();
-
-    if (HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED) && HasFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED))
+    // Initial path
+    if (!_initialPathLaunched)
     {
-        if (ComputeNextNode())
-        {
-            ASSERT(_currentNode < _path->nodes.size(), "WaypointMovementGenerator::StartMove: tried to reference a node id (%u) which is not included in path (%u)", _currentNode, _path->id);
+        // @tswow-begin
+        FIRE_ID(owner->GetCreatureTemplate()->events.id,Creature,OnWaypointStarted,TSCreature(owner),_path->nodes[_currentNode].id, _path->id);
+        // @tswow-end
 
-            // @tswow-begin
-            FIRE_ID(owner->GetCreatureTemplate()->events.id,Creature,OnWaypointStarted,TSCreature(owner),_path->nodes[_currentNode].id, _path->id);
-            // @tswow-end
-
-            // inform AI
-            if (CreatureAI* AI = owner->AI())
-                AI->WaypointStarted(_path->nodes[_currentNode].id, _path->id);
-        }
-        else
+        // inform AI
+        if (CreatureAI* AI = owner->AI())
+            AI->WaypointStarted(_path->nodes[_currentNode].id, _path->id);
+    }
+    // Next path or finish
+    else if (HasFlag(MOVEMENTGENERATOR_FLAG_INFORM_ENABLED))
+    {
+        // Can't compute a new node so we must be finished
+        if (!ComputeNextNode())
         {
             WaypointNode const &waypoint = _path->nodes[_currentNode];
             float x = waypoint.x;
@@ -326,7 +287,7 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaun
             float z = waypoint.z;
             float o = owner->GetOrientation();
 
-            if (!transportPath)
+            if (!owner->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) || owner->GetTransGUID().IsEmpty())
                 owner->SetHomePosition(x, y, z, o);
             else
             {
@@ -339,6 +300,7 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaun
                 }
                 // else if (vehicle) - this should never happen, vehicle offsets are const
             }
+
             AddFlag(MOVEMENTGENERATOR_FLAG_FINALIZED);
             owner->UpdateCurrentWaypointInfo(0, 0);
 
@@ -349,12 +311,9 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaun
             // inform AI
             if (CreatureAI* AI = owner->AI())
                 AI->WaypointPathEnded(waypoint.id, _path->id);
+
             return;
         }
-    }
-    else if (!HasFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED))
-    {
-        AddFlag(MOVEMENTGENERATOR_FLAG_INITIALIZED);
 
         // @tswow-begin
         FIRE_ID(owner->GetCreatureTemplate()->events.id,Creature,OnWaypointStarted,TSCreature(owner),_path->nodes[_currentNode].id, _path->id);
@@ -365,14 +324,14 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaun
             AI->WaypointStarted(_path->nodes[_currentNode].id, _path->id);
     }
 
-    ASSERT(_currentNode < _path->nodes.size(), "WaypointMovementGenerator::StartMove: tried to reference a node id (%u) which is not included in path (%u)", _currentNode, _path->id);
-    WaypointNode const &waypoint = _path->nodes[_currentNode];
-
     RemoveFlag(MOVEMENTGENERATOR_FLAG_TRANSITORY | MOVEMENTGENERATOR_FLAG_INFORM_ENABLED | MOVEMENTGENERATOR_FLAG_TIMED_PAUSED);
+
+    _interruptedBeforeArrive = false;
 
     owner->AddUnitState(UNIT_STATE_ROAMING_MOVE);
 
-    Movement::MoveSplineInit init(owner);
+    // Destination is always our current waypoint
+    WaypointNode const &waypoint = _path->nodes[_currentNode];
     float x = waypoint.x;
     float y = waypoint.y;
     float z = waypoint.z;
@@ -381,9 +340,10 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaun
     // We now pass global coordinates to MoveTo / pathfinder calculate()
     if (GenericTransport* trans = owner->GetTransport())
         trans->CalculatePassengerPosition(x, y, z, &o);
-
     //! Do not use formationDest here, MoveTo requires transport offsets due to DisableTransportPathTransformations() call
     //! but formationDest contains global coordinates
+
+    Movement::MoveSplineInit init(owner);
     init.MoveTo(x, y, z);
 
     if (waypoint.orientation.has_value() && waypoint.delay > 0)
@@ -411,6 +371,8 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature* owner, bool relaun
 
     // inform formation
     owner->SignalFormationMovement();
+
+    _initialPathLaunched = true;
 }
 
 bool WaypointMovementGenerator<Creature>::ComputeNextNode()

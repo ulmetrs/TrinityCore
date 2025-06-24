@@ -235,6 +235,8 @@ enum AchievementCriteriaTypes : uint8
     ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS = 119,
     // @tswow-begin custom achievement criteria
     ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ENCOUNTER            = 120,
+    // @epoch-begin custom achievement criteria
+    ACHIEVEMENT_CRITERIA_TYPE_CAST_SKILL_SPELL              = 121,
 };
 
 #define ACHIEVEMENT_CRITERIA_TYPE_TOTAL 124

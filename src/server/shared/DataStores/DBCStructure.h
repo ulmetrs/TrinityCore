@@ -72,6 +72,9 @@ struct AchievementCriteriaEntry
         // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL      = 40
         // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS = 75
         // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LINE       = 112
+        // @epoch-start
+        // ACHIEVEMENT_CRITERIA_TYPE_CAST_SKILL_SPELL       = 121
+        // @epoch-end
         uint32 SkillID;
 
         // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ACHIEVEMENT   = 8

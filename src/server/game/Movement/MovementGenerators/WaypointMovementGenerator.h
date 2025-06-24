@@ -53,25 +53,18 @@ class WaypointMovementGenerator<Creature> : public MovementGeneratorMedium<Creat
         std::string GetDebugInfo() const override;
 
     private:
-        void MovementInform(Creature*);
         void OnArrived(Creature*);
-        void StartMove(Creature*, bool relaunch = false);
+        void StartMove(Creature*);
         bool ComputeNextNode();
-        bool UpdateTimer(uint32 diff)
-        {
-            _nextMoveTime.Update(diff);
-            if (_nextMoveTime.Passed())
-            {
-                _nextMoveTime.Reset(0);
-                return true;
-            }
-            return false;
-        }
 
-        TimeTracker _nextMoveTime;
         uint32 _pathId;
         bool _repeating;
         bool _loadedFromDB;
+        bool _initialPathLaunched;
+        TimeTracker _pauseTimer;
+        TimeTracker _waypointTimer;
+        bool _interruptedBeforeArrive;
+
 };
 
 #endif
