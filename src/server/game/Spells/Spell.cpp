@@ -4353,6 +4353,8 @@ void Spell::SendSpellStart()
     if (!IsNeedSendToClient())
         return;
 
+    TC_LOG_DEBUG("charge", "Spell::SendSpellStart Needs to send to client {}", m_spellInfo->Id);
+
     //TC_LOG_DEBUG("spells", "Sending SMSG_SPELL_START id={}", m_spellInfo->Id);
 
     uint32 castFlags = CAST_FLAG_UNKNOWN_2;
@@ -4417,9 +4419,12 @@ void Spell::SendSpellStart()
 
 void Spell::SendSpellGo()
 {
+    TC_LOG_DEBUG("charge", "Spell::SendSpellGo called with id {}", m_spellInfo->Id);
     // not send invisible spell casting
     if (!IsNeedSendToClient())
         return;
+
+    TC_LOG_DEBUG("charge", "Spell::SendSpellGo Needs to send to client {}", m_spellInfo->Id);
 
     uint32 castFlags = CAST_FLAG_UNKNOWN_9;
 
@@ -4764,6 +4769,7 @@ void Spell::ExecuteLogEffectResurrect(uint8 effIndex, Unit* target)
 
 void Spell::SendInterrupted(SpellCastResult result, Optional<SpellCastResult> resultOther /*= {}*/)
 {
+    TC_LOG_DEBUG("charge", "Spell::SendInterrupted called with id {} - result {}", m_spellInfo->Id, result);
     WorldPacket data(SMSG_SPELL_FAILURE, 8 + 1 + 4 + 1);
     data << m_caster->GetPackGUID();
     data << uint8(m_cast_count);

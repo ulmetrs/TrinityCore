@@ -1831,6 +1831,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
             return;
 
         ShapeshiftForm prevForm = target->GetShapeshiftForm();
+        TC_LOG_DEBUG("charge", "AuraEffect::HandleAuraModShapeshift Setting ShapeshiftForm {}", GetId());
         target->SetShapeshiftForm(form);
         // add the shapeshift aura's boosts
         if (prevForm != form)
