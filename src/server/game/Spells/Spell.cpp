@@ -732,6 +732,7 @@ void Spell::SelectExplicitTargets()
 
 void Spell::SelectSpellTargets()
 {
+    TC_LOG_DEBUG("charge", "Spell::SelectSpellTargets called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     // select targets for cast phase
     SelectExplicitTargets();
 
@@ -890,10 +891,13 @@ void Spell::SelectSpellTargets()
 
     if (uint64 dstDelay = CalculateDelayMomentForDst())
         m_delayMoment = dstDelay;
+
+    TC_LOG_DEBUG("charge", "Spell::SelectSpellTargets set delay moment {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTime());
 }
 
 uint64 Spell::CalculateDelayMomentForDst() const
 {
+    TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     if (m_targets.HasDst())
     {
         if (m_targets.HasTraj())
@@ -910,8 +914,10 @@ uint64 Spell::CalculateDelayMomentForDst() const
         }
     }
 
-    if (m_spellInfo->Id == 21156)
+    if (m_spellInfo->Id == 21156) {
+        TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst for spell {} - {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         return 1000;
+    }
 
     return 0;
 }
@@ -919,6 +925,7 @@ uint64 Spell::CalculateDelayMomentForDst() const
 void Spell::RecalculateDelayMomentForDst()
 {
     m_delayMoment = CalculateDelayMomentForDst();
+    TC_LOG_DEBUG("charge", "Spell::RecalculateDelayMomentForDst called {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTime());
     m_caster->m_Events.ModifyEventTime(_spellEvent, Milliseconds(GetDelayStart() + m_delayMoment));
 }
 
@@ -2227,6 +2234,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
         // Calculate minimum incoming time
         if (!m_delayMoment || m_delayMoment > targetInfo.TimeDelay)
             m_delayMoment = targetInfo.TimeDelay;
+        TC_LOG_DEBUG("charge", "Spell::AddUnitTarget called {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTime());
     }
     else
         targetInfo.TimeDelay = 0ULL;
@@ -3597,6 +3605,11 @@ void Spell::_cast(bool skipCheck)
         m_immediateHandled = false;
         m_spellState = SPELL_STATE_DELAYED;
         SetDelayStart(0);
+        if (m_spellInfo->Id == 21156)
+        {
+            TC_LOG_DEBUG("charge", "Spell::_cast modifying delay moment {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+            RecalculateDelayMomentForDst();
+        }
 
         if (Unit* unitCaster = m_caster->ToUnit())
             if (unitCaster->HasUnitState(UNIT_STATE_CASTING) && !unitCaster->IsNonMeleeSpellCast(false, false, true))
