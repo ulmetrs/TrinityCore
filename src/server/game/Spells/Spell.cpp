@@ -910,6 +910,9 @@ uint64 Spell::CalculateDelayMomentForDst() const
         }
     }
 
+    if (m_spellInfo->Id == 21156)
+        return 1000;
+
     return 0;
 }
 
