@@ -897,7 +897,6 @@ void Spell::SelectSpellTargets()
 
 uint64 Spell::CalculateDelayMomentForDst() const
 {
-    TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     if (m_targets.HasDst())
     {
         if (m_targets.HasTraj())
@@ -2234,10 +2233,10 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
         // Calculate minimum incoming time
         if (!m_delayMoment || m_delayMoment > targetInfo.TimeDelay)
             m_delayMoment = targetInfo.TimeDelay;
-        TC_LOG_DEBUG("charge", "Spell::AddUnitTarget called {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTime());
     }
     else
-        targetInfo.TimeDelay = 0ULL;
+        targetInfo.TimeDelay = 1000;
+        //targetInfo.TimeDelay = 0ULL;
 
     // If target reflect spell back to caster
     if (targetInfo.MissCondition == SPELL_MISS_REFLECT)
@@ -3605,11 +3604,7 @@ void Spell::_cast(bool skipCheck)
         m_immediateHandled = false;
         m_spellState = SPELL_STATE_DELAYED;
         SetDelayStart(0);
-        if (m_spellInfo->Id == 21156)
-        {
-            TC_LOG_DEBUG("charge", "Spell::_cast modifying delay moment {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
-            RecalculateDelayMomentForDst();
-        }
+        TC_LOG_DEBUG("charge", "Spell::_cast SetDelayStart {} - moment {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTime());
 
         if (Unit* unitCaster = m_caster->ToUnit())
             if (unitCaster->HasUnitState(UNIT_STATE_CASTING) && !unitCaster->IsNonMeleeSpellCast(false, false, true))
@@ -3747,6 +3742,7 @@ void Spell::DoProcessTargetContainer(Container& targetContainer)
 
 void Spell::handle_immediate()
 {
+    TC_LOG_DEBUG("charge", "Spell::handle_immediate {} - {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTime());
     // start channeling if applicable
     if (m_spellInfo->IsChanneled())
     {
@@ -3808,6 +3804,7 @@ void Spell::handle_immediate()
 
 uint64 Spell::handle_delayed(uint64 t_offset)
 {
+    TC_LOG_DEBUG("charge", "Spell::handle_delayed {} - offset {} - {}", m_spellInfo->Id, t_offset, GameTime::GetGameTime());
     if (!UpdatePointers())
     {
         // finish the spell if UpdatePointers() returned false, something wrong happened there
@@ -7837,6 +7834,7 @@ bool SpellEvent::Execute(uint64 e_time, uint32 p_time)
                     uint64 n_offset = m_Spell->handle_delayed(t_offset);
                     if (n_offset)
                     {
+                        TC_LOG_DEBUG("charge", "SpellEvent::Execute spell adding offset to queue {} - {} - {}", m_Spell->GetSpellInfo()->Id, n_offset, GameTime::GetGameTime());
                         // re-add us to the queue
                         m_Spell->GetCaster()->m_Events.AddEvent(this, Milliseconds(m_Spell->GetDelayStart() + n_offset), false);
                         return false;                       // event not complete
@@ -7851,6 +7849,7 @@ bool SpellEvent::Execute(uint64 e_time, uint32 p_time)
                 m_Spell->SetDelayStart(e_time);
                 // re-plan the event for the delay moment
                 m_Spell->GetCaster()->m_Events.AddEvent(this, Milliseconds(e_time + m_Spell->GetDelayMoment()), false);
+                TC_LOG_DEBUG("charge", "SpellEvent::Execute spell {} delay moment - {} game time - {}", m_Spell->GetSpellInfo()->Id, m_Spell->GetDelayMoment(), GameTime::GetGameTime());
                 return false;                               // event not complete
             }
             break;
