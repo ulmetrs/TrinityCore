@@ -915,7 +915,7 @@ uint64 Spell::CalculateDelayMomentForDst() const
     }
 
     if (m_spellInfo->Id == 21156) {
-        TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst for spell {} - {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+        TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst for spell {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         return 1000;
     }
 
