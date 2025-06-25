@@ -421,6 +421,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     {
         if (_player->CanRequestSpellCast(spellInfo))
         {
+            TC_LOG_DEBUG("charge", "queueing spell cast request {} - {}", spellInfo.Id, GameTime::GetGameTimeMS());
             PendingSpellCastRequest newRequest
             {
                 spellId,
@@ -435,10 +436,15 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         }
     }
 
+    TC_LOG_DEBUG("charge", "did not queue, casting spell immediately, reading targets {} - {}", spellInfo.Id, GameTime::GetGameTimeMS());
+
     // client provided targets
     SpellCastTargets targets;
     targets.Read(recvPacket, _player);
     HandleClientCastFlags(recvPacket, castFlags, targets);
+
+    TC_LOG_DEBUG("charge", "did not queue, casting spell immediately, handled client cast flags {} - {}", spellInfo.Id, GameTime::GetGameTimeMS());
+
 
     // not have spell in spellbook
     if (_player->GetTypeId() == TYPEID_PLAYER && !_player->ToPlayer()->HasActiveSpell(spellId))
