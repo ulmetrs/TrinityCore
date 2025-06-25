@@ -857,6 +857,9 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
             // @tswow-begin
             case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ENCOUNTER:
             // @tswow-end
+            // @epoch-begin
+            case ACHIEVEMENT_CRITERIA_TYPE_CAST_SKILL_SPELL:
+            // @epoch-end
                 SetCriteriaProgress(achievementCriteria, 1, PROGRESS_ACCUMULATE);
                 break;
             // std case: increment at miscvalue1
@@ -1239,6 +1242,9 @@ bool AchievementMgr::IsCompletedCriteria(AchievementCriteriaEntry const* achieve
         // @tswow-begin
         case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ENCOUNTER:
         // @tswow-end
+        // @epoch-begin
+        case ACHIEVEMENT_CRITERIA_TYPE_CAST_SKILL_SPELL:
+        // @epoch-end
             return progress->counter >= achievementCriteria->Quantity;
         case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
         case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST:

@@ -41,7 +41,8 @@ class TC_GAME_API Totem : public Minion
         Totem(SummonPropertiesEntry const* properties, Unit* owner);
         virtual ~Totem() { }
         void Update(uint32 time) override;
-        void InitStats(uint32 duration) override;
+        void InitStats(uint32 duration) override { InitStats(duration, 0); }
+        void InitStats(uint32 duration, uint8 levelOverride) override;
         void InitSummon() override;
         void UnSummon(uint32 msTime = 0) override;
         uint32 GetSpell(uint8 slot = 0) const { return m_spells[slot]; }
