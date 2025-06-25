@@ -602,7 +602,7 @@ m_caster((info->HasAttribute(SPELL_ATTR6_CAST_BY_CHARMER) && caster->GetCharmerO
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         m_destTargets[i] = SpellDestination(*m_caster);
 
-    TC_LOG_DEBUG("charge", "Spell::Spell constructor called with id {} - {}", info->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::Spell constructor called with id {} - {}", info->Id, GameTime::GetGameTimeMS());
 }
 
 Spell::~Spell()
@@ -732,7 +732,7 @@ void Spell::SelectExplicitTargets()
 
 void Spell::SelectSpellTargets()
 {
-    TC_LOG_DEBUG("charge", "Spell::SelectSpellTargets called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SelectSpellTargets called {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     // select targets for cast phase
     SelectExplicitTargets();
 
@@ -892,7 +892,7 @@ void Spell::SelectSpellTargets()
     if (uint64 dstDelay = CalculateDelayMomentForDst())
         m_delayMoment = dstDelay;
 
-    TC_LOG_DEBUG("charge", "Spell::SelectSpellTargets set delay moment {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SelectSpellTargets set delay moment {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTimeMS());
 }
 
 uint64 Spell::CalculateDelayMomentForDst() const
@@ -914,7 +914,7 @@ uint64 Spell::CalculateDelayMomentForDst() const
     }
 
     if (m_spellInfo->Id == 21156) {
-        TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst for spell {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+        TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst for spell {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
         return 1000;
     }
 
@@ -924,7 +924,7 @@ uint64 Spell::CalculateDelayMomentForDst() const
 void Spell::RecalculateDelayMomentForDst()
 {
     m_delayMoment = CalculateDelayMomentForDst();
-    TC_LOG_DEBUG("charge", "Spell::RecalculateDelayMomentForDst called {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::RecalculateDelayMomentForDst called {} - {} - {}", m_delayMoment, m_spellInfo->Id, GameTime::GetGameTimeMS());
     m_caster->m_Events.ModifyEventTime(_spellEvent, Milliseconds(GetDelayStart() + m_delayMoment));
 }
 
@@ -2472,7 +2472,7 @@ void Spell::TargetInfo::DoTargetSpellHit(Spell* spell, SpellEffectInfo const& sp
     if (unit->IsAlive() != IsAlive)
         return;
 
-    if (spell->getState() == SPELL_STATE_DELAYED && !spell->IsPositive() && (GameTime::GetGameTimeMS() - TimeDelay) <= unit->m_lastSanctuaryTime)
+    if (spell->getState() == SPELL_STATE_DELAYED && !spell->IsPositive() && (GameTime::GetGameTimeMSMS() - TimeDelay) <= unit->m_lastSanctuaryTime)
         return;                                             // No missinfo in that case
 
     if (_spellHitTarget)
@@ -3116,7 +3116,7 @@ bool Spell::UpdateChanneledTargetList()
 
 SpellCastResult Spell::prepare(SpellCastTargets const& targets, AuraEffect const* triggeredByAura)
 {
-    TC_LOG_DEBUG("charge", "Spell::prepare called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::prepare called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     if (m_CastItem)
     {
         m_castItemGUID = m_CastItem->GetGUID();
@@ -3183,7 +3183,7 @@ SpellCastResult Spell::prepare(SpellCastTargets const& targets, AuraEffect const
         return SPELL_FAILED_SPELL_IN_PROGRESS;
     }
 
-    TC_LOG_DEBUG("charge", "Spell::prepare finished cast in progress check {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::prepare finished cast in progress check {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     LoadScripts();
 
     // Fill cost data (do not use power for item casts)
@@ -3372,7 +3372,7 @@ void Spell::cancel(SpellCastResult result /*= SPELL_FAILED_INTERRUPTED*/, Option
 
 void Spell::cast(bool skipCheck)
 {
-    TC_LOG_DEBUG("charge", "Spell::cast called with id {}, skipCheck: {} - {}", m_spellInfo->Id, skipCheck, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::cast called with id {}, skipCheck: {} - {}", m_spellInfo->Id, skipCheck, GameTime::GetGameTimeMS());
     Player* modOwner = m_caster->GetSpellModOwner();
     Spell* lastSpellMod = nullptr;
     if (modOwner)
@@ -3458,7 +3458,7 @@ void Spell::_cast(bool skipCheck)
         SpellCastResult castResult = CheckCast(false, &param1, &param2);
         if (castResult != SPELL_CAST_OK)
         {
-            TC_LOG_DEBUG("charge", "Spell::CheckCast failed {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+            TC_LOG_DEBUG("charge", "Spell::CheckCast failed {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
             cleanupSpell(castResult, &param1, &param2);
             return;
         }
@@ -3581,7 +3581,7 @@ void Spell::_cast(bool skipCheck)
     }
 
     // CAST SPELL
-    TC_LOG_DEBUG("charge", "Spell::_cast starting cooldown/launch/spellgo {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::_cast starting cooldown/launch/spellgo {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     SendSpellCooldown();
 
     HandleLaunchPhase();
@@ -3604,7 +3604,7 @@ void Spell::_cast(bool skipCheck)
         m_immediateHandled = false;
         m_spellState = SPELL_STATE_DELAYED;
         SetDelayStart(0);
-        TC_LOG_DEBUG("charge", "Spell::_cast SetDelayStart {} - moment {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTime());
+        TC_LOG_DEBUG("charge", "Spell::_cast SetDelayStart {} - moment {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTimeMS());
 
         if (Unit* unitCaster = m_caster->ToUnit())
             if (unitCaster->HasUnitState(UNIT_STATE_CASTING) && !unitCaster->IsNonMeleeSpellCast(false, false, true))
@@ -3612,7 +3612,7 @@ void Spell::_cast(bool skipCheck)
     }
     else
     {
-        TC_LOG_DEBUG("charge", "Spell::_cast immediate spell {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+        TC_LOG_DEBUG("charge", "Spell::_cast immediate spell {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
         // Immediate spell, no big deal
         handle_immediate();
     }
@@ -3722,7 +3722,7 @@ void Spell::_cast(bool skipCheck)
         if (caster->IsAIEnabled())
             caster->AI()->OnSpellCast(GetSpellInfo());
     
-    TC_LOG_DEBUG("charge", "Spell::_cast finished {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::_cast finished {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
 }
 
 template <class Container>
@@ -3742,7 +3742,7 @@ void Spell::DoProcessTargetContainer(Container& targetContainer)
 
 void Spell::handle_immediate()
 {
-    TC_LOG_DEBUG("charge", "Spell::handle_immediate {} - {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::handle_immediate {} - {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTimeMS());
     // start channeling if applicable
     if (m_spellInfo->IsChanneled())
     {
@@ -3804,7 +3804,7 @@ void Spell::handle_immediate()
 
 uint64 Spell::handle_delayed(uint64 t_offset)
 {
-    TC_LOG_DEBUG("charge", "Spell::handle_delayed {} - offset {} - {}", m_spellInfo->Id, t_offset, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::handle_delayed {} - offset {} - {}", m_spellInfo->Id, t_offset, GameTime::GetGameTimeMS());
     if (!UpdatePointers())
     {
         // finish the spell if UpdatePointers() returned false, something wrong happened there
@@ -4115,7 +4115,7 @@ void Spell::finish(bool ok)
 
 void Spell::WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo const* spellInfo, uint8 castCount, SpellCastResult result, SpellCustomErrors customError, uint32* param1 /*= nullptr*/, uint32* param2 /*= nullptr*/)
 {
-    TC_LOG_DEBUG("charge", "Spell::WriteCastResultInfo {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::WriteCastResultInfo {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTimeMS());
     data << uint8(castCount);                               // single cast or multi 2.3 (0/1)
     data << uint32(spellInfo->Id);
     data << uint8(result);                                  // problem
@@ -4302,6 +4302,7 @@ void Spell::SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 cas
     WorldPacket data(SMSG_CAST_FAILED, 1 + 4 + 1);
     WriteCastResultInfo(data, caster, spellInfo, castCount, result, customError, param1, param2);
 
+    TC_LOG_DEBUG("charge", "Spell::SendCastResult {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTimeMS());
     caster->SendDirectMessage(&data);
 }
 
@@ -4363,11 +4364,11 @@ void Spell::SendMountResult(MountResult result)
 
 void Spell::SendSpellStart()
 {
-    TC_LOG_DEBUG("charge", "Spell::SendSpellStart called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SendSpellStart called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     if (!IsNeedSendToClient())
         return;
 
-    TC_LOG_DEBUG("charge", "Spell::SendSpellStart Needs to send to client {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SendSpellStart Needs to send to client {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
 
     //TC_LOG_DEBUG("spells", "Sending SMSG_SPELL_START id={}", m_spellInfo->Id);
 
@@ -4433,12 +4434,12 @@ void Spell::SendSpellStart()
 
 void Spell::SendSpellGo()
 {
-    TC_LOG_DEBUG("charge", "Spell::SendSpellGo called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SendSpellGo called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     // not send invisible spell casting
     if (!IsNeedSendToClient())
         return;
 
-    TC_LOG_DEBUG("charge", "Spell::SendSpellGo Needs to send to client {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SendSpellGo Needs to send to client {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
 
     uint32 castFlags = CAST_FLAG_UNKNOWN_9;
 
@@ -4487,7 +4488,7 @@ void Spell::SendSpellGo()
     castData.CastID = m_cast_count;
     castData.SpellID = m_spellInfo->Id;
     castData.CastFlags = castFlags;
-    castData.CastTime = GameTime::GetGameTimeMS();
+    castData.CastTime = GameTime::GetGameTimeMSMS();
 
     UpdateSpellCastDataTargets(castData);
 
@@ -4783,7 +4784,7 @@ void Spell::ExecuteLogEffectResurrect(uint8 effIndex, Unit* target)
 
 void Spell::SendInterrupted(SpellCastResult result, Optional<SpellCastResult> resultOther /*= {}*/)
 {
-    TC_LOG_DEBUG("charge", "Spell::SendInterrupted called with id {} - result {} - {}", m_spellInfo->Id, result, GameTime::GetGameTime());
+    TC_LOG_DEBUG("charge", "Spell::SendInterrupted called with id {} - result {} - {}", m_spellInfo->Id, result, GameTime::GetGameTimeMS());
     WorldPacket data(SMSG_SPELL_FAILURE, 8 + 1 + 4 + 1);
     data << m_caster->GetPackGUID();
     data << uint8(m_cast_count);
@@ -5000,7 +5001,7 @@ void Spell::TakePower()
 
     // Set the five second timer
     if (powerType == POWER_MANA && m_powerCost > 0 && ! GetSpellInfo()->HasAttribute(SPELL_ATTR2_DONT_BLOCK_MANA_REGEN))
-        unitCaster->SetLastManaUse(GameTime::GetGameTimeMS());
+        unitCaster->SetLastManaUse(GameTime::GetGameTimeMSMS());
 }
 
 void Spell::TakeAmmo()
@@ -5326,7 +5327,6 @@ void Spell::HandleEffects(Unit* pUnitTarget, Item* pItemTarget, GameObject* pGoT
 
 SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint32* param2 /*= nullptr*/)
 {
-    TC_LOG_DEBUG("charge", "Spell::CheckCast called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     // check death state
     if (m_caster->ToUnit() && !m_caster->ToUnit()->IsAlive() && !m_spellInfo->IsPassive() && !(m_spellInfo->HasAttribute(SPELL_ATTR0_CASTABLE_WHILE_DEAD) || (IsTriggered() && !m_triggeredByAuraSpell)))
         return SPELL_FAILED_CASTER_DEAD;
@@ -5394,7 +5394,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     {
         // only check at first call, Stealth auras are already removed at second call
         // for now, ignore triggered spells
-        TC_LOG_DEBUG("charge", "Spell::CheckCast determining checkForm {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         if (strict && !(_triggeredCastFlags & TRIGGERED_IGNORE_SHAPESHIFT))
         {
             bool checkForm = true;
@@ -5414,7 +5413,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 
                 // Cannot be used in this stance/form
                 SpellCastResult shapeError = m_spellInfo->CheckShapeshift(unitCaster->GetShapeshiftForm());
-                TC_LOG_DEBUG("charge", "Spell::CheckCast checkForm result {} {} - {}", shapeError, m_spellInfo->Id, GameTime::GetGameTime());
+                TC_LOG_DEBUG("charge", "Spell::CheckCast checkForm result {} {} - {}", shapeError, m_spellInfo->Id, GameTime::GetGameTimeMS());
                 if (shapeError != SPELL_CAST_OK)
                     return shapeError;
 
@@ -5547,7 +5546,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     return SPELL_FAILED_LINE_OF_SIGHT;
             }
         }
-        TC_LOG_DEBUG("charge", "Spell::CheckCast finished los {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     }
 
     // Check for line of sight for spells with dest
@@ -5651,7 +5649,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     castResult = CheckRange(strict);
     if (castResult != SPELL_CAST_OK)
         return castResult;
-    TC_LOG_DEBUG("charge", "Spell::CheckCast finished trigger range {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 
     if (!(_triggeredCastFlags & TRIGGERED_IGNORE_POWER_AND_REAGENT_COST))
     {
@@ -5722,7 +5719,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
 
     uint8 approximateAuraEffectMask = 0;
     uint8 nonAuraEffectMask = 0;
-    TC_LOG_DEBUG("charge", "Spell::CheckCast checking spell effects {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     {
         // for effects of spells that have only one target
@@ -5849,7 +5845,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     m_preGeneratedPath->SetPathLengthLimit(range);
 
                     // first try with raycast, if it fails fall back to normal path
-                    TC_LOG_DEBUG("charge", "Spell::CheckCast checking path {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
                     bool result = m_preGeneratedPath->CalculatePath(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), false);
                     if (m_preGeneratedPath->GetPathType() & PATHFIND_SHORT)
                         return SPELL_FAILED_NOPATH;
@@ -5857,7 +5852,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                         return SPELL_FAILED_NOPATH;
                     else if (m_preGeneratedPath->IsInvalidDestinationZ(target)) // Check position z, if not in a straight line
                         return SPELL_FAILED_NOPATH;
-                    TC_LOG_DEBUG("charge", "Spell::CheckCast finished path {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
                     m_preGeneratedPath->ShortenPathUntilDist(PositionToVector3(target), objSize); // move back
                 }
                 // @epoch-begin
@@ -6378,7 +6372,6 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             }
         }
     }
-    TC_LOG_DEBUG("charge", "Spell::CheckCast all done {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 
     // all ok
     return SPELL_CAST_OK;
@@ -7834,7 +7827,7 @@ bool SpellEvent::Execute(uint64 e_time, uint32 p_time)
                     uint64 n_offset = m_Spell->handle_delayed(t_offset);
                     if (n_offset)
                     {
-                        TC_LOG_DEBUG("charge", "SpellEvent::Execute spell adding offset to queue {} - {} - {}", m_Spell->GetSpellInfo()->Id, n_offset, GameTime::GetGameTime());
+                        TC_LOG_DEBUG("charge", "SpellEvent::Execute spell adding offset to queue {} - {} - {}", m_Spell->GetSpellInfo()->Id, n_offset, GameTime::GetGameTimeMS());
                         // re-add us to the queue
                         m_Spell->GetCaster()->m_Events.AddEvent(this, Milliseconds(m_Spell->GetDelayStart() + n_offset), false);
                         return false;                       // event not complete
@@ -7849,7 +7842,7 @@ bool SpellEvent::Execute(uint64 e_time, uint32 p_time)
                 m_Spell->SetDelayStart(e_time);
                 // re-plan the event for the delay moment
                 m_Spell->GetCaster()->m_Events.AddEvent(this, Milliseconds(e_time + m_Spell->GetDelayMoment()), false);
-                TC_LOG_DEBUG("charge", "SpellEvent::Execute spell {} delay moment - {} game time - {}", m_Spell->GetSpellInfo()->Id, m_Spell->GetDelayMoment(), GameTime::GetGameTime());
+                TC_LOG_DEBUG("charge", "SpellEvent::Execute spell {} delay moment - {} game time - {}", m_Spell->GetSpellInfo()->Id, m_Spell->GetDelayMoment(), GameTime::GetGameTimeMS());
                 return false;                               // event not complete
             }
             break;
