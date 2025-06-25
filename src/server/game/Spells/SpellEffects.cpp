@@ -4500,7 +4500,7 @@ void Spell::EffectSkinning()
 
 void Spell::EffectCharge()
 {
-    TC_LOG_DEBUG("charge", "Spell::EffectCharge called");
+    TC_LOG_DEBUG("charge", "Spell::EffectCharge called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     if (!unitTarget)
         return;
 
@@ -4510,7 +4510,7 @@ void Spell::EffectCharge()
 
     if (effectHandleMode == SPELL_EFFECT_HANDLE_LAUNCH_TARGET)
     {
-        TC_LOG_DEBUG("charge", "Spell::EffectCharge SPELL_EFFECT_HANDLE_LAUNCH_TARGET");
+        TC_LOG_DEBUG("charge", "Spell::EffectCharge SPELL_EFFECT_HANDLE_LAUNCH_TARGET {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         // charge changes fall time
         if (unitCaster->GetTypeId() == TYPEID_PLAYER)
             unitCaster->ToPlayer()->SetFallInformation(0, unitCaster->GetPositionZ());
@@ -4533,7 +4533,7 @@ void Spell::EffectCharge()
 
     if (effectHandleMode == SPELL_EFFECT_HANDLE_HIT_TARGET)
     {
-        TC_LOG_DEBUG("charge", "Spell::EffectCharge SPELL_EFFECT_HANDLE_HIT_TARGET");
+        TC_LOG_DEBUG("charge", "Spell::EffectCharge SPELL_EFFECT_HANDLE_HIT_TARGET {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         // not all charge effects used in negative spells
         if (!m_spellInfo->HasAttribute(SPELL_ATTR0_STOP_ATTACK_TARGET) && !m_spellInfo->IsPositive() && m_caster->GetTypeId() == TYPEID_PLAYER)
             unitCaster->Attack(unitTarget, true);

@@ -602,7 +602,7 @@ m_caster((info->HasAttribute(SPELL_ATTR6_CAST_BY_CHARMER) && caster->GetCharmerO
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         m_destTargets[i] = SpellDestination(*m_caster);
 
-    TC_LOG_DEBUG("charge", "Spell::Spell constructor called with id {}", info->Id);
+    TC_LOG_DEBUG("charge", "Spell::Spell constructor called with id {} - {}", info->Id, GameTime::GetGameTime());
 }
 
 Spell::~Spell()
@@ -3106,7 +3106,7 @@ bool Spell::UpdateChanneledTargetList()
 
 SpellCastResult Spell::prepare(SpellCastTargets const& targets, AuraEffect const* triggeredByAura)
 {
-    TC_LOG_DEBUG("charge", "Spell::prepare called with id {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::prepare called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     if (m_CastItem)
     {
         m_castItemGUID = m_CastItem->GetGUID();
@@ -3173,7 +3173,7 @@ SpellCastResult Spell::prepare(SpellCastTargets const& targets, AuraEffect const
         return SPELL_FAILED_SPELL_IN_PROGRESS;
     }
 
-    TC_LOG_DEBUG("charge", "Spell::prepare finished cast in progress check {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::prepare finished cast in progress check {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     LoadScripts();
 
     // Fill cost data (do not use power for item casts)
@@ -3362,7 +3362,7 @@ void Spell::cancel(SpellCastResult result /*= SPELL_FAILED_INTERRUPTED*/, Option
 
 void Spell::cast(bool skipCheck)
 {
-    TC_LOG_DEBUG("charge", "Spell::cast called with id {}, skipCheck: {}", m_spellInfo->Id, skipCheck);
+    TC_LOG_DEBUG("charge", "Spell::cast called with id {}, skipCheck: {} - {}", m_spellInfo->Id, skipCheck, GameTime::GetGameTime());
     Player* modOwner = m_caster->GetSpellModOwner();
     Spell* lastSpellMod = nullptr;
     if (modOwner)
@@ -3448,7 +3448,7 @@ void Spell::_cast(bool skipCheck)
         SpellCastResult castResult = CheckCast(false, &param1, &param2);
         if (castResult != SPELL_CAST_OK)
         {
-            TC_LOG_DEBUG("charge", "Spell::CheckCast failed {}", m_spellInfo->Id);
+            TC_LOG_DEBUG("charge", "Spell::CheckCast failed {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
             cleanupSpell(castResult, &param1, &param2);
             return;
         }
@@ -3571,7 +3571,7 @@ void Spell::_cast(bool skipCheck)
     }
 
     // CAST SPELL
-    TC_LOG_DEBUG("charge", "Spell::_cast starting cooldown/launch/spellgo {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::_cast starting cooldown/launch/spellgo {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     SendSpellCooldown();
 
     HandleLaunchPhase();
@@ -3601,7 +3601,7 @@ void Spell::_cast(bool skipCheck)
     }
     else
     {
-        TC_LOG_DEBUG("charge", "Spell::_cast immediate spell {}", m_spellInfo->Id);
+        TC_LOG_DEBUG("charge", "Spell::_cast immediate spell {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         // Immediate spell, no big deal
         handle_immediate();
     }
@@ -3711,7 +3711,7 @@ void Spell::_cast(bool skipCheck)
         if (caster->IsAIEnabled())
             caster->AI()->OnSpellCast(GetSpellInfo());
     
-    TC_LOG_DEBUG("charge", "Spell::_cast finished {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::_cast finished {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 }
 
 template <class Container>
@@ -4102,6 +4102,7 @@ void Spell::finish(bool ok)
 
 void Spell::WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo const* spellInfo, uint8 castCount, SpellCastResult result, SpellCustomErrors customError, uint32* param1 /*= nullptr*/, uint32* param2 /*= nullptr*/)
 {
+    TC_LOG_DEBUG("charge", "Spell::WriteCastResultInfo {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTime());
     data << uint8(castCount);                               // single cast or multi 2.3 (0/1)
     data << uint32(spellInfo->Id);
     data << uint8(result);                                  // problem
@@ -4205,6 +4206,7 @@ void Spell::WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo con
             break;
         }
         case SPELL_FAILED_CUSTOM_ERROR:
+            TC_LOG_DEBUG("charge", "SPELL_FAILED_CUSTOM_ERROR {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTime());
             data << uint32(customError);
             break;
         case SPELL_FAILED_REAGENTS:
@@ -4234,6 +4236,7 @@ void Spell::WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo con
             break;
         }
         case SPELL_FAILED_PREVENTED_BY_MECHANIC:
+            TC_LOG_DEBUG("charge", "SPELL_FAILED_PREVENTED_BY_MECHANIC {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTime());
             if (param1)
                 data << uint32(*param1);
             else
@@ -4349,11 +4352,11 @@ void Spell::SendMountResult(MountResult result)
 
 void Spell::SendSpellStart()
 {
-    TC_LOG_DEBUG("charge", "Spell::SendSpellStart called with id {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::SendSpellStart called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     if (!IsNeedSendToClient())
         return;
 
-    TC_LOG_DEBUG("charge", "Spell::SendSpellStart Needs to send to client {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::SendSpellStart Needs to send to client {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 
     //TC_LOG_DEBUG("spells", "Sending SMSG_SPELL_START id={}", m_spellInfo->Id);
 
@@ -4419,12 +4422,12 @@ void Spell::SendSpellStart()
 
 void Spell::SendSpellGo()
 {
-    TC_LOG_DEBUG("charge", "Spell::SendSpellGo called with id {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::SendSpellGo called with id {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     // not send invisible spell casting
     if (!IsNeedSendToClient())
         return;
 
-    TC_LOG_DEBUG("charge", "Spell::SendSpellGo Needs to send to client {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::SendSpellGo Needs to send to client {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 
     uint32 castFlags = CAST_FLAG_UNKNOWN_9;
 
@@ -4769,7 +4772,7 @@ void Spell::ExecuteLogEffectResurrect(uint8 effIndex, Unit* target)
 
 void Spell::SendInterrupted(SpellCastResult result, Optional<SpellCastResult> resultOther /*= {}*/)
 {
-    TC_LOG_DEBUG("charge", "Spell::SendInterrupted called with id {} - result {}", m_spellInfo->Id, result);
+    TC_LOG_DEBUG("charge", "Spell::SendInterrupted called with id {} - result {} - {}", m_spellInfo->Id, result, GameTime::GetGameTime());
     WorldPacket data(SMSG_SPELL_FAILURE, 8 + 1 + 4 + 1);
     data << m_caster->GetPackGUID();
     data << uint8(m_cast_count);
@@ -5312,7 +5315,7 @@ void Spell::HandleEffects(Unit* pUnitTarget, Item* pItemTarget, GameObject* pGoT
 
 SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint32* param2 /*= nullptr*/)
 {
-    TC_LOG_DEBUG("charge", "Spell::CheckCast called {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::CheckCast called {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     // check death state
     if (m_caster->ToUnit() && !m_caster->ToUnit()->IsAlive() && !m_spellInfo->IsPassive() && !(m_spellInfo->HasAttribute(SPELL_ATTR0_CASTABLE_WHILE_DEAD) || (IsTriggered() && !m_triggeredByAuraSpell)))
         return SPELL_FAILED_CASTER_DEAD;
@@ -5380,7 +5383,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     {
         // only check at first call, Stealth auras are already removed at second call
         // for now, ignore triggered spells
-        TC_LOG_DEBUG("charge", "Spell::CheckCast determining checkForm {}", m_spellInfo->Id);
+        TC_LOG_DEBUG("charge", "Spell::CheckCast determining checkForm {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
         if (strict && !(_triggeredCastFlags & TRIGGERED_IGNORE_SHAPESHIFT))
         {
             bool checkForm = true;
@@ -5400,7 +5403,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                 
                 // Cannot be used in this stance/form
                 SpellCastResult shapeError = m_spellInfo->CheckShapeshift(unitCaster->GetShapeshiftForm());
-                TC_LOG_DEBUG("charge", "Spell::CheckCast checkForm result {} {}", shapeError, m_spellInfo->Id);
+                TC_LOG_DEBUG("charge", "Spell::CheckCast checkForm result {} {} - {}", shapeError, m_spellInfo->Id, GameTime::GetGameTime());
                 if (shapeError != SPELL_CAST_OK)
                     return shapeError;
 
@@ -5533,7 +5536,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     return SPELL_FAILED_LINE_OF_SIGHT;
             }
         }
-        TC_LOG_DEBUG("charge", "Spell::CheckCast finished los {}", m_spellInfo->Id);
+        TC_LOG_DEBUG("charge", "Spell::CheckCast finished los {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     }
 
     // Check for line of sight for spells with dest
@@ -5637,7 +5640,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
     castResult = CheckRange(strict);
     if (castResult != SPELL_CAST_OK)
         return castResult;
-    TC_LOG_DEBUG("charge", "Spell::CheckCast finished trigger range {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::CheckCast finished trigger range {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 
     if (!(_triggeredCastFlags & TRIGGERED_IGNORE_POWER_AND_REAGENT_COST))
     {
@@ -5708,7 +5711,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
 
     uint8 approximateAuraEffectMask = 0;
     uint8 nonAuraEffectMask = 0;
-    TC_LOG_DEBUG("charge", "Spell::CheckCast checking spell effects {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::CheckCast checking spell effects {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     {
         // for effects of spells that have only one target
@@ -5835,7 +5838,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                     m_preGeneratedPath->SetPathLengthLimit(range);
 
                     // first try with raycast, if it fails fall back to normal path
-                    TC_LOG_DEBUG("charge", "Spell::CheckCast checking path");
+                    TC_LOG_DEBUG("charge", "Spell::CheckCast checking path {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
                     bool result = m_preGeneratedPath->CalculatePath(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), false);
                     if (m_preGeneratedPath->GetPathType() & PATHFIND_SHORT)
                         return SPELL_FAILED_NOPATH;
@@ -5843,7 +5846,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
                         return SPELL_FAILED_NOPATH;
                     else if (m_preGeneratedPath->IsInvalidDestinationZ(target)) // Check position z, if not in a straight line
                         return SPELL_FAILED_NOPATH;
-                    TC_LOG_DEBUG("charge", "Spell::CheckCast finished path");
+                    TC_LOG_DEBUG("charge", "Spell::CheckCast finished path {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
                     m_preGeneratedPath->ShortenPathUntilDist(PositionToVector3(target), objSize); // move back
                 }
                 // @epoch-begin
@@ -6364,7 +6367,7 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* param1 /*= nullptr*/, uint
             }
         }
     }
-    TC_LOG_DEBUG("charge", "Spell::CheckCast all done {}", m_spellInfo->Id);
+    TC_LOG_DEBUG("charge", "Spell::CheckCast all done {} - {}", m_spellInfo->Id, GameTime::GetGameTime());
 
     // all ok
     return SPELL_CAST_OK;
