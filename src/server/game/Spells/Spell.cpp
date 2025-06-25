@@ -3584,7 +3584,7 @@ void Spell::_cast(bool skipCheck)
             creatureCaster->ReleaseSpellFocus(this);
 
     // Okay, everything is prepared. Now we need to distinguish between immediate and evented delayed spells
-    if (m_spellInfo->Speed > 0.0f && !m_spellInfo->IsChanneled())
+    if ((m_spellInfo->Speed > 0.0f && !m_spellInfo->IsChanneled())) || m_spellInfo->Id == 21156
     {
         // Remove used for cast item if need (it can be already NULL after TakeReagents call
         // in case delayed spell remove item at cast delay start
@@ -4206,7 +4206,6 @@ void Spell::WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo con
             break;
         }
         case SPELL_FAILED_CUSTOM_ERROR:
-            TC_LOG_DEBUG("charge", "SPELL_FAILED_CUSTOM_ERROR {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTime());
             data << uint32(customError);
             break;
         case SPELL_FAILED_REAGENTS:
@@ -4236,7 +4235,6 @@ void Spell::WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo con
             break;
         }
         case SPELL_FAILED_PREVENTED_BY_MECHANIC:
-            TC_LOG_DEBUG("charge", "SPELL_FAILED_PREVENTED_BY_MECHANIC {} - {} - {}", spellInfo->Id, result, GameTime::GetGameTime());
             if (param1)
                 data << uint32(*param1);
             else
