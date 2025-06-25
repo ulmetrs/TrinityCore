@@ -3127,11 +3127,6 @@ SpellCastResult Spell::prepare(SpellCastTargets const& targets, AuraEffect const
     // Fill aura scaling information
     if (Unit* unitCaster = m_caster->ToUnit())
     {
-        // try as early as possible
-        if (m_spellInfo->Id == 2457)
-        {
-            unitCaster->SetShapeshiftForm(FORM_BATTLESTANCE);
-        }
         if (unitCaster->IsControlledByPlayer() && !m_spellInfo->IsPassive() && m_spellInfo->SpellLevel && !m_spellInfo->IsChanneled() && !(_triggeredCastFlags & TRIGGERED_IGNORE_AURA_SCALING))
         {
             for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
