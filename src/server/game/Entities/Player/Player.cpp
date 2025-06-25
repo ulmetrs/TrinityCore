@@ -27780,6 +27780,7 @@ void Player::ProcessPendingSpellCastRequest(uint32 category)
     if (WorldSession* session = GetSession())
     {
         // AddSameTickQueueBlock(category);
+        TC_LOG_DEBUG("charge", "Handle Cast Spell Opcode in ProcessPendingSpellCastRequest {} - {}", request->spell_id, GameTime::GetGameTimeMS());
         if (request->is_item)
             session->HandleUseItemOpcode(packet);
         else
@@ -27843,6 +27844,7 @@ void Player::ExecuteSortedCastRequests()
             // {
                 // TC_LOG_DEBUG("misc", "time: {}, spell: {}", i->first, request->spell_id);
             // }
+            TC_LOG_DEBUG("charge", "executing spell cast request {} - {}", i->second, GameTime::GetGameTimeMS());
             ProcessPendingSpellCastRequest(i->second);
         }
     }
