@@ -913,11 +913,6 @@ uint64 Spell::CalculateDelayMomentForDst() const
         }
     }
 
-    if (m_spellInfo->Id == 2457) {
-        TC_LOG_DEBUG("charge", "Spell::CalculateDelayMomentForDst for spell {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
-        return 1000;
-    }
-
     return 0;
 }
 
@@ -2235,8 +2230,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
             m_delayMoment = targetInfo.TimeDelay;
     }
     else
-        targetInfo.TimeDelay = 1000;
-        //targetInfo.TimeDelay = 0ULL;
+        targetInfo.TimeDelay = 0ULL;
 
     // If target reflect spell back to caster
     if (targetInfo.MissCondition == SPELL_MISS_REFLECT)
@@ -3598,7 +3592,7 @@ void Spell::_cast(bool skipCheck)
             creatureCaster->ReleaseSpellFocus(this);
 
     // Okay, everything is prepared. Now we need to distinguish between immediate and evented delayed spells
-    if ((m_spellInfo->Speed > 0.0f && !m_spellInfo->IsChanneled()) || m_spellInfo->Id == 2457)
+    if (m_spellInfo->Speed > 0.0f && !m_spellInfo->IsChanneled())
     {
         // Remove used for cast item if need (it can be already NULL after TakeReagents call
         // in case delayed spell remove item at cast delay start
@@ -3608,7 +3602,6 @@ void Spell::_cast(bool skipCheck)
         m_immediateHandled = false;
         m_spellState = SPELL_STATE_DELAYED;
         SetDelayStart(0);
-        TC_LOG_DEBUG("charge", "Spell::_cast SetDelayStart {} - moment {} - {}", m_spellInfo->Id, m_delayMoment, GameTime::GetGameTimeMS());
 
         if (Unit* unitCaster = m_caster->ToUnit())
             if (unitCaster->HasUnitState(UNIT_STATE_CASTING) && !unitCaster->IsNonMeleeSpellCast(false, false, true))
@@ -3616,7 +3609,6 @@ void Spell::_cast(bool skipCheck)
     }
     else
     {
-        TC_LOG_DEBUG("charge", "Spell::_cast immediate spell {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
         // Immediate spell, no big deal
         handle_immediate();
     }
