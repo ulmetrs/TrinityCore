@@ -9496,8 +9496,9 @@ void Unit::SetShapeshiftForm(ShapeshiftForm form)
     SetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_SHAPESHIFT_FORM, form);
     // Send update to self
     TC_LOG_DEBUG("charge", "Unit::SetShapeshiftForm {}", GameTime::GetGameTime());
-    if (Player* player = ToPlayer())
-        this->SendUpdateToPlayer(player);
+    //if (Player* player = ToPlayer())
+    //    this->SendUpdateToPlayer(player);
+    GetMap()->SendObjectUpdates();
 }
 
 bool Unit::IsShapeShifted() const

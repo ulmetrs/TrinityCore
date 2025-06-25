@@ -4686,6 +4686,7 @@ void Spell::UpdateSpellCastDataTargets(WorldPackets::Spells::SpellCastData& data
 
 void Spell::SendLogExecute()
 {
+    TC_LOG_DEBUG("charge", "SendLogExecute {} - {}", m_spellInfo->Id, GameTime::GetGameTimeMS());
     WorldPacket data(SMSG_SPELLLOGEXECUTE, (8+4+4+4+4+8));
 
     data << m_caster->GetPackGUID();
