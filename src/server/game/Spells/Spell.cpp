@@ -4542,6 +4542,17 @@ void Spell::SendSpellGo()
     }
     else
         m_caster->SendMessageToSet(packet.Write(), true);
+
+    if (Player* playerCaster = m_caster->ToPlayer())
+    {
+        if (m_spellInfo->Id == 2457)
+        {
+            WorldPacket data(SMSG_SPELL_DELAYED, 8+4);
+            data << playerCaster->GetPackGUID();
+            data << uint32(1000);
+            playerCaster->SendDirectMessage(&data);
+        }
+    }
 }
 
 void Spell::UpdateSpellCastDataAmmo(WorldPackets::Spells::SpellAmmo& ammo)
