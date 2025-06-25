@@ -2472,7 +2472,7 @@ void Spell::TargetInfo::DoTargetSpellHit(Spell* spell, SpellEffectInfo const& sp
     if (unit->IsAlive() != IsAlive)
         return;
 
-    if (spell->getState() == SPELL_STATE_DELAYED && !spell->IsPositive() && (GameTime::GetGameTimeMSMS() - TimeDelay) <= unit->m_lastSanctuaryTime)
+    if (spell->getState() == SPELL_STATE_DELAYED && !spell->IsPositive() && (GameTime::GetGameTimeMS() - TimeDelay) <= unit->m_lastSanctuaryTime)
         return;                                             // No missinfo in that case
 
     if (_spellHitTarget)
@@ -4488,7 +4488,7 @@ void Spell::SendSpellGo()
     castData.CastID = m_cast_count;
     castData.SpellID = m_spellInfo->Id;
     castData.CastFlags = castFlags;
-    castData.CastTime = GameTime::GetGameTimeMSMS();
+    castData.CastTime = GameTime::GetGameTimeMS();
 
     UpdateSpellCastDataTargets(castData);
 
@@ -5001,7 +5001,7 @@ void Spell::TakePower()
 
     // Set the five second timer
     if (powerType == POWER_MANA && m_powerCost > 0 && ! GetSpellInfo()->HasAttribute(SPELL_ATTR2_DONT_BLOCK_MANA_REGEN))
-        unitCaster->SetLastManaUse(GameTime::GetGameTimeMSMS());
+        unitCaster->SetLastManaUse(GameTime::GetGameTimeMS());
 }
 
 void Spell::TakeAmmo()
