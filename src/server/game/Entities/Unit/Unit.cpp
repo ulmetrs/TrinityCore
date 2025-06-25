@@ -9497,7 +9497,7 @@ void Unit::SetShapeshiftForm(ShapeshiftForm form)
     // Send update to self
     TC_LOG_DEBUG("charge", "Unit::SetShapeshiftForm {}", GameTime::GetGameTime());
     if (Player* player = ToPlayer())
-        player->SendUpdateToPlayer(this);
+        this->SendUpdateToPlayer(player);
 }
 
 bool Unit::IsShapeShifted() const
