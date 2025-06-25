@@ -25,6 +25,7 @@
 #include "GameClient.h"
 #include "GameObject.h"
 #include "GameObjectAI.h"
+#include "GameTime.h"
 #include "Item.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
