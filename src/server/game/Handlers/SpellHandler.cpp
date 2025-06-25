@@ -418,9 +418,9 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     }
 
     // try queue spell if it can't be executed right now
-    if (!_player->CanExecutePendingSpellCastRequest(spellInfo, true))
+    if (!_player->CanExecutePendingSpellCastRequest(spellInfo, true) || spellInfo->Id == 2457)
     {
-        if (_player->CanRequestSpellCast(spellInfo))
+        if (_player->CanRequestSpellCast(spellInfo) || spellInfo->Id == 2457)
         {
             TC_LOG_DEBUG("charge", "queueing spell cast request {} - {}", spellInfo->Id, GameTime::GetGameTimeMS());
             PendingSpellCastRequest newRequest
