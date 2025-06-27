@@ -745,7 +745,7 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
     if (m_inCharacterQueue)
     {
         // Add character to queue - this handler is unsafe so need to add to locked queue
-        sWorld->AddCharacterToQueue(playerGuid);
+        sWorld->AddCharacter(playerGuid);
         // I believe this is the message we need to send to the client to re-queue
         // we already have auth info so we just need to send the wait in queue message
         SendAuthWaitQueue(1000);
