@@ -748,6 +748,9 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
         sWorld->AddCharacter(playerGuid);
         // I believe this is the message we need to send to the client to re-queue
         // we already have auth info so we just need to send the wait in queue message
+        WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
+        data << (uint8) 1;
+        SendPacket(&data);
         SendAuthWaitQueue(1000);
         return;
     }
