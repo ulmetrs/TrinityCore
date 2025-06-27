@@ -751,7 +751,6 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
         WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
         data << (uint8) 1;
         SendPacket(&data);
-        SendAuthWaitQueue(1000);
         return;
     }
 
