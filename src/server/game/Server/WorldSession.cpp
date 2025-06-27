@@ -131,6 +131,7 @@ WorldSession::WorldSession(uint32 id, std::string&& name, std::shared_ptr<WorldS
     m_expansion(expansion),
     _logoutTime(0),
     m_inQueue(false),
+    m_inCharacterQueue(false),
     m_playerLoading(false),
     m_playerLogout(false),
     m_playerRecentlyLogout(false),
@@ -742,7 +743,7 @@ void WorldSession::ResetTimeOutTime(bool onlyActive)
 
 bool WorldSession::IsConnectionIdle() const
 {
-    return m_timeOutTime < GameTime::GetGameTime() && !m_inQueue;
+    return m_timeOutTime < GameTime::GetGameTime() && !m_inQueue && !m_inCharacterQueue;
 }
 
 void WorldSession::Handle_NULL(WorldPacket& null)
@@ -1425,12 +1426,15 @@ void WorldSession::InitializeSessionCallback(CharacterDatabaseQueryHolder const&
     LoadTutorialsData(realmHolder.GetPreparedResult(AccountInfoQueryHolderPerRealm::TUTORIALS));
     LoadInstanceTimeRestrictions(realmHolder.GetPreparedResult(AccountInfoQueryHolderPerRealm::INSTANCE_TIMES));
 
+    // If we were never queued we need to send more information in auth response packet
     if (!m_inQueue)
         SendAuthResponse(AUTH_OK, true);
     else
         SendAuthWaitQueue(0);
 
     SetInQueue(false);
+    // Set in character queue so that we can key off this on login
+    SetInCharacterQueue(true);
     ResetTimeOutTime(false);
 
     SendAddonsInfo();

@@ -325,6 +325,11 @@ void World::AddSession(WorldSession* s)
     addSessQueue.add(s);
 }
 
+void World::AddCharacter(ObjectGuid guid)
+{
+    addCharQueue.add(guid);
+}
+
 void World::AddSession_(WorldSession* s)
 {
     ASSERT(s);
@@ -389,6 +394,74 @@ void World::AddSession_(WorldSession* s)
         popu *= 2;
         TC_LOG_INFO("misc", "Server Population ({}).", popu);
     }
+}
+
+void World::AddCharacter_(ObjectGuid guid)
+{
+    ASSERT(guid);
+
+    // Do nothing for now, testing
+
+    // //NOTE - Still there is race condition in WorldSession* being used in the Sockets
+
+    // ///- kick already loaded player with same account (if any) and remove session
+    // ///- if player is in loading and want to load again, return
+    // if (!RemoveSession(s->GetAccountId()))
+    // {
+    //     s->KickPlayer("World::AddSession_ Couldn't remove the other session while on loading screen");
+    //     delete s;                                           // session not added yet in session list, so not listed in queue
+    //     return;
+    // }
+
+    // // decrease session counts only at not reconnection case
+    // bool decrease_session = true;
+
+    // // if session already exist, prepare to it deleting at next world update
+    // // NOTE - KickPlayer() should be called on "old" in RemoveSession()
+    // {
+    //     SessionMap::const_iterator old = m_sessions.find(s->GetAccountId());
+
+    //     if (old != m_sessions.end())
+    //     {
+    //         // prevent decrease sessions count if session queued
+    //         if (RemoveQueuedPlayer(old->second))
+    //             decrease_session = false;
+    //         // not remove replaced session form queue if listed
+    //         delete old->second;
+    //     }
+    // }
+
+    // m_sessions[s->GetAccountId()] = s;
+
+    // uint32 Sessions = GetActiveAndQueuedSessionCount();
+    // uint32 pLimit = GetPlayerAmountLimit();
+    // uint32 QueueSize = GetQueuedSessionCount(); //number of players in the queue
+
+    // //so we don't count the user trying to
+    // //login as a session and queue the socket that we are using
+    // if (decrease_session)
+    //     --Sessions;
+
+    // if (pLimit > 0 && Sessions >= pLimit && !s->HasPermission(rbac::RBAC_PERM_SKIP_QUEUE) && !HasRecentlyDisconnected(s))
+    // {
+    //     AddQueuedPlayer(s);
+    //     UpdateMaxSessionCounters();
+    //     TC_LOG_INFO("misc", "PlayerQueue: Account id {} is in Queue Position ({}).", s->GetAccountId(), ++QueueSize);
+    //     return;
+    // }
+
+    // s->InitializeSession();
+
+    // UpdateMaxSessionCounters();
+
+    // // Updates the population
+    // if (pLimit > 0)
+    // {
+    //     float popu = (float)GetActiveSessionCount();              // updated number of users on the server
+    //     popu /= pLimit;
+    //     popu *= 2;
+    //     TC_LOG_INFO("misc", "Server Population ({}).", popu);
+    // }
 }
 
 bool World::HasRecentlyDisconnected(WorldSession* session)
@@ -3292,6 +3365,17 @@ void World::UpdateSessions(uint32 diff)
         WorldSession* sess = nullptr;
         while (addSessQueue.next(sess))
             AddSession_(sess);
+    }
+
+    {
+        ZoneScopedN("AddCharacters");
+        TC_METRIC_DETAILED_NO_THRESHOLD_TIMER("world_update_time",
+            TC_METRIC_TAG("type", "Add characters"),
+            TC_METRIC_TAG("parent_type", "Update sessions"));
+        ///- Add new characters
+        ObjectGuid guid = ObjectGuid::Empty;
+        while (addCharQueue.next(guid))
+            AddCharacter_(guid);
     }
 
     ///- Then send an update signal to remaining ones

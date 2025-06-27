@@ -502,6 +502,7 @@ class TC_GAME_API WorldSession
 
         /// Session in auth.queue currently
         void SetInQueue(bool state) { m_inQueue = state; }
+        void SetInCharacterQueue(bool state) { m_inCharacterQueue = state; }
 
         /// Is the user engaged in a log out process?
         bool isLogingOut() const { return _logoutTime || m_playerLogout; }
@@ -1270,6 +1271,7 @@ class TC_GAME_API WorldSession
 
         time_t _logoutTime;
         bool m_inQueue;                                     // session wait in auth.queue
+        bool m_inCharacterQueue;                           // session wait in character queue
         bool m_playerLoading;                               // code processed in LoginPlayer
         bool m_playerLogout;                                // code processed in LogoutPlayer
         bool m_playerRecentlyLogout;

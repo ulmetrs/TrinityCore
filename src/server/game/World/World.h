@@ -644,6 +644,7 @@ class TC_GAME_API World
 
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession* s);
+        void AddCharacter(ObjectGuid guid);
         void SendAutoBroadcast();
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
@@ -928,6 +929,10 @@ class TC_GAME_API World
         // sessions that are added async
         void AddSession_(WorldSession* s);
         LockedQueue<WorldSession*> addSessQueue;
+
+        // characters that are added async
+        void AddCharacter_(ObjectGuid guid);
+        LockedQueue<ObjectGuid> addCharQueue;
 
         // used versions
         std::string m_DBVersion;
