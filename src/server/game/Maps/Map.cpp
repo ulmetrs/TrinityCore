@@ -943,15 +943,17 @@ void Map::Update(uint32 t_diff)
             // non-player active objects, increasing iterator in the loop in case of object removal
             for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
             {
-                ZoneScopedN("Map::Update::Entities::ActiveObjects::ActiveNonPlayer")
-
                 WorldObject* obj = *m_activeNonPlayersIter;
                 ++m_activeNonPlayersIter;
 
                 if (!obj || !obj->IsInWorld())
                     continue;
 
-                VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
+                {
+                    ZoneScopedN("Map::Update::Entities::ActiveObjects::ActiveNonPlayer")
+
+                    VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
+                }
             }
         }
 
@@ -962,7 +964,6 @@ void Map::Update(uint32 t_diff)
             // waypoint creatures, increasing iterator in the loop in case of object removal
             for (m_waypointCreaturesIter = m_waypointCreatures.begin(); m_waypointCreaturesIter != m_waypointCreatures.end();)
             {
-                ZoneScopedN("Map::Update::Entities::WaypointCreatures::WaypointCreature")
                 Creature* creature = *m_waypointCreaturesIter;
                 ++m_waypointCreaturesIter;
 
@@ -974,27 +975,31 @@ void Map::Update(uint32 t_diff)
                 if (isCellMarked(cellCoord.GetId()))
                     continue;
 
-                // Manually update the creature and its formation members
-                auto formation = creature->GetFormation();
-                if (formation && creature->IsFormationLeader())
                 {
-                    // Copy the members to handle both members removing themselves from the formation,
-                    // and removing others from the formation
-                    std::vector<Creature*> members;
-                    for (auto itr = formation->GetMembersBegin(); itr != formation->GetMembersEnd(); ++itr)
+                    ZoneScopedN("Map::Update::Entities::WaypointCreatures::WaypointCreature")
+
+                    // Manually update the creature and its formation members
+                    auto formation = creature->GetFormation();
+                    if (formation && creature->IsFormationLeader())
                     {
-                        if (itr->first)
-                            members.push_back(itr->first);
+                        // Copy the members to handle both members removing themselves from the formation,
+                        // and removing others from the formation
+                        std::vector<Creature*> members;
+                        for (auto itr = formation->GetMembersBegin(); itr != formation->GetMembersEnd(); ++itr)
+                        {
+                            if (itr->first)
+                                members.push_back(itr->first);
+                        }
+                        // Update all members this tick, even if they are removed from the formation during the tick
+                        for (Creature* member : members)
+                            member->Update(t_diff);
                     }
-                    // Update all members this tick, even if they are removed from the formation during the tick
-                    for (Creature* member : members)
-                        member->Update(t_diff);
-                }
-                // Don't update members of formations individually, do it via the leader above
-                // Update the creature if it is not in a formation
-                else if (!formation)
-                {
-                    creature->Update(t_diff);
+                    // Don't update members of formations individually, do it via the leader above
+                    // Update the creature if it is not in a formation
+                    else if (!formation)
+                    {
+                        creature->Update(t_diff);
+                    }
                 }
             }
         }
