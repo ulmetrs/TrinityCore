@@ -57,6 +57,7 @@
 #include "TSSpellInfo.h"
 #include "TSMutable.h"
 #include "TSWorldObject.h"
+#include "TSProfile.h"
 // @tswow-end
 #include <G3D/Vector3.h>
 
@@ -1059,6 +1060,8 @@ void WorldObject::_Create(ObjectGuid::LowType guidlow, HighGuid guidhigh, uint32
 
 void WorldObject::UpdatePositionData()
 {
+    ZoneScopedN("WorldObject::UpdatePositionData")
+
     PositionFullTerrainStatus data;
     GetMap()->GetFullTerrainStatusForPosition(GetPhaseMask(), GetPositionX(), GetPositionY(), GetPositionZ(), data, {}, GetCollisionHeight());
     ProcessPositionDataChanged(data);

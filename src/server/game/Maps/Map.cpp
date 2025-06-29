@@ -1091,7 +1091,6 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
 
         for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
         {
-            ZoneScopedN("Map::ProcessRelocationNotifies::DelayedUnitRelocation::Grid")
             NGridType *grid = i->GetSource();
 
             if (grid->GetGridState() != GRID_STATE_ACTIVE)
@@ -1101,30 +1100,34 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
             if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
                 continue;
 
-            uint32 gx = grid->getX(), gy = grid->getY();
-
-            CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
-            CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-            for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
             {
-                for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
+                ZoneScopedN("Map::ProcessRelocationNotifies::DelayedUnitRelocation::Grid")
+
+                uint32 gx = grid->getX(), gy = grid->getY();
+
+                CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
+                CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
+
+                for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
                 {
-                    uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-                    if (!isCellMarked(cell_id))
-                        continue;
+                    for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
+                    {
+                        uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+                        if (!isCellMarked(cell_id))
+                            continue;
 
-                    CellCoord pair(x, y);
-                    Cell cell(pair);
-                    cell.SetNoCreate();
+                        CellCoord pair(x, y);
+                        Cell cell(pair);
+                        cell.SetNoCreate();
 
-                    /** @epoch-start */
-                    Trinity::DelayedUnitRelocation cell_relocation(cell, pair, *this, 100);
-                    /** @epoch-end */
-                    TypeContainerVisitor<Trinity::DelayedUnitRelocation, GridTypeMapContainer  > grid_object_relocation(cell_relocation);
-                    TypeContainerVisitor<Trinity::DelayedUnitRelocation, WorldTypeMapContainer > world_object_relocation(cell_relocation);
-                    Visit(cell, grid_object_relocation);
-                    Visit(cell, world_object_relocation);
+                        /** @epoch-start */
+                        Trinity::DelayedUnitRelocation cell_relocation(cell, pair, *this, 100);
+                        /** @epoch-end */
+                        TypeContainerVisitor<Trinity::DelayedUnitRelocation, GridTypeMapContainer  > grid_object_relocation(cell_relocation);
+                        TypeContainerVisitor<Trinity::DelayedUnitRelocation, WorldTypeMapContainer > world_object_relocation(cell_relocation);
+                        Visit(cell, grid_object_relocation);
+                        Visit(cell, world_object_relocation);
+                    }
                 }
             }
         }
@@ -1138,7 +1141,6 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
         TypeContainerVisitor<ResetNotifier, WorldTypeMapContainer > world_notifier(reset);
         for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
         {
-            ZoneScopedN("Map::ProcessRelocationNotifies::ResetNotifier::Grid")
             NGridType *grid = i->GetSource();
 
             if (grid->GetGridState() != GRID_STATE_ACTIVE)
@@ -1147,26 +1149,30 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
             if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
                 continue;
 
-            grid->getGridInfoRef()->getRelocationTimer().TReset(diff, m_VisibilityNotifyPeriod);
-
-            uint32 gx = grid->getX(), gy = grid->getY();
-
-            CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
-            CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-            for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
             {
-                for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
-                {
-                    uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-                    if (!isCellMarked(cell_id))
-                        continue;
+                ZoneScopedN("Map::ProcessRelocationNotifies::ResetNotifier::Grid")
 
-                    CellCoord pair(x, y);
-                    Cell cell(pair);
-                    cell.SetNoCreate();
-                    Visit(cell, grid_notifier);
-                    Visit(cell, world_notifier);
+                grid->getGridInfoRef()->getRelocationTimer().TReset(diff, m_VisibilityNotifyPeriod);
+
+                uint32 gx = grid->getX(), gy = grid->getY();
+
+                CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
+                CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
+
+                for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
+                {
+                    for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
+                    {
+                        uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+                        if (!isCellMarked(cell_id))
+                            continue;
+
+                        CellCoord pair(x, y);
+                        Cell cell(pair);
+                        cell.SetNoCreate();
+                        Visit(cell, grid_notifier);
+                        Visit(cell, world_notifier);
+                    }
                 }
             }
         }
@@ -1294,6 +1300,8 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float ang, bool respawnRelocationOnFail)
 {
+    ZoneScopedN("Map::CreatureRelocation")
+
     ASSERT(CheckGridIntegrity(creature, false));
 
     Cell old_cell = creature->GetCurrentCell();
@@ -1326,6 +1334,8 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
 
 void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation, bool respawnRelocationOnFail)
 {
+    ZoneScopedN("Map::GameObjectRelocation")
+
     Cell integrity_check(go->GetPositionX(), go->GetPositionY());
     Cell old_cell = go->GetCurrentCell();
 

@@ -451,7 +451,7 @@ Unit::~Unit()
 
 void Unit::Update(uint32 p_time)
 {
-    ZoneScopedNC("Unit::Update", MAP_UPDATE_COLOR);
+    ZoneScopedN("Unit::Update")
 
     // @tswow-begin
     m_tsWorldEntity.tick(TSWorldObject(this));
