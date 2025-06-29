@@ -787,20 +787,33 @@ void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 // @tswow-begin tracy
 void Map::Update(uint32 t_diff)
 {
-    ZoneScopedC(MAP_UPDATE_COLOR)
+    ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
+
     // @tswow-begin tswow-events
-    m_tsWorldEntity.tick(TSMap(this));
-    FIRE_ID(
-          GetId()
-        , Map,OnUpdate
-        , TSMap(this)
-        , t_diff
-        );
+    {
+        ZoneScopedNC("TSMap::Tick", MAP_UPDATE_COLOR)
+
+        m_tsWorldEntity.tick(TSMap(this));
+    }
+
+
+    {
+        ZoneScopedNC("TSMap::OnUpdate", MAP_UPDATE_COLOR)
+
+        FIRE_ID(
+            GetId()
+          , Map,OnUpdate
+          , TSMap(this)
+          , t_diff
+          );
+    }
     // @tswow-end tswow-events
+
     _dynamicTree.update(t_diff);
 
     {
-        ZoneScopedNC("UpdateWorldSessions", MAP_UPDATE_COLOR);
+        ZoneScopedN("Map::Update::WorldSessions")
+
         uint64_t start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::map<uint32, uint32> opcode_map;
 
@@ -810,6 +823,8 @@ void Map::Update(uint32 t_diff)
             Player* player = m_mapRefIter->GetSource();
             if (player && player->IsInWorld())
             {
+                ZoneScopedN("Map::Update::WorldSessions::Player")
+
                 //player->Update(t_diff);
                 WorldSession* session = player->GetSession();
                 MapSessionFilter updater(session);
@@ -857,13 +872,17 @@ void Map::Update(uint32 t_diff)
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
     {
-        ZoneScopedNC("EntityUpdates", MAP_UPDATE_COLOR);
+        ZoneScopedN("Map::Update::Entities")
+
         {
-            ZoneScopedNC("EntityUpdates(Source:Players)", MAP_UPDATE_COLOR);
+            ZoneScopedN("Map::Update::Entities::Players")
+
             // the player iterator is stored in the map object
             // to make sure calls to Map::Remove don't invalidate it
             for (m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
             {
+                ZoneScopedN("Map::Update::Entities::Players::Player")
+
                 Player* player = m_mapRefIter->GetSource();
 
                 if (!player || !player->IsInWorld())
@@ -919,10 +938,13 @@ void Map::Update(uint32 t_diff)
         }
 
         {
-            ZoneScopedNC("EntityUpdates(Source:Active Objects)", MAP_UPDATE_COLOR);
+            ZoneScopedN("Map::Update::Entities::ActiveObjects")
+
             // non-player active objects, increasing iterator in the loop in case of object removal
             for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
             {
+                ZoneScopedN("Map::Update::Entities::ActiveObjects::ActiveNonPlayer")
+
                 WorldObject* obj = *m_activeNonPlayersIter;
                 ++m_activeNonPlayersIter;
 
@@ -935,10 +957,12 @@ void Map::Update(uint32 t_diff)
 
         if (sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
         {
-            ZoneScopedNC("EntityUpdates(Source:Waypoint Creatures)", MAP_UPDATE_COLOR);
+            ZoneScopedN("Map::Update::Entities::WaypointCreatures")
+
             // waypoint creatures, increasing iterator in the loop in case of object removal
             for (m_waypointCreaturesIter = m_waypointCreatures.begin(); m_waypointCreaturesIter != m_waypointCreatures.end();)
             {
+                ZoneScopedN("Map::Update::Entities::WaypointCreatures::WaypointCreature")
                 Creature* creature = *m_waypointCreaturesIter;
                 ++m_waypointCreaturesIter;
 
@@ -977,7 +1001,8 @@ void Map::Update(uint32 t_diff)
     }
 
     {
-        ZoneScopedNC("TransportUpdates", MAP_UPDATE_COLOR)
+        ZoneScopedN("Map::Update::Transports")
+
         for (_transportsUpdateIter = _transports.begin(); _transportsUpdateIter != _transports.end();)
         {
             WorldObject* obj = *_transportsUpdateIter;
@@ -998,7 +1023,8 @@ void Map::Update(uint32 t_diff)
     ///- Process necessary scripts
     if (!m_scriptSchedule.empty())
     {
-        ZoneScopedNC("Map::ScriptsProcess", MAP_UPDATE_COLOR)
+        ZoneScopedN("Map::Update::ScriptsProcess")
+
         i_scriptLock = true;
         ScriptsProcess();
         i_scriptLock = false;
@@ -1007,7 +1033,8 @@ void Map::Update(uint32 t_diff)
     _weatherUpdateTimer.Update(t_diff);
     if (_weatherUpdateTimer.Passed())
     {
-        ZoneScopedNC("Update Weather", MAP_UPDATE_COLOR)
+        ZoneScopedNC("Update Weather")
+
         for (auto&& zoneInfo : _zoneDynamicInfo)
             if (zoneInfo.second.DefaultWeather && !zoneInfo.second.DefaultWeather->Update(_weatherUpdateTimer.GetInterval()))
                 zoneInfo.second.DefaultWeather.reset();
@@ -1016,19 +1043,20 @@ void Map::Update(uint32 t_diff)
     }
 
     {
-        ZoneScopedNC("MoveWorldObjects", MAP_UPDATE_COLOR)
+        ZoneScopedNC("MoveWorldObjects")
+
         MoveAllCreaturesInMoveList();
         MoveAllGameObjectsInMoveList();
     }
 
     if (!m_mapRefManager.isEmpty() || !m_activeNonPlayers.empty())
     {
-        ZoneScopedNC("Map::ProcessRelocationNotifies", MAP_UPDATE_COLOR)
         ProcessRelocationNotifies(t_diff);
     }
 
     {
-        ZoneScopedNC("ScriptMgr::OnMapUpdate", MAP_UPDATE_COLOR)
+        ZoneScopedN("Map::Update::ScriptMgr")
+
         sScriptMgr->OnMapUpdate(this, t_diff);
     }
 
@@ -1056,78 +1084,90 @@ struct ResetNotifier
 
 void Map::ProcessRelocationNotifies(const uint32 diff)
 {
-    for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
+    ZoneScopedN("Map::ProcessRelocationNotifies")
+
     {
-        NGridType *grid = i->GetSource();
+        ZoneScopedN("Map::ProcessRelocationNotifies::DelayedUnitRelocation")
 
-        if (grid->GetGridState() != GRID_STATE_ACTIVE)
-            continue;
-
-        grid->getGridInfoRef()->getRelocationTimer().TUpdate(diff);
-        if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
-            continue;
-
-        uint32 gx = grid->getX(), gy = grid->getY();
-
-        CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
-        CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-        for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
+        for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
         {
-            for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
+            ZoneScopedN("Map::ProcessRelocationNotifies::DelayedUnitRelocation::Grid")
+            NGridType *grid = i->GetSource();
+
+            if (grid->GetGridState() != GRID_STATE_ACTIVE)
+                continue;
+
+            grid->getGridInfoRef()->getRelocationTimer().TUpdate(diff);
+            if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
+                continue;
+
+            uint32 gx = grid->getX(), gy = grid->getY();
+
+            CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
+            CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
+
+            for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
             {
-                uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-                if (!isCellMarked(cell_id))
-                    continue;
+                for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
+                {
+                    uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+                    if (!isCellMarked(cell_id))
+                        continue;
 
-                CellCoord pair(x, y);
-                Cell cell(pair);
-                cell.SetNoCreate();
+                    CellCoord pair(x, y);
+                    Cell cell(pair);
+                    cell.SetNoCreate();
 
-                /** @epoch-start */
-                Trinity::DelayedUnitRelocation cell_relocation(cell, pair, *this, 100);
-                /** @epoch-end */
-                TypeContainerVisitor<Trinity::DelayedUnitRelocation, GridTypeMapContainer  > grid_object_relocation(cell_relocation);
-                TypeContainerVisitor<Trinity::DelayedUnitRelocation, WorldTypeMapContainer > world_object_relocation(cell_relocation);
-                Visit(cell, grid_object_relocation);
-                Visit(cell, world_object_relocation);
+                    /** @epoch-start */
+                    Trinity::DelayedUnitRelocation cell_relocation(cell, pair, *this, 100);
+                    /** @epoch-end */
+                    TypeContainerVisitor<Trinity::DelayedUnitRelocation, GridTypeMapContainer  > grid_object_relocation(cell_relocation);
+                    TypeContainerVisitor<Trinity::DelayedUnitRelocation, WorldTypeMapContainer > world_object_relocation(cell_relocation);
+                    Visit(cell, grid_object_relocation);
+                    Visit(cell, world_object_relocation);
+                }
             }
         }
     }
 
-    ResetNotifier reset;
-    TypeContainerVisitor<ResetNotifier, GridTypeMapContainer >  grid_notifier(reset);
-    TypeContainerVisitor<ResetNotifier, WorldTypeMapContainer > world_notifier(reset);
-    for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
     {
-        NGridType *grid = i->GetSource();
+        ZoneScopedN("Map::ProcessRelocationNotifies::ResetNotifier")
 
-        if (grid->GetGridState() != GRID_STATE_ACTIVE)
-            continue;
-
-        if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
-            continue;
-
-        grid->getGridInfoRef()->getRelocationTimer().TReset(diff, m_VisibilityNotifyPeriod);
-
-        uint32 gx = grid->getX(), gy = grid->getY();
-
-        CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
-        CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-        for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
+        ResetNotifier reset;
+        TypeContainerVisitor<ResetNotifier, GridTypeMapContainer >  grid_notifier(reset);
+        TypeContainerVisitor<ResetNotifier, WorldTypeMapContainer > world_notifier(reset);
+        for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
         {
-            for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
-            {
-                uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-                if (!isCellMarked(cell_id))
-                    continue;
+            ZoneScopedN("Map::ProcessRelocationNotifies::ResetNotifier::Grid")
+            NGridType *grid = i->GetSource();
 
-                CellCoord pair(x, y);
-                Cell cell(pair);
-                cell.SetNoCreate();
-                Visit(cell, grid_notifier);
-                Visit(cell, world_notifier);
+            if (grid->GetGridState() != GRID_STATE_ACTIVE)
+                continue;
+
+            if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
+                continue;
+
+            grid->getGridInfoRef()->getRelocationTimer().TReset(diff, m_VisibilityNotifyPeriod);
+
+            uint32 gx = grid->getX(), gy = grid->getY();
+
+            CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
+            CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
+
+            for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
+            {
+                for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
+                {
+                    uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+                    if (!isCellMarked(cell_id))
+                        continue;
+
+                    CellCoord pair(x, y);
+                    Cell cell(pair);
+                    cell.SetNoCreate();
+                    Visit(cell, grid_notifier);
+                    Visit(cell, world_notifier);
+                }
             }
         }
     }
