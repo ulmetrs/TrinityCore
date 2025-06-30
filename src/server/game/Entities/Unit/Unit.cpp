@@ -13803,10 +13803,13 @@ bool Unit::UpdatePosition(float x, float y, float z, float orientation, bool tel
         else
             GetMap()->CreatureRelocation(ToCreature(), x, y, z, orientation);
     }
-    else if (turn)
-        UpdateOrientation(orientation);
+    else
+    {
+        if (turn)
+            UpdateOrientation(orientation);
 
-    UpdatePositionData();
+        UpdatePositionData();
+    }
 
     _positionUpdateInfo.Relocated = relocated;
     _positionUpdateInfo.Turned = turn;
