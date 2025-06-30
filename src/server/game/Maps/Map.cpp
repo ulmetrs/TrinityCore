@@ -1105,6 +1105,8 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
             if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
                 continue;
 
+            continue;
+
             {
                 ZoneScopedN("Map::ProcessRelocationNotifies::DelayedUnitRelocation::Grid")
 
