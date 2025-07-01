@@ -30,7 +30,13 @@
 
 MapInstanced::MapInstanced(uint32 id) : Map(id, 0)
 {
-    // This is the parent map for instance maps
+    for (uint32 gx = 0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
+    {
+        for (uint32 gy = 0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
+        {
+            LoadMap(gx, gy);
+        }
+    }
 }
 
 void MapInstanced::InitVisibilityDistance()

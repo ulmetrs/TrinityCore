@@ -28,6 +28,14 @@
 
 MapPartitioned::MapPartitioned(uint32 id) : Map(id, 0)
 {
+    for (uint32 gx = 0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
+    {
+        for (uint32 gy = 0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
+        {
+            LoadMap(gx, gy);
+        }
+    }
+
     PartitionEntries const* entries = sObjectMgr->GetMapPartitions(id);
 
     if (entries && !entries->empty())

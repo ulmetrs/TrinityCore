@@ -206,14 +206,6 @@ void Map::LoadMap(int gx, int gy)
     if (GridMaps[gx][gy])
         return;
 
-    // All child maps use the same load logic so inlining it here
-    if (GetParent() != this)
-    {
-        // ensure parent grid is created and set reference
-        GridMaps[gx][gy] = GetParent()->GetGrid(gx, gy);
-        return;
-    }
-
     // map file name
     std::string fileName = Trinity::StringFormat("{}maps/{:03}{:02}{:02}.map", sWorld->GetDataPath(), GetId(), gx, gy);
     TC_LOG_DEBUG("maps", "Loading map {}", fileName);
@@ -224,7 +216,6 @@ void Map::LoadMap(int gx, int gy)
 
     sScriptMgr->OnLoadGridMap(this, GridMaps[gx][gy], gx, gy);
 
-    // only loaded for parent map
     LoadVMap(gx, gy);
     LoadMMap(gx, gy);
 }
@@ -243,13 +234,15 @@ m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
 m_activeNonPlayersIter(m_activeNonPlayers.end()), m_waypointCreaturesIter(m_waypointCreatures.end()), _transportsUpdateIter(_transports.end()),
 i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _respawnCheckTimer(0)
 {
-    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
+    MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), GetId(), instanceOrPartitionId);
+
+    for (uint32 x = 0; x < MAX_NUMBER_OF_GRIDS; ++x)
     {
-        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
+        for (uint32 y = 0; y < MAX_NUMBER_OF_GRIDS; ++y)
         {
             //z code
-            GridMaps[idx][j] = nullptr;
-            setNGrid(nullptr, idx, j);
+            GridMaps[x][y] = nullptr;
+            setNGrid(nullptr, x, y);
         }
     }
 
@@ -273,8 +266,6 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
         FIRE_ID(GetId(),Map,OnReload,TSMap(this));
     }
     // @tswow-end
-
-    MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), GetId(), instanceOrPartitionId);
 }
 
 void Map::InitVisibilityDistance()
@@ -464,7 +455,6 @@ void Map::DeleteFromWorld(Transport* transport)
 //But object data is not loaded here
 void Map::EnsureGridCreated(GridCoord const& p)
 {
-    std::lock_guard<std::mutex> lock(_gridLock);
     if (!getNGrid(p.x_coord, p.y_coord))
     {
         TC_LOG_DEBUG("maps", "Creating grid[{}, {}] for map {} instance/partition {}", p.x_coord, p.y_coord, GetId(), GetInstanceOrPartitionId());
@@ -474,12 +464,6 @@ void Map::EnsureGridCreated(GridCoord const& p)
 
         // build a linkage between this map and NGridType
         buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
-
-        //z coord
-        int gx = (MAX_NUMBER_OF_GRIDS - 1) - p.x_coord;
-        int gy = (MAX_NUMBER_OF_GRIDS - 1) - p.y_coord;
-
-        LoadMap(gx, gy);
     }
 }
 
@@ -2217,13 +2201,6 @@ inline ZLiquidStatus GridMap::GetLiquidStatus(float x, float y, float z, Optiona
         return LIQUID_MAP_WATER_WALK;
                                       // Above water
     return LIQUID_MAP_ABOVE_WATER;
-}
-
-inline GridMap* Map::GetGrid(int gx, int gy)
-{
-    EnsureGridCreated(GridCoord((MAX_NUMBER_OF_GRIDS - 1) - gx, (MAX_NUMBER_OF_GRIDS - 1) - gy));
-
-    return GridMaps[gx][gy];
 }
 
 inline GridMap* Map::GetGrid(float x, float y)

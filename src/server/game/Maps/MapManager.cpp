@@ -105,54 +105,47 @@ ChainedRange<Map::PlayerList> MapManager::GetContinentPlayers(uint32 mapId)
     return mapPartitioned->GetAllPlayers();
 }
 
-// This should normally only be called indirectly via CreateMap, but can also be used to
-// create the base maps needed to query for instances or partitions.
 Map* MapManager::CreateBaseMap(uint32 id)
 {
-    ZoneScopedN("MapManager::CreateBaseMap")
-
-    // BaseMaps are maps that manage other maps.
-    // MapInstanced manages its instances, and MapPartitioned manages its partitions.
     Map* map = FindBaseMap(id);
+    if (map)
+        return map;
 
-    if (map == nullptr)
+    std::lock_guard<std::mutex> lock(_mapsLock);
+
+    MapEntry const* entry = sMapStore.LookupEntry(id);
+    ASSERT(entry);
+
+    if (entry->Instanceable())
     {
-        std::lock_guard<std::mutex> lock(_mapsLock);
+        map = new MapInstanced(id);
+        std::unique_ptr<Map> ptr(map); 
+        _baseMaps[id] = std::move(ptr);
+    }
+    else
+    {
+        map = new MapPartitioned(id);
+        std::unique_ptr<Map> ptr(map); 
+        _baseMaps[id] = std::move(ptr);
 
-        MapEntry const* entry = sMapStore.LookupEntry(id);
-        ASSERT(entry);
+        MapPartitioned* mapPartitioned = map->ToMapPartitioned();
 
-        if (entry->Instanceable())
+        // Create all partitions for this map before loading respawns and corpses
+        for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
         {
-            map = new MapInstanced(id);
-            std::unique_ptr<Map> ptr(map); 
-            _baseMaps[id] = std::move(ptr);
+            mapPartitioned->CreatePartition(id, partitionEntry.partitionId);
         }
-        else
+
+        map->LoadRespawnTimes();
+        map->LoadCorpseData();
+        sScriptMgr->OnCreateMap(map);
+
+        for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
         {
-            map = new MapPartitioned(id);
-            std::unique_ptr<Map> ptr(map); 
-            _baseMaps[id] = std::move(ptr);
-
-            MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-
-            // Create all partitions for this map before loading respawns and corpses
-            for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
-            {
-                mapPartitioned->CreatePartition(id, partitionEntry.partitionId);
-            }
-
-            map->LoadRespawnTimes();
-            map->LoadCorpseData();
-            sScriptMgr->OnCreateMap(map);
-
-            for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
-            {
-                partitionPtr.get()->LoadRespawnTimes();
-                partitionPtr.get()->LoadCorpseData();
-                // Call on create after loading respawns and corpses for consistency
-                sScriptMgr->OnCreateMap(partitionPtr.get());
-            }
+            partitionPtr.get()->LoadRespawnTimes();
+            partitionPtr.get()->LoadCorpseData();
+            // Call on create after loading respawns and corpses for consistency
+            sScriptMgr->OnCreateMap(partitionPtr.get());
         }
     }
 

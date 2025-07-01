@@ -48,7 +48,6 @@ class TC_GAME_API MapInstanced : public Map
         bool DestroyInstance(Instances::iterator &itr);
 
         Instances &GetInstances() { return _instances; }
-        
 
     private:
         InstanceMap* CreateInstance(uint32 InstanceId, InstanceSave* save, Difficulty difficulty, TeamId InstanceTeam);
