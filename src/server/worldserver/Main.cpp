@@ -66,7 +66,6 @@
 #include <boost/program_options.hpp>
 #include <csignal>
 #include <iostream>
-#include <boost/stacktrace.hpp>
 
 using namespace boost::program_options;
 namespace fs = boost::filesystem;
@@ -130,16 +129,9 @@ void ShutdownCLIThread(std::thread* cliThread);
 bool LoadRealmInfo(Trinity::Asio::IoContext& ioContext);
 variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile, fs::path& configDir, std::string& winServiceAction);
 
-void signal_handler(int signum) {
-    std::cerr << "Signal " << signum << " received. Stacktrace:\n";
-    std::cerr << boost::stacktrace::stacktrace();
-    std::exit(signum);
-}
-
 /// Launch the Trinity server
 extern int main(int argc, char** argv)
 {
-    std::signal(SIGSEGV, signal_handler); // Catch segmentation faults
     // @tswow-begin
     setbuf(stdout,0);
     setbuf(stderr,0);
