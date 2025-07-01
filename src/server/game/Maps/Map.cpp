@@ -206,6 +206,14 @@ void Map::LoadMap(int gx, int gy)
     if (GridMaps[gx][gy])
         return;
 
+    // All child maps use the same load logic so inlining it here
+    if (GetParent() != this)
+    {
+        // ensure parent grid is created and set reference
+        GridMaps[gx][gy] = GetParent()->GetGrid(gx, gy);
+        return;
+    }
+
     // map file name
     std::string fileName = Trinity::StringFormat("{}maps/{:03}{:02}{:02}.map", sWorld->GetDataPath(), GetId(), gx, gy);
     TC_LOG_DEBUG("maps", "Loading map {}", fileName);
@@ -454,6 +462,7 @@ void Map::DeleteFromWorld(Transport* transport)
 //But object data is not loaded here
 void Map::EnsureGridCreated(GridCoord const& p)
 {
+    std::lock_guard<std::mutex> lock(_gridLock);
     if (!getNGrid(p.x_coord, p.y_coord))
     {
         TC_LOG_DEBUG("maps", "Creating grid[{}, {}] for map {} instance/partition {}", p.x_coord, p.y_coord, GetId(), GetInstanceOrPartitionId());
@@ -463,6 +472,12 @@ void Map::EnsureGridCreated(GridCoord const& p)
 
         // build a linkage between this map and NGridType
         buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
+
+        //z coord
+        int gx = (MAX_NUMBER_OF_GRIDS - 1) - p.x_coord;
+        int gy = (MAX_NUMBER_OF_GRIDS - 1) - p.y_coord;
+
+        LoadMap(gx, gy);
     }
 }
 
@@ -2200,6 +2215,13 @@ inline ZLiquidStatus GridMap::GetLiquidStatus(float x, float y, float z, Optiona
         return LIQUID_MAP_WATER_WALK;
                                       // Above water
     return LIQUID_MAP_ABOVE_WATER;
+}
+
+inline GridMap* Map::GetGrid(int gx, int gy)
+{
+    EnsureGridCreated(GridCoord((MAX_NUMBER_OF_GRIDS - 1) - gx, (MAX_NUMBER_OF_GRIDS - 1) - gy));
+
+    return GridMaps[gx][gy];
 }
 
 inline GridMap* Map::GetGrid(float x, float y)
