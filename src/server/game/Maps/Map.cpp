@@ -203,16 +203,7 @@ void Map::LoadVMap(int gx, int gy)
 
 void Map::LoadMap(int gx, int gy)
 {
-    if (GridMaps[gx][gy])
-        return;
-
-    // All child maps use the same load logic so inlining it here
-    if (GetParent() != this)
-    {
-        // ensure parent grid is created and set reference
-        GridMaps[gx][gy] = GetParent()->GetGrid(gx, gy);
-        return;
-    }
+    ASSERT(!GridMaps[gx][gy])
 
     // map file name
     std::string fileName = Trinity::StringFormat("{}maps/{:03}{:02}{:02}.map", sWorld->GetDataPath(), GetId(), gx, gy);
@@ -473,12 +464,6 @@ void Map::EnsureGridCreated(GridCoord const& p)
 
         // build a linkage between this map and NGridType
         buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
-
-        //z coord
-        int gx = (MAX_NUMBER_OF_GRIDS - 1) - p.x_coord;
-        int gy = (MAX_NUMBER_OF_GRIDS - 1) - p.y_coord;
-
-        LoadMap(gx, gy);
     }
 }
 
@@ -2218,13 +2203,6 @@ inline ZLiquidStatus GridMap::GetLiquidStatus(float x, float y, float z, Optiona
     return LIQUID_MAP_ABOVE_WATER;
 }
 
-inline GridMap* Map::GetGrid(int gx, int gy)
-{
-    EnsureGridCreated(GridCoord((MAX_NUMBER_OF_GRIDS - 1) - gx, (MAX_NUMBER_OF_GRIDS - 1) - gy));
-
-    return GridMaps[gx][gy];
-}
-
 inline GridMap* Map::GetGrid(float x, float y)
 {
     // half opt method
@@ -3783,6 +3761,13 @@ template TC_GAME_API void Map::RemoveFromPartition(DynamicObject*);
 
 PartitionMap::PartitionMap(uint32 id, uint32 partitionId, Map* parent): Map(id, partitionId), _partitionId(partitionId), _parent(parent)
 {
+    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
+    {
+        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
+        {
+            GridMaps[idx][j] = _parent->GetGrid(idx, j);
+        }
+    }
 }
 
 PartitionMap::~PartitionMap()
@@ -3798,6 +3783,14 @@ InstanceMap::InstanceMap(uint32 id, uint32 instanceId, uint8 spawnMode, Map* par
     m_resetAfterUnload(false), m_unloadWhenEmpty(false),
     i_data(nullptr), i_script_id(0), i_script_team(instanceTeam)
 {
+    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
+    {
+        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
+        {
+            GridMaps[idx][j] = _parent->GetGrid(idx, j);
+        }
+    }
+
     //lets initialize visibility distance for dungeons
     InstanceMap::InitVisibilityDistance();
 
@@ -4318,6 +4311,14 @@ uint32 InstanceMap::GetMaxResetDelay() const
 BattlegroundMap::BattlegroundMap(uint32 id, uint32 instanceId, uint8 spawnMode, Map* parent)
   : Map(id, instanceId), _instanceId(instanceId), _spawnMode(spawnMode), _parent(parent), m_bg(nullptr)
 {
+    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
+    {
+        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
+        {
+            GridMaps[idx][j] = _parent->GetGrid(idx, j);
+        }
+    }
+
     //lets initialize visibility distance for BG/Arenas
     BattlegroundMap::InitVisibilityDistance();
 }
