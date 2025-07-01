@@ -26,11 +26,8 @@
 #include "TemporarySummon.h"
 #include "TSProfile.h"
 
-MapPartitioned::MapPartitioned(uint32 id, std::vector<std::pair<uint32, uint32>> const& grids) : Map(id, 0)
+MapPartitioned::MapPartitioned(uint32 id) : Map(id, 0)
 {
-    for (auto [gx, gy] : grids)
-        LoadMap(gx, gy);
-
     PartitionEntries const* entries = sObjectMgr->GetMapPartitions(id);
 
     if (entries && !entries->empty())

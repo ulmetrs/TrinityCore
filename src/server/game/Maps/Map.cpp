@@ -226,8 +226,8 @@ void Map::LoadAllCells()
             LoadGrid((cellX + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL, (cellY + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL);
 }
 
-Map::Map(uint32 id, uint32 instanceOrPartitionId):
-i_mapEntry(sMapStore.LookupEntry(id)),
+Map::Map(uint32 id, uint32 instanceOrPartitionId, Map* parent):
+i_mapEntry(sMapStore.LookupEntry(id)), _parent(parent),
 m_unloadTimer(0), m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
 m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
 m_activeNonPlayersIter(m_activeNonPlayers.end()), m_waypointCreaturesIter(m_waypointCreatures.end()), _transportsUpdateIter(_transports.end()),
@@ -238,7 +238,7 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
         for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
         {
             //z code
-            GridMaps[idx][j] = nullptr;
+            GridMaps[idx][j] = parent ? parent->GetGrid(idx, j) : LoadMap(idx, j);
             setNGrid(nullptr, idx, j);
         }
     }
@@ -264,7 +264,7 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
     }
     // @tswow-end
 
-    MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), GetId(), instanceOrPartitionId);
+    MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), id, instanceOrPartitionId);
 }
 
 void Map::InitVisibilityDistance()
@@ -3759,15 +3759,8 @@ template TC_GAME_API void Map::RemoveFromPartition(DynamicObject*);
 
 /* ******* Partition Maps ******* */
 
-PartitionMap::PartitionMap(uint32 id, uint32 partitionId, Map* parent): Map(id, partitionId), _partitionId(partitionId), _parent(parent)
+PartitionMap::PartitionMap(uint32 id, uint32 partitionId, Map* parent): Map(id, partitionId, parent), _partitionId(partitionId)
 {
-    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
-    {
-        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
-        {
-            GridMaps[idx][j] = _parent->GetGrid(idx, j);
-        }
-    }
 }
 
 PartitionMap::~PartitionMap()
@@ -3779,18 +3772,10 @@ PartitionMap::~PartitionMap()
 /* ******* Dungeon Instance Maps ******* */
 
 InstanceMap::InstanceMap(uint32 id, uint32 instanceId, uint8 spawnMode, Map* parent, TeamId instanceTeam)
-  : Map(id, instanceId), _instanceId(instanceId), _spawnMode(spawnMode), _parent(parent),
+  : Map(id, instanceId, parent), _instanceId(instanceId), _spawnMode(spawnMode),
     m_resetAfterUnload(false), m_unloadWhenEmpty(false),
     i_data(nullptr), i_script_id(0), i_script_team(instanceTeam)
 {
-    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
-    {
-        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
-        {
-            GridMaps[idx][j] = _parent->GetGrid(idx, j);
-        }
-    }
-
     //lets initialize visibility distance for dungeons
     InstanceMap::InitVisibilityDistance();
 
@@ -4309,16 +4294,8 @@ uint32 InstanceMap::GetMaxResetDelay() const
 /* ******* Battleground Instance Maps ******* */
 
 BattlegroundMap::BattlegroundMap(uint32 id, uint32 instanceId, uint8 spawnMode, Map* parent)
-  : Map(id, instanceId), _instanceId(instanceId), _spawnMode(spawnMode), _parent(parent), m_bg(nullptr)
+  : Map(id, instanceId, parent), _instanceId(instanceId), _spawnMode(spawnMode), m_bg(nullptr)
 {
-    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
-    {
-        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
-        {
-            GridMaps[idx][j] = _parent->GetGrid(idx, j);
-        }
-    }
-
     //lets initialize visibility distance for BG/Arenas
     BattlegroundMap::InitVisibilityDistance();
 }

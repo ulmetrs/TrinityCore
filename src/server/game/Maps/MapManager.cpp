@@ -59,9 +59,9 @@ void MapManager::LoadBaseMaps()
 {
     std::string mapFolder = sWorld->GetDataPath() + "maps/";
     std::regex mapFilePattern(R"((\d{3})(\d{2})(\d{2})\.map)");
-    std::unordered_map<uint32, std::vector<std::pair<uint32, uint32>>> existingMapTiles;
+    std::set<uint32> mapsWithTiles;
 
-    // Scan the folder ONCE to build the mapId->grids mapping
+    // Scan the folder ONCE to get the map ids
     for (const auto& entry : fs::directory_iterator(mapFolder))
     {
         if (!entry.is_regular_file())
@@ -73,18 +73,16 @@ void MapManager::LoadBaseMaps()
         if (std::regex_match(filename, match, mapFilePattern))
         {
             uint32 mapId = std::stoi(match[1]);
-            uint32 gx = std::stoi(match[2]);
-            uint32 gy = std::stoi(match[3]);
-            existingMapTiles[mapId].emplace_back(gx, gy);
+            mapsWithTiles.insert(mapId);
         }
     }
 
     // Now, for each mapId with at least one grid, create the correct map type
-    for (const auto& [mapId, grids] : existingMapTiles)
+    for (const auto& mapId : mapsWithTiles)
     {
 
         TC_LOG_INFO("server.loading", "Loading Base Map {}", mapId);
-        CreateBaseMap(mapId, grids);
+        CreateBaseMap(mapId);
     }
 }
 
@@ -154,7 +152,7 @@ ChainedRange<Map::PlayerList> MapManager::GetContinentPlayers(uint32 mapId)
     return mapPartitioned->GetAllPlayers();
 }
 
-Map* MapManager::CreateBaseMap(uint32 mapId, std::vector<std::pair<uint32, uint32>> const& grids)
+Map* MapManager::CreateBaseMap(uint32 mapId)
 {
     Map* map = FindBaseMap(mapId);
     if (map)
@@ -168,14 +166,14 @@ Map* MapManager::CreateBaseMap(uint32 mapId, std::vector<std::pair<uint32, uint3
     if (entry->Instanceable())
     {
         // If MapInstanced needs grids, add as a parameter. Otherwise, just pass mapId.
-        map = new MapInstanced(mapId, grids);
+        map = new MapInstanced(mapId);
         std::unique_ptr<Map> ptr(map);
         _baseMaps[mapId] = std::move(ptr);
     }
     else
     {
         // Pass the grids to MapPartitioned constructor
-        map = new MapPartitioned(mapId, grids);
+        map = new MapPartitioned(mapId);
         std::unique_ptr<Map> ptr(map);
         _baseMaps[mapId] = std::move(ptr);
 

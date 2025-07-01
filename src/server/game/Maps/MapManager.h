@@ -150,7 +150,7 @@ class TC_GAME_API MapManager
         MapManager(MapManager const&) = delete;
         MapManager& operator=(MapManager const&) = delete;
 
-        Map* CreateBaseMap(uint32 mapId, std::vector<std::pair<uint32, uint32>> const& grids = {});
+        Map* CreateBaseMap(uint32 mapId);
 
         std::mutex _mapsLock;
         BaseMaps _baseMaps;

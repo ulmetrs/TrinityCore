@@ -355,7 +355,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 {
     friend class MapReference;
     public:
-        Map(uint32 id, uint32 instanceOrPartitionId);
+        Map(uint32 id, uint32 instanceOrPartitionId, Map* parent = nullptr);
         virtual ~Map();
 
         MapEntry const* GetEntry() const { return i_mapEntry; }
@@ -765,6 +765,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
 
+        Map* _parent;
         std::mutex _mapLock;
         std::mutex _gridLock;
 
@@ -988,7 +989,6 @@ class TC_GAME_API PartitionMap : public Map
 
     private:
         uint32 _partitionId;
-        Map* _parent;
 };
 
 class TC_GAME_API InstanceMap : public Map
@@ -1032,7 +1032,6 @@ class TC_GAME_API InstanceMap : public Map
     private:
         uint32 _instanceId;
         uint8 _spawnMode;
-        Map* _parent;
         bool m_resetAfterUnload;
         bool m_unloadWhenEmpty;
         InstanceScript* i_data;
@@ -1065,7 +1064,6 @@ class TC_GAME_API BattlegroundMap : public Map
     private:
         uint32 _instanceId;
         uint8 _spawnMode;
-        Map* _parent;
         Battleground* m_bg;
 };
 
