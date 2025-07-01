@@ -37,14 +37,94 @@
 #include "TSProfile.h"
 #include "ScriptMgr.h"
 #include <numeric>
+#include <regex>
+#include <filesystem>
 
-MapManager::MapManager()
-    : _nextInstanceId(0), _scheduledScripts(0)
+namespace fs = std::filesystem;
+
+MapManager* MapManager::instance()
+{
+    static MapManager instance;
+    return &instance;
+}
+
+MapManager::MapManager() : _nextInstanceId(0), _scheduledScripts(0)
 {
     i_timer.SetInterval(sWorld->getIntConfig(CONFIG_INTERVAL_MAPUPDATE));
 }
 
 MapManager::~MapManager() { }
+
+void MapManager::LoadBaseMaps()
+{
+    std::string mapFolder = sWorld->GetDataPath() + "maps/";
+    std::regex mapFilePattern(R"((\d{3})(\d{2})(\d{2})\.map)");
+    std::unordered_map<uint32, std::vector<std::pair<uint32, uint32>>> existingMapTiles;
+
+    // Scan the folder ONCE to build the mapId->grids mapping
+    for (const auto& entry : fs::directory_iterator(mapFolder))
+    {
+        if (!entry.is_regular_file())
+            continue;
+
+        std::smatch match;
+        std::string filename = entry.path().filename().string();
+
+        if (std::regex_match(filename, match, mapFilePattern))
+        {
+            uint32 mapId = std::stoi(match[1]);
+            uint32 gx = std::stoi(match[2]);
+            uint32 gy = std::stoi(match[3]);
+            existingMapTiles[mapId].emplace_back(gx, gy);
+        }
+    }
+
+    // Now, for each mapId with at least one grid, create the correct map type
+    for (const auto& [mapId, grids] : existingMapTiles)
+    {
+        MapEntry const* entry = sMapStore.LookupEntry(mapId);
+        ASSERT(entry);
+
+        TC_LOG_INFO("server.loading", "Loading Base Map {}", mapId);
+        Map* map = nullptr;
+        if (entry->Instanceable())
+        {
+            // If MapInstanced needs grids, add as a parameter. Otherwise, just pass mapId.
+            map = new MapInstanced(mapId, grids);
+            std::unique_ptr<Map> ptr(map);
+            _baseMaps[mapId] = std::move(ptr);
+        }
+        else
+        {
+            // Pass the grids to MapPartitioned constructor
+            map = new MapPartitioned(mapId, grids);
+            std::unique_ptr<Map> ptr(map);
+            _baseMaps[mapId] = std::move(ptr);
+
+            MapPartitioned* mapPartitioned = map->ToMapPartitioned();
+    
+            // TODO move into constructor?
+            // Create all partitions for this map before loading respawns and corpses
+            for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
+            {
+                mapPartitioned->CreatePartition(mapId, partitionEntry.partitionId);
+            }
+    
+            // Leave the ordering of this
+            map->LoadRespawnTimes();
+            map->LoadCorpseData();
+            sScriptMgr->OnCreateMap(map);
+    
+            // Leave the ordering of this
+            for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
+            {
+                partitionPtr.get()->LoadRespawnTimes();
+                partitionPtr.get()->LoadCorpseData();
+                sScriptMgr->OnCreateMap(partitionPtr.get());
+            }
+        }
+    }
+}
 
 void MapManager::Initialize()
 {
@@ -60,10 +140,17 @@ void MapManager::InitializeVisibilityDistanceInfo()
         mapPtr->InitVisibilityDistance();
 }
 
-MapManager* MapManager::instance()
+uint32 MapManager::CalculatePartitionId(uint32 mapid, Position const& pos)
 {
-    static MapManager instance;
-    return &instance;
+    Map* map = FindBaseMap(mapid);
+    if (!map)
+        return 0;
+
+    MapPartitioned* mapPartitioned = map->ToMapPartitioned();
+    if (!mapPartitioned)
+        return 0;
+
+    return mapPartitioned->CalculatePartitionId(pos);
 }
 
 void MapManager::VisualizePartitions(Unit* owner, Seconds duration)
@@ -105,61 +192,13 @@ ChainedRange<Map::PlayerList> MapManager::GetContinentPlayers(uint32 mapId)
     return mapPartitioned->GetAllPlayers();
 }
 
-Map* MapManager::CreateBaseMap(uint32 id)
-{
-    Map* map = FindBaseMap(id);
-    if (map)
-        return map;
-
-    std::lock_guard<std::mutex> lock(_mapsLock);
-
-    MapEntry const* entry = sMapStore.LookupEntry(id);
-    ASSERT(entry);
-
-    if (entry->Instanceable())
-    {
-        map = new MapInstanced(id);
-        std::unique_ptr<Map> ptr(map); 
-        _baseMaps[id] = std::move(ptr);
-    }
-    else
-    {
-        map = new MapPartitioned(id);
-        std::unique_ptr<Map> ptr(map); 
-        _baseMaps[id] = std::move(ptr);
-
-        MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-
-        // Create all partitions for this map before loading respawns and corpses
-        for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
-        {
-            mapPartitioned->CreatePartition(id, partitionEntry.partitionId);
-        }
-
-        map->LoadRespawnTimes();
-        map->LoadCorpseData();
-        sScriptMgr->OnCreateMap(map);
-
-        for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
-        {
-            partitionPtr.get()->LoadRespawnTimes();
-            partitionPtr.get()->LoadCorpseData();
-            // Call on create after loading respawns and corpses for consistency
-            sScriptMgr->OnCreateMap(partitionPtr.get());
-        }
-    }
-
-    ASSERT(map);
-    return map;
-}
-
 // This is used for most of our uses cases, find the map if exists, create it if its not -
 // player is required if the map is instanceable
 Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint32 loginInstanceId)
 {
-    ZoneScopedNC("Map* MapManager::CreateMap", WORLD_UPDATE_COLOR)
+    ZoneScopedNC("MapManager::CreateMap", WORLD_UPDATE_COLOR)
 
-    Map* map = CreateBaseMap(id);
+    Map* map = FindBaseMap(id);
     if (!map)
         return nullptr;
 
@@ -183,19 +222,6 @@ Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint3
 
     // Additional logic to check for existing partition
     return mapPartitioned->CreatePartition(id, partitionId);
-}
-
-uint32 MapManager::CalculatePartitionId(uint32 mapid, Position const& pos)
-{
-    Map* map = CreateBaseMap(mapid);
-    if (!map)
-        return 0;
-
-    MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-    if (!mapPartitioned)
-        return 0;
-
-    return mapPartitioned->CalculatePartitionId(pos);
 }
 
 // Use this for queries where we do not want to create the map directly
@@ -310,7 +336,7 @@ Map::EnterState MapManager::PlayerCannotEnter(uint32 mapid, Player* player, bool
     {
         InstanceGroupBind* boundInstance = group->GetBoundInstance(entry);
         if (boundInstance && boundInstance->save)
-            if (Map* boundMap = sMapMgr->FindMap(mapid, Position(), boundInstance->save->GetInstanceId()))
+            if (Map* boundMap = FindMap(mapid, Position(), boundInstance->save->GetInstanceId()))
                 if (Map::EnterState denyReason = boundMap->CannotEnter(player))
                     return denyReason;
     }

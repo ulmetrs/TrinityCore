@@ -1704,6 +1704,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Map Partitions...");
     sObjectMgr->LoadMapPartitions();
 
+    TC_LOG_INFO("server.loading", "Loading Base Maps...");
+    sMapMgr->LoadBaseMaps();
+
     TC_LOG_INFO("server.loading", "Initializing PlayerDump tables...");
     PlayerDump::InitializeTables();
 

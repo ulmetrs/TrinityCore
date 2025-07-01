@@ -247,11 +247,10 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
     }
 
     _zonePlayerCountMap.clear();
+    _weatherUpdateTimer.SetInterval(time_t(1 * IN_MILLISECONDS));
 
     //lets initialize visibility distance for map
     Map::InitVisibilityDistance();
-
-    _weatherUpdateTimer.SetInterval(time_t(1 * IN_MILLISECONDS));
 
     // @tswow-begin
     {

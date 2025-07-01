@@ -28,15 +28,10 @@
 #include "TSProfile.h"
 #include "World.h"
 
-MapInstanced::MapInstanced(uint32 id) : Map(id, 0)
+MapInstanced::MapInstanced(uint32 id, std::vector<std::pair<uint32, uint32>> const& grids) : Map(id, 0)
 {
-    for (uint32 gx = 0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
-    {
-        for (uint32 gy = 0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
-        {
-            LoadMap(gx, gy);
-        }
-    }
+    for (auto [gx, gy] : grids)
+        LoadMap(gx, gy);
 }
 
 void MapInstanced::InitVisibilityDistance()

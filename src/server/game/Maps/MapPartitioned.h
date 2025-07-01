@@ -32,7 +32,7 @@ class TC_GAME_API MapPartitioned : public Map
         typedef std::vector<MapPartition> PartitionEntries;
         typedef std::unordered_map<uint32, Trinity::unique_trackable_ptr<Map>> Partitions;
 
-        MapPartitioned(uint32 id);
+        MapPartitioned(uint32 id, std::vector<std::pair<uint32, uint32>> const& grids);
         ~MapPartitioned() { }
 
         // DEBUG ONLY
