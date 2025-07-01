@@ -422,7 +422,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         virtual uint8 GetSpawnMode() const { return REGULAR_DIFFICULTY; }
         virtual const Map* GetParent() const { return this; }
         virtual Map* GetParent() { return this; }
-        GridMap* GetGrid(int gx, int gy) { return GridMaps[gx][gy]; }
+        GridMap* GetGrid(uint32 gx, uint32 gy) { return GridMaps[gx][gy]; }
         virtual void UpdateWeather(uint32 t_diff);
 
         static bool ExistMap(uint32 mapId, int gx, int gy);
