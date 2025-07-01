@@ -2208,8 +2208,8 @@ inline GridMap* Map::GetGrid(float x, float y)
     // half opt method
     // gx/gy go from N-1->0, whereas x/y go from -MapSize->MapSize
     // This correctly scales, inverts and offsets our position
-    int gx=(int)(CENTER_GRID_ID - x/SIZE_OF_GRIDS);                       //grid x
-    int gy=(int)(CENTER_GRID_ID - y/SIZE_OF_GRIDS);                       //grid y
+    uint32 gx=(uint32)(CENTER_GRID_ID - x/SIZE_OF_GRIDS);                       //grid x
+    uint32 gy=(uint32)(CENTER_GRID_ID - y/SIZE_OF_GRIDS);                       //grid y
 
     return GetGrid(gx, gy);
 }
