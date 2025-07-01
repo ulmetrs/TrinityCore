@@ -237,8 +237,15 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
     {
         for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
         {
-            //z code
-            GridMaps[idx][j] = parent ? parent->GetGrid(idx, j) : LoadMap(idx, j);
+            if (parent)
+            {
+                GridMaps[idx][j] = parent->GetGrid(idx, j);
+            }
+            else
+            {
+                GridMaps[idx][j] = nullptr;
+                LoadMap(idx, j);
+            }
             setNGrid(nullptr, idx, j);
         }
     }
