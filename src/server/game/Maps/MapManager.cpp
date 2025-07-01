@@ -55,30 +55,10 @@ MapManager::MapManager() : _nextInstanceId(0), _scheduledScripts(0)
 
 MapManager::~MapManager() { }
 
-void MapManager::LoadBaseMaps()
+void MapManager::LoadBaseMaps(std::set<uint32> const& mapIds)
 {
-    std::string mapFolder = sWorld->GetDataPath() + "maps/";
-    std::regex mapFilePattern(R"((\d{3})(\d{2})(\d{2})\.map)");
-    std::set<uint32> mapsWithTiles;
-
-    // Scan the folder ONCE to get the map ids
-    for (const auto& entry : fs::directory_iterator(mapFolder))
-    {
-        if (!entry.is_regular_file())
-            continue;
-
-        std::smatch match;
-        std::string filename = entry.path().filename().string();
-
-        if (std::regex_match(filename, match, mapFilePattern))
-        {
-            uint32 mapId = std::stoi(match[1]);
-            mapsWithTiles.insert(mapId);
-        }
-    }
-
     // Now, for each mapId with at least one grid, create the correct map type
-    for (const auto& mapId : mapsWithTiles)
+    for (const auto& mapId : mapIds)
     {
 
         TC_LOG_INFO("server.loading", "Loading Base Map {}", mapId);
