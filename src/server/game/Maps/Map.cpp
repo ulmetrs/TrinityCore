@@ -4230,6 +4230,7 @@ bool Map::IsRegularDifficulty() const
 
 bool Map::Instanceable() const
 {
+    TC_LOG_DEBUG("partitions", "Instanceable for entry id {}", i_mapEntry->ID);
     return i_mapEntry && i_mapEntry->Instanceable();
 }
 

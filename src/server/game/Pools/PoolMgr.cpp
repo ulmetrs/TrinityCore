@@ -351,6 +351,7 @@ void PoolGroup<GameObject>::Spawn1Object(PoolObject* obj)
         // Spawn if necessary (loaded grids only)
         // this base map checked as non-instanced and then only existed
         Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
+        TC_LOG_DEBUG("partitions", "Spawn1Object for mapid {} and map with id {}", data->mapId, map->GetId());
         // We use current coords to unspawn, not spawn coords since creature can have changed grid
         if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
         {
