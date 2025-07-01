@@ -737,6 +737,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
     private:
         void LoadVMap(int gx, int gy);
+        void LoadMap(int gx, int gy);
         void LoadMMap(int gx, int gy);
         GridMap* GetGrid(float x, float y);
 
@@ -760,8 +761,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void UpdateMapPartitions();
 
     protected:
-        void LoadMap(int gx, int gy);
-
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
 
         Map* _parent;
