@@ -203,7 +203,7 @@ void Map::LoadVMap(int gx, int gy)
 
 void Map::LoadMap(int gx, int gy)
 {
-    ASSERT(!GridMaps[gx][gy])
+    ASSERT(!GridMaps[gx][gy]);
 
     // map file name
     std::string fileName = Trinity::StringFormat("{}maps/{:03}{:02}{:02}.map", sWorld->GetDataPath(), GetId(), gx, gy);
