@@ -61,7 +61,7 @@ class TC_GAME_API MapManager
             return IsValidMapCoord(loc.GetMapId(), loc);
         }
 
-        void LoadBaseMaps(std::set<uint32> const& mapIds);
+        void LoadBaseMaps(std::vector<uint32> const& mapIds);
 
         void VisualizePartitions(Unit* owner, Seconds duration);
         std::vector<uint32> GetContinentPartitionIds(uint32 mapId);

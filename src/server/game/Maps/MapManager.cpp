@@ -55,7 +55,7 @@ MapManager::MapManager() : _nextInstanceId(0), _scheduledScripts(0)
 
 MapManager::~MapManager() { }
 
-void MapManager::LoadBaseMaps(std::set<uint32> const& mapIds)
+void MapManager::LoadBaseMaps(std::vector<uint32> const& mapIds)
 {
     // Now, for each mapId with at least one grid, create the correct map type
     for (const auto& mapId : mapIds)
