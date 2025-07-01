@@ -66,6 +66,7 @@
 #include <boost/program_options.hpp>
 #include <csignal>
 #include <iostream>
+#include "StackWalker.h"
 
 using namespace boost::program_options;
 namespace fs = boost::filesystem;
@@ -129,9 +130,16 @@ void ShutdownCLIThread(std::thread* cliThread);
 bool LoadRealmInfo(Trinity::Asio::IoContext& ioContext);
 variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile, fs::path& configDir, std::string& winServiceAction);
 
+void myTerminateHandler() {
+    StackWalker sw;
+    sw.ShowCallstack();
+    abort();
+}
+
 /// Launch the Trinity server
 extern int main(int argc, char** argv)
 {
+    std::set_terminate(myTerminateHandler);
     // @tswow-begin
     setbuf(stdout,0);
     setbuf(stderr,0);
