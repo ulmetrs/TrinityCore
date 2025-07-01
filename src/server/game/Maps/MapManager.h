@@ -81,21 +81,21 @@ class TC_GAME_API MapManager
 
         uint32 GetAreaId(uint32 phaseMask, uint32 mapid, float x, float y, float z) const
         {
-            Map const* m = const_cast<MapManager*>(this)->FindBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             return m->GetAreaId(phaseMask, x, y, z);
         }
         uint32 GetAreaId(uint32 phaseMask, uint32 mapid, Position const& pos) const { return GetAreaId(phaseMask, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
         uint32 GetAreaId(uint32 phaseMask, WorldLocation const& loc) const { return GetAreaId(phaseMask, loc.GetMapId(), loc); }
         uint32 GetZoneId(uint32 phaseMask, uint32 mapid, float x, float y, float z) const
         {
-            Map const* m = const_cast<MapManager*>(this)->FindBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             return m->GetZoneId(phaseMask, x, y, z);
         }
         uint32 GetZoneId(uint32 phaseMask, uint32 mapid, Position const& pos) const { return GetZoneId(phaseMask, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
         uint32 GetZoneId(uint32 phaseMask, WorldLocation const& loc) const { return GetZoneId(phaseMask, loc.GetMapId(), loc); }
         void GetZoneAndAreaId(uint32 phaseMask, uint32& zoneid, uint32& areaid, uint32 mapid, float x, float y, float z) const
         {
-            Map const* m = const_cast<MapManager*>(this)->FindBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             m->GetZoneAndAreaId(phaseMask, zoneid, areaid, x, y, z);
         }
         void GetZoneAndAreaId(uint32 phaseMask, uint32& zoneid, uint32& areaid, uint32 mapid, Position const& pos) const { GetZoneAndAreaId(phaseMask, zoneid, areaid, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
@@ -149,6 +149,8 @@ class TC_GAME_API MapManager
 
         MapManager(MapManager const&) = delete;
         MapManager& operator=(MapManager const&) = delete;
+
+        Map* CreateBaseMap(uint32 mapId, std::vector<std::pair<uint32, uint32>> const& grids = {});
 
         std::mutex _mapsLock;
         BaseMaps _baseMaps;

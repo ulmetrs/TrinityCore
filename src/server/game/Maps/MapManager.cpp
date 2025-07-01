@@ -82,47 +82,9 @@ void MapManager::LoadBaseMaps()
     // Now, for each mapId with at least one grid, create the correct map type
     for (const auto& [mapId, grids] : existingMapTiles)
     {
-        MapEntry const* entry = sMapStore.LookupEntry(mapId);
-        ASSERT(entry);
 
         TC_LOG_INFO("server.loading", "Loading Base Map {}", mapId);
-        Map* map = nullptr;
-        if (entry->Instanceable())
-        {
-            // If MapInstanced needs grids, add as a parameter. Otherwise, just pass mapId.
-            map = new MapInstanced(mapId, grids);
-            std::unique_ptr<Map> ptr(map);
-            _baseMaps[mapId] = std::move(ptr);
-        }
-        else
-        {
-            // Pass the grids to MapPartitioned constructor
-            map = new MapPartitioned(mapId, grids);
-            std::unique_ptr<Map> ptr(map);
-            _baseMaps[mapId] = std::move(ptr);
-
-            MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-    
-            // TODO move into constructor?
-            // Create all partitions for this map before loading respawns and corpses
-            for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
-            {
-                mapPartitioned->CreatePartition(mapId, partitionEntry.partitionId);
-            }
-    
-            // Leave the ordering of this
-            map->LoadRespawnTimes();
-            map->LoadCorpseData();
-            sScriptMgr->OnCreateMap(map);
-    
-            // Leave the ordering of this
-            for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
-            {
-                partitionPtr.get()->LoadRespawnTimes();
-                partitionPtr.get()->LoadCorpseData();
-                sScriptMgr->OnCreateMap(partitionPtr.get());
-            }
-        }
+        CreateBaseMap(mapId, grids);
     }
 }
 
@@ -192,13 +154,64 @@ ChainedRange<Map::PlayerList> MapManager::GetContinentPlayers(uint32 mapId)
     return mapPartitioned->GetAllPlayers();
 }
 
+Map* MapManager::CreateBaseMap(uint32 mapId, std::vector<std::pair<uint32, uint32>> const& grids)
+{
+    Map* map = FindBaseMap(mapId);
+    if (map)
+        return map;
+
+    std::lock_guard<std::mutex> lock(_mapsLock);
+
+    MapEntry const* entry = sMapStore.LookupEntry(mapId);
+    ASSERT(entry);
+
+    if (entry->Instanceable())
+    {
+        // If MapInstanced needs grids, add as a parameter. Otherwise, just pass mapId.
+        map = new MapInstanced(mapId, grids);
+        std::unique_ptr<Map> ptr(map);
+        _baseMaps[mapId] = std::move(ptr);
+    }
+    else
+    {
+        // Pass the grids to MapPartitioned constructor
+        map = new MapPartitioned(mapId, grids);
+        std::unique_ptr<Map> ptr(map);
+        _baseMaps[mapId] = std::move(ptr);
+
+        MapPartitioned* mapPartitioned = map->ToMapPartitioned();
+
+        // TODO move into constructor?
+        // Create all partitions for this map before loading respawns and corpses
+        for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
+        {
+            mapPartitioned->CreatePartition(mapId, partitionEntry.partitionId);
+        }
+
+        // Leave the ordering of this
+        map->LoadRespawnTimes();
+        map->LoadCorpseData();
+        sScriptMgr->OnCreateMap(map);
+
+        // Leave the ordering of this
+        for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
+        {
+            partitionPtr.get()->LoadRespawnTimes();
+            partitionPtr.get()->LoadCorpseData();
+            sScriptMgr->OnCreateMap(partitionPtr.get());
+        }
+    }
+
+    return map;
+}
+
 // This is used for most of our uses cases, find the map if exists, create it if its not -
 // player is required if the map is instanceable
 Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint32 loginInstanceId)
 {
     ZoneScopedNC("MapManager::CreateMap", WORLD_UPDATE_COLOR)
 
-    Map* map = FindBaseMap(id);
+    Map* map = CreateBaseMap(id);
     if (!map)
         return nullptr;
 
