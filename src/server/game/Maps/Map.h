@@ -763,6 +763,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void LoadMap(int gx, int gy);
         GridMap* GetGrid(int gx, int gy) { return GridMaps[gx][gy]; }
 
+        GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+
         std::mutex _mapLock;
         std::mutex _gridLock;
 
@@ -802,7 +804,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
-        GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         std::bitset<MAX_NUMBER_OF_GRIDS*MAX_NUMBER_OF_GRIDS> marked_grids;
         std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
 
