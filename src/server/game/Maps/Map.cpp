@@ -238,15 +238,14 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
         for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
         {
             if (parent)
-            {
                 GridMaps[idx][j] = parent->GetGrid(idx, j);
-            }
             else
-            {
-                GridMaps[idx][j] = nullptr;
                 LoadMap(idx, j);
-            }
-            setNGrid(nullptr, idx, j);
+
+            GridCoord p(idx, j);
+            setNGrid(new NGridType(p.x_coord*MAX_NUMBER_OF_GRIDS + p.y_coord, p.x_coord, p.y_coord),  p.x_coord, p.y_coord);
+            // build a linkage between this map and NGridType
+            buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
         }
     }
 
@@ -457,27 +456,9 @@ void Map::DeleteFromWorld(Transport* transport)
     delete transport;
 }
 
-//Create NGrid so the object can be added to it
-//But object data is not loaded here
-void Map::EnsureGridCreated(GridCoord const& p)
-{
-    std::lock_guard<std::mutex> lock(_gridLock);
-    if (!getNGrid(p.x_coord, p.y_coord))
-    {
-        TC_LOG_DEBUG("maps", "Creating grid[{}, {}] for map {} instance/partition {}", p.x_coord, p.y_coord, GetId(), GetInstanceOrPartitionId());
-
-        setNGrid(new NGridType(p.x_coord*MAX_NUMBER_OF_GRIDS + p.y_coord, p.x_coord, p.y_coord),
-            p.x_coord, p.y_coord);
-
-        // build a linkage between this map and NGridType
-        buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
-    }
-}
-
 //Create NGrid and load the object data in it
 bool Map::EnsureGridLoaded(Cell const& cell)
 {
-    EnsureGridCreated(GridCoord(cell.GridX(), cell.GridY()));
     NGridType *grid = getNGrid(cell.GridX(), cell.GridY());
     ASSERT(grid != nullptr);
     if (!grid->isGridObjectDataLoaded())

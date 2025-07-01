@@ -743,7 +743,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void SendInitSelf(Player* player);
 
         bool IsGridLoaded(GridCoord const&) const;
-        void EnsureGridCreated(GridCoord const&);
         bool EnsureGridLoaded(Cell const&);
 
         void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
@@ -767,7 +766,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         Map* _parent;
         std::mutex _mapLock;
-        std::mutex _gridLock;
 
         MapEntry const* i_mapEntry;
         Trinity::unique_weak_ptr<Map> m_weakRef;
