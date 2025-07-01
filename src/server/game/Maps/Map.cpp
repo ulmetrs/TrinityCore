@@ -242,23 +242,22 @@ m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
 m_activeNonPlayersIter(m_activeNonPlayers.end()), m_waypointCreaturesIter(m_waypointCreatures.end()), _transportsUpdateIter(_transports.end()),
 i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _respawnCheckTimer(0)
 {
-    MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), GetId(), instanceOrPartitionId);
-
-    for (uint32 x = 0; x < MAX_NUMBER_OF_GRIDS; ++x)
+    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {
-        for (uint32 y = 0; y < MAX_NUMBER_OF_GRIDS; ++y)
+        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
         {
             //z code
-            GridMaps[x][y] = nullptr;
-            setNGrid(nullptr, x, y);
+            GridMaps[idx][j] = nullptr;
+            setNGrid(nullptr, idx, j);
         }
     }
 
     _zonePlayerCountMap.clear();
-    _weatherUpdateTimer.SetInterval(time_t(1 * IN_MILLISECONDS));
 
     //lets initialize visibility distance for map
     Map::InitVisibilityDistance();
+
+    _weatherUpdateTimer.SetInterval(time_t(1 * IN_MILLISECONDS));
 
     // @tswow-begin
     {
@@ -273,6 +272,8 @@ i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _r
         FIRE_ID(GetId(),Map,OnReload,TSMap(this));
     }
     // @tswow-end
+
+    MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), GetId(), instanceOrPartitionId);
 }
 
 void Map::InitVisibilityDistance()
