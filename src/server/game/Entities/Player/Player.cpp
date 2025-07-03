@@ -26740,24 +26740,6 @@ void Player::RemoveAtLoginFlag(AtLoginFlags flags, bool persist /*= false*/)
     }
 }
 
-void Player::ResetMap()
-{
-    // this may be called during Map::Update
-    // after decrement+unlink, ++m_mapRefIter will continue correctly
-    // when the first element of the list is being removed
-    // nocheck_prev will return the padding element of the RefManager
-    // instead of nullptr in the case of prev
-    GetMap()->UpdateIteratorBack(this);
-    Unit::ResetMap();
-    GetMapRef().unlink();
-}
-
-void Player::SetMap(Map* map)
-{
-    Unit::SetMap(map);
-    m_mapRef.link(map, this);
-}
-
 void Player::_LoadGlyphs(PreparedQueryResult result)
 {
     // SELECT talentGroup, glyph1, glyph2, glyph3, glyph4, glyph5, glyph6 from character_glyphs WHERE guid = '%u'

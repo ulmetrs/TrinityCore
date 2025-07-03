@@ -24,7 +24,6 @@
 #include "Log.h"
 #include "Map.h"
 #include "MotionMaster.h"
-#include "MapReference.h"
 #include "Player.h"
 
 #define TIMER_TOMBOFTHESEVEN    15000

@@ -772,9 +772,11 @@ void Map::Update(uint32 t_diff)
         std::map<uint32, uint32> opcode_map;
 
         /// update worldsessions for existing players
-        for (m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
+        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
         {
-            Player* player = m_mapRefIter->GetSource();
+            Player* player = *iter;
+            ++iter; // Increment here incase of remove
+
             if (player && player->IsInWorld())
             {
                 ZoneScopedN("Map::Update::WorldSessions::Player")
@@ -829,13 +831,15 @@ void Map::Update(uint32 t_diff)
 
         // the player iterator is stored in the map object
         // to make sure calls to Map::Remove don't invalidate it
-        for (m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
+        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
         {
-            ZoneScopedN("Map::Update::Players::Player")
-            Player* player = m_mapRefIter->GetSource();
+            Player* player = *iter;
+            ++iter; // Increment here incase of remove
 
             if (!player || !player->IsInWorld())
                 continue;
+
+            ZoneScopedN("Map::Update::Players::Player")
 
             // update players at tick
             player->Update(t_diff);
@@ -1119,7 +1123,7 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
 {
     ZoneScopedN("Map::ProcessRelocationNotifies")
 
-    if (m_mapRefManager.isEmpty() && m_activeNonPlayers.empty())
+    if (_players.empty() && m_activeNonPlayers.empty())
         return;
 
     for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
@@ -1480,9 +1484,11 @@ void Map::RemoveAllPlayers()
 
     if (HavePlayers())
     {
-        for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
+        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
         {
-            Player* player = itr->GetSource();
+            Player* player = *iter;
+            ++iter; // Increment here incase of remove
+
             if (!player->IsBeingTeleportedFar())
             {
                 // this is happening for bg
@@ -3658,16 +3664,16 @@ void Map::RemoveAllObjectsInRemoveList()
 uint32 Map::GetPlayersCountExceptGMs() const
 {
     uint32 count = 0;
-    for (MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-        if (!itr->GetSource()->IsGameMaster())
+    for (auto player : _players)
+        if (!player->IsGameMaster())
             ++count;
     return count;
 }
 
 void Map::SendToPlayers(WorldPacket const* data) const
 {
-    for (MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-        itr->GetSource()->SendDirectMessage(data);
+    for (auto player : _players)
+        player->SendDirectMessage(data);
 }
 
 /// Send a packet to all players (or players selected team) in the zone (except self if mentioned)
@@ -3675,9 +3681,8 @@ bool Map::SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession c
 {
     bool foundPlayerToSend = false;
 
-    for (MapReference const& ref : GetPlayers())
+    for (auto player : GetPlayers())
     {
-        Player* player = ref.GetSource();
         if (player->IsInWorld() &&
             player->GetZoneId() == zone &&
             player->GetSession() != self &&
@@ -3689,43 +3694,6 @@ bool Map::SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession c
     }
 
     return foundPlayerToSend;
-}
-
-bool Map::ActiveObjectsNearGrid(NGridType const& ngrid) const
-{
-    CellCoord cell_min(ngrid.getX() * MAX_NUMBER_OF_CELLS, ngrid.getY() * MAX_NUMBER_OF_CELLS);
-    CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-    //we must find visible range in cells so we unload only non-visible cells...
-    float viewDist = GetVisibilityRange();
-    int cell_range = (int)ceilf(viewDist / SIZE_OF_GRID_CELL) + 1;
-
-    cell_min.dec_x(cell_range);
-    cell_min.dec_y(cell_range);
-    cell_max.inc_x(cell_range);
-    cell_max.inc_y(cell_range);
-
-    for (MapRefManager::const_iterator iter = m_mapRefManager.begin(); iter != m_mapRefManager.end(); ++iter)
-    {
-        Player* player = iter->GetSource();
-
-        CellCoord p = Trinity::ComputeCellCoord(player->GetPositionX(), player->GetPositionY());
-        if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
-            (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            return true;
-    }
-
-    for (ActiveNonPlayers::const_iterator iter = m_activeNonPlayers.begin(); iter != m_activeNonPlayers.end(); ++iter)
-    {
-        WorldObject* obj = *iter;
-
-        CellCoord p = Trinity::ComputeCellCoord(obj->GetPositionX(), obj->GetPositionY());
-        if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
-            (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            return true;
-    }
-
-    return false;
 }
 
 template TC_GAME_API bool Map::AddToMap(Corpse*);
@@ -3800,7 +3768,8 @@ Map::EnterState InstanceMap::CannotEnter(Player* player)
     if (player->IsGameMaster())
         return Map::CannotEnter(player);
 
-    if (player->GetMapRef().getTarget() == this)
+    // TODO test this change, since SetMap created the MapReference
+    if (player->GetMap() == this)
     {
         TC_LOG_ERROR("maps", "InstanceMap::CannotEnter - player {} {} already in map {}, {}, {}!", player->GetName(), player->GetGUID().ToString(), GetId(), GetInstanceId(), GetSpawnMode());
         ABORT();
@@ -3984,7 +3953,7 @@ void InstanceMap::RemovePlayerFromMap(Player* player, bool remove)
         i_data->OnPlayerLeave(player);
 
     // if last player set unload timer
-    if (!m_unloadTimer && m_mapRefManager.getSize() == 1)
+    if (!m_unloadTimer && _players.size() == 1)
         m_unloadTimer = m_unloadWhenEmpty ? MIN_UNLOAD_DELAY : std::max(sWorld->getIntConfig(CONFIG_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
 
     Map::RemovePlayerFromMap(player, remove);
@@ -4050,8 +4019,8 @@ bool InstanceMap::Reset(uint8 method)
         if (method == INSTANCE_RESET_ALL || method == INSTANCE_RESET_CHANGE_DIFFICULTY)
         {
             // notify the players to leave the instance so it can be reset
-            for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-                itr->GetSource()->SendResetFailedNotify(GetId());
+            for (auto player : _players)
+                player->SendResetFailedNotify(GetId());
         }
         else
         {
@@ -4059,13 +4028,13 @@ bool InstanceMap::Reset(uint8 method)
             if (method == INSTANCE_RESET_GLOBAL)
             {
                 // set the homebind timer for players inside (1 minute)
-                for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
+                for (auto player : _players)
                 {
-                    InstancePlayerBind* bind = itr->GetSource()->GetBoundInstance(GetId(), GetDifficulty());
+                    InstancePlayerBind* bind = player->GetBoundInstance(GetId(), GetDifficulty());
                     if (bind && bind->extendState && bind->save->GetInstanceId() == GetInstanceId())
                         doUnload = false;
                     else
-                        itr->GetSource()->m_InstanceValid = false;
+                        player->m_InstanceValid = false;
                 }
 
                 if (doUnload && HasPermBoundPlayers()) // check if any unloaded players have a nonexpired save to this
@@ -4088,7 +4057,7 @@ bool InstanceMap::Reset(uint8 method)
         m_resetAfterUnload = !(method == INSTANCE_RESET_GLOBAL && HasPermBoundPlayers());
     }
 
-    return m_mapRefManager.isEmpty();
+    return _players.empty();
 }
 
 std::string const& InstanceMap::GetScriptName() const
@@ -4111,9 +4080,8 @@ void InstanceMap::PermBindAllPlayers()
     }
 
     // perm bind all players that are currently inside the instance
-    for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
+    for (auto player : _players)
     {
-        Player* player = itr->GetSource();
         // never instance bind GMs with GM mode enabled
         if (player->IsGameMaster())
             continue;
@@ -4163,8 +4131,8 @@ void InstanceMap::UnloadAll()
 
 void InstanceMap::SendResetWarnings(uint32 timeLeft) const
 {
-    for (MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-        itr->GetSource()->SendInstanceResetWarning(GetId(), itr->GetSource()->GetDifficulty(IsRaid()), timeLeft, false);
+    for (auto player : _players)
+        player->SendInstanceResetWarning(GetId(), GetDifficulty(IsRaid()), timeLeft, false);
 }
 
 void InstanceMap::SetResetSchedule(bool on)
@@ -4310,7 +4278,8 @@ void BattlegroundMap::InitVisibilityDistance()
 
 Map::EnterState BattlegroundMap::CannotEnter(Player* player)
 {
-    if (player->GetMapRef().getTarget() == this)
+    // TODO test this change, since SetMap created the MapReference
+    if (player->GetMap() == this)
     {
         TC_LOG_ERROR("maps", "BGMap::CannotEnter - player {} is already in map!", player->GetGUID().ToString());
         ABORT();
@@ -4354,10 +4323,16 @@ void BattlegroundMap::RemoveAllPlayers()
     ZoneScopedNC("BattlegroundMap::RemoveAllPlayers", WORLD_UPDATE_COLOR)
 
     if (HavePlayers())
-        for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-            if (Player* player = itr->GetSource())
-                if (!player->IsBeingTeleportedFar())
-                    player->TeleportTo(player->GetBattlegroundEntryPoint());
+    {
+        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
+        {
+            Player* player = *iter;
+            ++iter; // Increment here incase of remove
+
+            if (!player->IsBeingTeleportedFar())
+                player->TeleportTo(player->GetBattlegroundEntryPoint());
+        }
+    }
 }
 
 Player* Map::GetPlayer(ObjectGuid const& guid)
@@ -4439,12 +4414,6 @@ GenericTransport* Map::GetTransport(ObjectGuid const& guid)
 DynamicObject* Map::GetDynamicObject(ObjectGuid const& guid)
 {
     return _objectsStore.Find<DynamicObject>(guid);
-}
-
-void Map::UpdateIteratorBack(Player* player)
-{
-    if (&*m_mapRefIter == &player->GetMapRef())
-        m_mapRefIter = m_mapRefIter->nocheck_prev();
 }
 
 void Map::SaveRespawnTime(SpawnObjectType type, ObjectGuid::LowType spawnId, uint32 entry, time_t respawnTime, uint32 gridId, CharacterDatabaseTransaction dbTrans, bool startup)

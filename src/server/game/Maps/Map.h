@@ -25,7 +25,6 @@
 #include "GridDefines.h"
 #include "GridRefManager.h"
 #include "MapDefines.h"
-#include "MapRefManager.h"
 #include "MPSCQueue.h"
 #include "ObjectGuid.h"
 #include "PathGenerator.h"
@@ -353,7 +352,6 @@ private:
 
 class TC_GAME_API Map : public GridRefManager<NGridType>
 {
-    friend class MapReference;
     public:
         Map(uint32 id, uint32 instanceOrPartitionId, Map* parent = nullptr);
         virtual ~Map();
@@ -493,9 +491,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }
         void markCell(uint32 pCellId) { marked_cells.set(pCellId); }
 
-        bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
+        bool HavePlayers() const { return !_players.empty(); }
         uint32 GetPlayersCountExceptGMs() const;
-        bool ActiveObjectsNearGrid(NGridType const& ngrid) const;
 
         void AddWorldObject(WorldObject* obj) { i_worldObjects.insert(obj); }
         void RemoveWorldObject(WorldObject* obj) { i_worldObjects.erase(obj); }
@@ -503,11 +500,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void SendToPlayers(WorldPacket const* data) const;
         bool SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession const* self = nullptr, uint32 team = 0) const;
 
-        typedef MapRefManager PlayerList;
-        PlayerList const& GetPlayers() const { return m_mapRefManager; }
+        typedef std::list<Player*> PlayerList;
+        PlayerList const& GetPlayers() const { return _players; }
         virtual ChainedRange<PlayerList> GetAllPlayers() const
         {
-            std::vector<PlayerList*> lists(1, const_cast<PlayerList*>(&m_mapRefManager));
+            std::vector<PlayerList*> lists(1, const_cast<PlayerList*>(&_players));
             return ChainedRange<PlayerList>(lists);
         }
 
@@ -772,8 +769,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         float m_VisibleDistance;
         DynamicMapTree _dynamicTree;
 
-        MapRefManager m_mapRefManager;
-        MapRefManager::iterator m_mapRefIter;
+        PlayerList _players;
 
         int32 m_VisibilityNotifyPeriod;
 
