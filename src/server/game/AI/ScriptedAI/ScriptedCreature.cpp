@@ -413,11 +413,8 @@ void ScriptedAI::DoTeleportAll(float x, float y, float z, float o)
     if (players.empty())
         return;
 
-    for (auto iter = players.begin(); iter != players.end(); /* no increment */)
+    for (auto player : players)
     {
-        Player* player = *iter;
-        ++iter; // Increment here incase of remove
-
         if (player->IsAlive())
             player->TeleportTo(me->GetMapId(), x, y, z, o, TELE_TO_NOT_LEAVE_COMBAT);
     }
