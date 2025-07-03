@@ -4133,7 +4133,7 @@ void InstanceMap::UnloadAll()
 void InstanceMap::SendResetWarnings(uint32 timeLeft) const
 {
     for (auto player : _players)
-        player->SendInstanceResetWarning(GetId(), GetDifficulty(IsRaid()), timeLeft, false);
+        player->SendInstanceResetWarning(GetId(), player->GetDifficulty(IsRaid()), timeLeft, false);
 }
 
 void InstanceMap::SetResetSchedule(bool on)
