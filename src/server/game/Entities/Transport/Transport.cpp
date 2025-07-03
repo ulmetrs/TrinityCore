@@ -991,11 +991,11 @@ void Transport::DoEventIfAny(KeyFrame const& node, bool departure)
 void Transport::BuildUpdate(UpdateDataMapType& data_map)
 {
     Map::PlayerList const& players = GetMap()->GetPlayers();
-    if (players.isEmpty())
+    if (players.empty())
         return;
 
-    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-        BuildFieldsUpdate(itr->GetSource(), data_map);
+    for (auto player : players)
+        BuildFieldsUpdate(player, data_map);
 
     ClearUpdateMask(true);
 }

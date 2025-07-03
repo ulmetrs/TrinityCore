@@ -95,10 +95,11 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= nullptr*/)
         return;
     }
 
-    if (!map->HavePlayers())
+    Map::PlayerList const& players = map->GetPlayers();
+    if (players.empty())
         return;
 
-    for (auto player : map->GetPlayers())
+    for (auto player : players)
     {
         if (!player->IsAlive() || !CombatManager::CanBeginCombat(creature, player))
             continue;

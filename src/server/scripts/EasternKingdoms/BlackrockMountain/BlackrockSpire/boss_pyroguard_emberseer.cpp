@@ -214,14 +214,14 @@ struct boss_pyroguard_emberseer : public BossAI
                     {
                         // As of Patch 3.0.8 only one person needs to channel the altar
                         bool _hasAura = false;
-                        Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                            if (Player* player = itr->GetSource()->ToPlayer())
-                                if (player->HasAura(SPELL_EMBERSEER_OBJECT_VISUAL))
-                                {
-                                    _hasAura = true;
-                                    break;
-                                }
+                        for (auto player : me->GetMap()->GetPlayers())
+                        {
+                            if (player->HasAura(SPELL_EMBERSEER_OBJECT_VISUAL))
+                            {
+                                _hasAura = true;
+                                break;
+                            }
+                        }
 
                         if (_hasAura)
                         {

@@ -250,10 +250,8 @@ struct boss_lady_vashj : public BossAI
     void JustEngagedWith(Unit* who) override
     {
         // remove old tainted cores to prevent cheating in phase 2
-        Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-        for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
-            if (Player* player = itr->GetSource())
-                player->DestroyItemCount(31088, 1, true);
+        for (auto player : me->GetMap()->GetPlayers())
+            player->DestroyItemCount(31088, 1, true);
         StartEvent(who); // this is JustEngagedWith(), so were are 100% in combat, start the event
 
         if (Phase != 2)

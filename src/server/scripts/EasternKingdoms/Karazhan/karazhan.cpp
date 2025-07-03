@@ -307,13 +307,13 @@ public:
                     if (WipeTimer <= diff)
                     {
                         Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-                        if (PlayerList.isEmpty())
+                        if (PlayerList.empty())
                             return;
 
                         RaidWiped = true;
-                        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                        for (auto player : PlayerList)
                         {
-                            if (i->GetSource()->IsAlive() && !i->GetSource()->IsGameMaster())
+                            if (player->IsAlive() && !player->IsGameMaster())
                             {
                                 RaidWiped = false;
                                 break;
@@ -569,13 +569,12 @@ public:
                 me->SetVisible(false);
                 me->ClearInCombat();
 
-                InstanceMap::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-                for (InstanceMap::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                for (auto player : me->GetMap()->GetPlayers())
                 {
-                    if (i->GetSource()->IsAlive())
+                    if (player->IsAlive())
                     {
-                        if (i->GetSource()->GetQuestStatus(9645) == QUEST_STATUS_INCOMPLETE)
-                            i->GetSource()->CompleteQuest(9645);
+                        if (player->GetQuestStatus(9645) == QUEST_STATUS_INCOMPLETE)
+                            player->CompleteQuest(9645);
                     }
                 }
                 return 50000;

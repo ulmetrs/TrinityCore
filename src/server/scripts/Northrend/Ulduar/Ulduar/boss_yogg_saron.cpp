@@ -475,16 +475,14 @@ class boss_voice_of_yogg_saron : public CreatureScript
                         creature->AI()->EnterEvadeMode();
 
                 // not sure, spoken by Sara (sound), regarding to wowwiki Voice whispers it
-                Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                    if (Player* player = itr->GetSource())
-                    {
-                        if (events.IsInPhase(PHASE_ONE))
-                            Talk(WHISPER_VOICE_PHASE_1_WIPE, player);
+                for (auto player : me->GetMap()->GetPlayers())
+                {
+                    if (events.IsInPhase(PHASE_ONE))
+                        Talk(WHISPER_VOICE_PHASE_1_WIPE, player);
 
-                        player->RemoveAurasDueToSpell(SPELL_SANITY);
-                        player->RemoveAurasDueToSpell(SPELL_INSANE);
-                    }
+                    player->RemoveAurasDueToSpell(SPELL_SANITY);
+                    player->RemoveAurasDueToSpell(SPELL_INSANE);
+                }
             }
 
             void Reset() override
@@ -970,13 +968,11 @@ class boss_yogg_saron : public CreatureScript
                     if (Creature* creature = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(i)))
                         creature->AI()->EnterEvadeMode();
 
-                Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                    if (Player* player = itr->GetSource())
-                    {
-                        player->RemoveAurasDueToSpell(SPELL_SANITY);
-                        player->RemoveAurasDueToSpell(SPELL_INSANE);
-                    }
+                for (auto player : me->GetMap()->GetPlayers())
+                {
+                    player->RemoveAurasDueToSpell(SPELL_SANITY);
+                    player->RemoveAurasDueToSpell(SPELL_INSANE);
+                }
             }
 
             void UpdateAI(uint32 diff) override

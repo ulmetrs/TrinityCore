@@ -216,7 +216,7 @@ struct boss_four_horsemen_baseAI : public BossAI
             }
             instance->SetBossState(BOSS_HORSEMEN, IN_PROGRESS);
             Map::PlayerList const& players = me->GetMap()->GetPlayers();
-            if (players.isEmpty()) // sanity check
+            if (players.empty()) // sanity check
                 ResetEncounter();
 
             for (Horseman boss : horsemen)
@@ -233,16 +233,14 @@ struct boss_four_horsemen_baseAI : public BossAI
                     cBoss->setActive(true);
                     cBoss->SetFarVisible(true);
 
-                    for (Map::PlayerList::const_iterator it = players.begin(); it != players.end(); ++it)
+                    for (auto player : players)
                     {
-                        if (Player* player = it->GetSource())
-                        {
-                            if (player->IsGameMaster())
-                                continue;
 
-                            if (player->IsAlive())
-                                AddThreat(player, 0.0f, cBoss);
-                        }
+                        if (player->IsGameMaster())
+                            continue;
+
+                        if (player->IsAlive())
+                            AddThreat(player, 0.0f, cBoss);
                     }
 
                     /* Why do the Four Horsemen run to opposite corners of the room when engaged?          *

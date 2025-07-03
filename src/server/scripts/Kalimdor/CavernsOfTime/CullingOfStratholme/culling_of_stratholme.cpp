@@ -314,18 +314,14 @@ class npc_chromie_start : public CreatureScript
                         AddGossipItemFor(player, GOSSIP_MENU_INITIAL, GOSSIP_OPTION_EXPLAIN, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + AsUnderlyingType(GOSSIP_OFFSET_EXPLAIN));
                         {
                             bool shouldAddSkipGossip = true;
-                            Map::PlayerList const& players = instance->instance->GetPlayers();
-                            for (Map::PlayerList::const_iterator it = players.begin(); it != players.end(); ++it)
+                            for (auto player : instance->instance->GetPlayers())
                             {
-                                if (Player* player = it->GetSource())
+                                if (player->IsGameMaster())
+                                    continue;
+                                if (!player->HasAchieved(instance->instance->GetSpawnMode() == DUNGEON_DIFFICULTY_HEROIC ? ACHIEVEMENT_HEROIC : ACHIEVEMENT_NORMAL))
                                 {
-                                    if (player->IsGameMaster())
-                                        continue;
-                                    if (!player->HasAchieved(instance->instance->GetSpawnMode() == DUNGEON_DIFFICULTY_HEROIC ? ACHIEVEMENT_HEROIC : ACHIEVEMENT_NORMAL))
-                                    {
-                                        shouldAddSkipGossip = false;
-                                        break;
-                                    }
+                                    shouldAddSkipGossip = false;
+                                    break;
                                 }
                             }
                             if (shouldAddSkipGossip)

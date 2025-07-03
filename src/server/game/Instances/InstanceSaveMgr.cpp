@@ -269,7 +269,7 @@ bool InstanceSave::UnloadIfEmpty()
     {
         // don't remove the save if there are still players inside the map
         if (Map* map = sMapMgr->FindMap(GetMapId(), Position(), GetInstanceId()))
-            if (map->HavePlayers())
+            if (!map->GetPlayers().empty())
                 return true;
 
         if (!sInstanceSaveMgr->lock_instLists)

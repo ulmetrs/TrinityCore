@@ -404,8 +404,8 @@ class instance_ulduar : public InstanceMapScript
                 if (!TeamInInstance)
                 {
                     Map::PlayerList const& Players = instance->GetPlayers();
-                    if (!Players.isEmpty())
-                        if (Player* player = Players.begin()->GetSource())
+                    if (!Players.empty())
+                        if (Player* player = Players.front())
                             TeamInInstance = player->GetTeam();
                 }
 
@@ -700,37 +700,31 @@ class instance_ulduar : public InstanceMapScript
                             if (GameObject* gift = GetGameObject(DATA_GIFT_OF_THE_OBSERVER))
                                 gift->SetRespawnTime(gift->GetRespawnDelay());
                             // get item level (recheck weapons)
-                            Map::PlayerList const& players = instance->GetPlayers();
-                            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                                if (Player* player = itr->GetSource())
-                                    for (uint8 slot = EQUIPMENT_SLOT_MAINHAND; slot <= EQUIPMENT_SLOT_RANGED; ++slot)
-                                        if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
-                                            if (item->GetTemplate()->ItemLevel > _maxWeaponItemLevel)
-                                                _maxWeaponItemLevel = item->GetTemplate()->ItemLevel;
+                            for (auto player : instance->GetPlayers())
+                                for (uint8 slot = EQUIPMENT_SLOT_MAINHAND; slot <= EQUIPMENT_SLOT_RANGED; ++slot)
+                                    if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+                                        if (item->GetTemplate()->ItemLevel > _maxWeaponItemLevel)
+                                            _maxWeaponItemLevel = item->GetTemplate()->ItemLevel;
                         }
                         else if (state == IN_PROGRESS)
                         {
                             // get item level (armor cannot be swapped in combat)
-                            Map::PlayerList const& players = instance->GetPlayers();
-                            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                            for (auto player : instance->GetPlayers())
                             {
-                                if (Player* player = itr->GetSource())
+                                for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
                                 {
-                                    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
-                                    {
-                                        if (slot == EQUIPMENT_SLOT_TABARD || slot == EQUIPMENT_SLOT_BODY)
-                                            continue;
+                                    if (slot == EQUIPMENT_SLOT_TABARD || slot == EQUIPMENT_SLOT_BODY)
+                                        continue;
 
-                                        if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+                                    if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+                                    {
+                                        if (slot >= EQUIPMENT_SLOT_MAINHAND && slot <= EQUIPMENT_SLOT_RANGED)
                                         {
-                                            if (slot >= EQUIPMENT_SLOT_MAINHAND && slot <= EQUIPMENT_SLOT_RANGED)
-                                            {
-                                                if (item->GetTemplate()->ItemLevel > _maxWeaponItemLevel)
-                                                    _maxWeaponItemLevel = item->GetTemplate()->ItemLevel;
-                                            }
-                                            else if (item->GetTemplate()->ItemLevel > _maxArmorItemLevel)
-                                                _maxArmorItemLevel = item->GetTemplate()->ItemLevel;
+                                            if (item->GetTemplate()->ItemLevel > _maxWeaponItemLevel)
+                                                _maxWeaponItemLevel = item->GetTemplate()->ItemLevel;
                                         }
+                                        else if (item->GetTemplate()->ItemLevel > _maxArmorItemLevel)
+                                            _maxArmorItemLevel = item->GetTemplate()->ItemLevel;
                                     }
                                 }
                             }

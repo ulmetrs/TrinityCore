@@ -86,11 +86,10 @@ class instance_sunwell_plateau : public InstanceMapScript
             {
                 Map::PlayerList const& players = instance->GetPlayers();
 
-                if (!players.isEmpty())
+                if (!players.empty())
                 {
-                    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                    for (auto player : players)
                     {
-                        Player* player = itr->GetSource();
                         if (player && !player->HasAura(45839))
                             return player;
                     }

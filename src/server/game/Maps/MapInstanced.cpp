@@ -247,7 +247,7 @@ BattlegroundMap* MapInstanced::CreateBattleground(uint32 InstanceId, Battlegroun
 bool MapInstanced::DestroyInstance(Instances::iterator &itr)
 {
     itr->second->RemoveAllPlayers();
-    if (itr->second->HavePlayers())
+    if (!itr->second->GetPlayers().empty())
     {
         ++itr;
         return false;

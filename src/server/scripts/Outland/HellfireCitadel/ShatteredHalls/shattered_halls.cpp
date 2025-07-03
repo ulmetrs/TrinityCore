@@ -112,10 +112,8 @@ class boss_shattered_executioner : public CreatureScript
                 if (instance->GetData(DATA_PRISONERS_EXECUTED) > 0)
                     return;
 
-                Map::PlayerList const& players = instance->instance->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                for (auto pl : instance->instance->GetPlayers())
                 {
-                    Player* pl = itr->GetSource();
                     uint32 qId = pl->GetTeam() == ALLIANCE ? QUEST_IMPRISONED_A : QUEST_IMPRISONED_H;
                     if (pl->GetQuestStatus(qId) == QUEST_STATUS_INCOMPLETE)
                         pl->CompleteQuest(qId);
@@ -131,10 +129,8 @@ class boss_shattered_executioner : public CreatureScript
 
                     if (data == 1)
                     {
-                        Map::PlayerList const& players = instance->instance->GetPlayers();
-                        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                        for (auto pl : instance->instance->GetPlayers())
                         {
-                            Player* pl = itr->GetSource();
                             uint32 qId = pl->GetTeam() == ALLIANCE ? QUEST_IMPRISONED_A : QUEST_IMPRISONED_H;
                             if (pl->GetQuestStatus(qId) == QUEST_STATUS_INCOMPLETE)
                                 pl->FailQuest(qId);

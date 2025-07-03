@@ -766,11 +766,9 @@ class npc_halion_controller : public CreatureScript
 
             void DoCheckEvade()
             {
-                Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
-                    if (Player* player = i->GetSource())
-                        if (player->IsAlive() && IsInBoundary(player) && !player->IsGameMaster())
-                            return;
+                for (auto player : me->GetMap()->GetPlayers())
+                    if (player->IsAlive() && IsInBoundary(player) && !player->IsGameMaster())
+                        return;
 
                 EnterEvadeMode(EVADE_REASON_NO_HOSTILES);
             }

@@ -101,20 +101,17 @@ void AggroAllPlayers(Creature* temp)
     if (PlList.isEmpty())
             return;
 
-    for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+    for (auto player :PlList)
     {
-        if (Player* player = i->GetSource())
-        {
-            if (player->IsGameMaster())
-                continue;
+        if (player->IsGameMaster())
+            continue;
 
-            if (player->IsAlive())
-            {
-                temp->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
-                temp->SetImmuneToPC(true);
-                temp->SetReactState(REACT_AGGRESSIVE);
-                temp->EngageWithTarget(player);
-            }
+        if (player->IsAlive())
+        {
+            temp->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+            temp->SetImmuneToPC(true);
+            temp->SetReactState(REACT_AGGRESSIVE);
+            temp->EngageWithTarget(player);
         }
     }
 }
@@ -254,11 +251,10 @@ public:
             if (uiChargeTimer <= uiDiff)
             {
                 Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                if (!players.isEmpty())
+                if (!players.empty())
                 {
-                    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                    for (auto player : players)
                     {
-                        Player* player = itr->GetSource();
                         if (player && !player->IsGameMaster() && me->IsInRange(player, 8.0f, 25.0f, false))
                         {
                             ResetThreatList();
@@ -281,11 +277,10 @@ public:
                 if (Unit* pPassenger = pVehicle->GetPassenger(SEAT_ID_0))
                 {
                     Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                    if (!players.isEmpty())
+                    if (!players.empty())
                     {
-                        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                        for (auto player : players)
                         {
-                            Player* player = itr->GetSource();
                             if (player && !player->IsGameMaster() && me->IsInRange(player, 10.0f, 30.0f, false))
                             {
                                 pPassenger->CastSpell(player, SPELL_SHIELD_BREAKER, true);
@@ -401,11 +396,10 @@ public:
             if (uiInterceptTimer <= uiDiff)
             {
                 Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                if (!players.isEmpty())
+                if (!players.empty())
                 {
-                    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                    for (auto player : players)
                     {
-                        Player* player = itr->GetSource();
                         if (player && !player->IsGameMaster() && me->IsInRange(player, 8.0f, 25.0f, false))
                         {
                             ResetThreatList();
@@ -871,11 +865,10 @@ public:
                 else
                 {
                     Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                    if (!players.isEmpty())
+                    if (!players.empty())
                     {
-                        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                        for (auto player : players)
                         {
-                            Player* player = itr->GetSource();
                             if (player && !player->IsGameMaster() && me->IsInRange(player, 5.0f, 30.0f, false))
                             {
                                 DoCast(player, SPELL_MULTI_SHOT);

@@ -409,7 +409,11 @@ void ScriptedAI::DoTeleportAll(float x, float y, float z, float o)
     if (!map->IsDungeon())
         return;
 
-    for (auto iter = map->GetPlayers().begin(); iter != map->GetPlayers().end(); /* no increment */)
+    Map::PlayerList const& players = map->GetPlayers();
+    if (players.empty())
+        return;
+
+    for (auto iter = players.begin(); iter != players.end(); /* no increment */)
     {
         Player* player = *iter;
         ++iter; // Increment here incase of remove

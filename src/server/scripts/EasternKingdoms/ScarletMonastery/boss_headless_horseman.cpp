@@ -448,10 +448,10 @@ struct boss_headless_horseman : public ScriptedAI
         Talk(SAY_DEATH);
         me->SummonCreature(NPC_SIR_THOMAS, me->GetPosition());
         // Credit LFG
-        if (me->GetMap()->HavePlayers())
+        if (!me->GetMap()->GetPlayers().empty())
         {
             Map* map = me->GetMap();
-            if (Group* group = map->GetPlayers().begin()->GetSource()->GetGroup())
+            if (Group* group = map->GetPlayers().front()->GetGroup())
                 if (group->isLFGGroup())
                     sLFGMgr->FinishDungeon(group->GetGUID(), LFG_DUNGEONID_THE_HEADLESS_HORSEMAN, map);
         }

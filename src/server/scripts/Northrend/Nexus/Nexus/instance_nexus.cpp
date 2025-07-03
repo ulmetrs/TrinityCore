@@ -74,8 +74,8 @@ class instance_nexus : public InstanceMapScript
                 if (!_teamInInstance)
                 {
                     Map::PlayerList const& players = instance->GetPlayers();
-                    if (!players.isEmpty())
-                        if (Player* player = players.begin()->GetSource())
+                    if (!players.empty())
+                        if (Player* player = players.front())
                             _teamInInstance = player->GetTeam();
                 }
 

@@ -210,17 +210,13 @@ public:
 
         void AggroAllPlayers(Creature* temp)
         {
-            Map::PlayerList const& PlList = me->GetMap()->GetPlayers();
-            for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+            for (auto player : me->GetMap()->GetPlayers())
             {
-                if (Player* player = i->GetSource())
-                {
-                    if (player->IsGameMaster())
-                        continue;
+                if (player->IsGameMaster())
+                    continue;
 
-                    if (player->IsAlive())
-                        AddThreat(player, 0.0f, temp);
-                }
+                if (player->IsAlive())
+                    AddThreat(player, 0.0f, temp);
             }
         }
 

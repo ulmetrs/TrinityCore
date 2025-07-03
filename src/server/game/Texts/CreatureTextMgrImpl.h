@@ -125,27 +125,24 @@ void CreatureTextMgr::SendChatPacket(WorldObject* source, Builder const& builder
         case TEXT_RANGE_AREA:
         {
             uint32 areaId = source->GetAreaId();
-            Map::PlayerList const& players = source->GetMap()->GetPlayers();
-            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                if (itr->GetSource()->GetAreaId() == areaId && (!team || Team(itr->GetSource()->GetTeam()) == team) && (!gmOnly || itr->GetSource()->IsGameMaster()))
-                    localizer(itr->GetSource());
+            for (auto player : source->GetMap()->GetPlayers())
+                if (player->GetAreaId() == areaId && (!team || Team(player->GetTeam()) == team) && (!gmOnly || player->IsGameMaster()))
+                    localizer(player);
             return;
         }
         case TEXT_RANGE_ZONE:
         {
             uint32 zoneId = source->GetZoneId();
-            Map::PlayerList const& players = source->GetMap()->GetPlayers();
-            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                if (itr->GetSource()->GetZoneId() == zoneId && (!team || Team(itr->GetSource()->GetTeam()) == team) && (!gmOnly || itr->GetSource()->IsGameMaster()))
-                    localizer(itr->GetSource());
+            for (auto player : source->GetMap()->GetPlayers())
+                if (player->GetZoneId() == zoneId && (!team || Team(player->GetTeam()) == team) && (!gmOnly || player->IsGameMaster()))
+                    localizer(player);
             return;
         }
         case TEXT_RANGE_MAP:
         {
-            Map::PlayerList const& players = source->GetMap()->GetPlayers();
-            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                if ((!team || Team(itr->GetSource()->GetTeam()) == team) && (!gmOnly || itr->GetSource()->IsGameMaster()))
-                    localizer(itr->GetSource());
+            for (auto player : source->GetMap()->GetPlayers())
+                if ((!team || Team(player->GetTeam()) == team) && (!gmOnly || player->IsGameMaster()))
+                    localizer(player);
             return;
         }
         case TEXT_RANGE_WORLD:

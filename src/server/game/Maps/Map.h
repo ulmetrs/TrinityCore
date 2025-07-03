@@ -491,7 +491,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }
         void markCell(uint32 pCellId) { marked_cells.set(pCellId); }
 
-        bool HavePlayers() const { return !_players.empty(); }
         uint32 GetPlayersCountExceptGMs() const;
 
         void AddWorldObject(WorldObject* obj) { i_worldObjects.insert(obj); }

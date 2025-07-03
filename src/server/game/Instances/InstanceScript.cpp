@@ -724,11 +724,10 @@ void InstanceScript::DoUpdateWorldState(uint32 uiStateId, uint32 uiStateData)
 {
     Map::PlayerList const& lPlayers = instance->GetPlayers();
 
-    if (!lPlayers.isEmpty())
+    if (!lPlayers.empty())
     {
-        for (Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr)
-            if (Player* player = itr->GetSource())
-                player->SendUpdateWorldState(uiStateId, uiStateData);
+        for (auto player : lPlayers)
+            player->SendUpdateWorldState(uiStateId, uiStateData);
     }
     else
         TC_LOG_DEBUG("scripts", "DoUpdateWorldState attempt send data but no players in map.");
@@ -739,17 +738,16 @@ void InstanceScript::DoSendNotifyToInstance(char const* format, ...)
 {
     InstanceMap::PlayerList const& players = instance->GetPlayers();
 
-    if (!players.isEmpty())
+    if (!players.empty())
     {
         va_list ap;
         va_start(ap, format);
         char buff[1024];
         vsnprintf(buff, 1024, format, ap);
         va_end(ap);
-        for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
-            if (Player* player = i->GetSource())
-                if (WorldSession* session = player->GetSession())
-                    session->SendNotification("%s", buff);
+        for (auto player : players)
+            if (WorldSession* session = player->GetSession())
+                session->SendNotification("%s", buff);
     }
 }
 
@@ -758,10 +756,9 @@ void InstanceScript::DoUpdateAchievementCriteria(AchievementCriteriaTypes type, 
 {
     Map::PlayerList const& PlayerList = instance->GetPlayers();
 
-    if (!PlayerList.isEmpty())
-        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-            if (Player* player = i->GetSource())
-                player->UpdateAchievementCriteria(type, miscValue1, miscValue2, unit);
+    if (!PlayerList.empty())
+        for (auto player : PlayerList)
+            player->UpdateAchievementCriteria(type, miscValue1, miscValue2, unit);
 }
 
 // Start timed achievement for all players in instance
@@ -769,10 +766,9 @@ void InstanceScript::DoStartTimedAchievement(AchievementCriteriaTimedTypes type,
 {
     Map::PlayerList const& PlayerList = instance->GetPlayers();
 
-    if (!PlayerList.isEmpty())
-        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-            if (Player* player = i->GetSource())
-                player->StartTimedAchievement(type, entry);
+    if (!PlayerList.empty())
+        for (auto player : PlayerList)
+            player->StartTimedAchievement(type, entry);
 }
 
 // Stop timed achievement for all players in instance
@@ -780,17 +776,15 @@ void InstanceScript::DoStopTimedAchievement(AchievementCriteriaTimedTypes type, 
 {
     Map::PlayerList const& PlayerList = instance->GetPlayers();
 
-    if (!PlayerList.isEmpty())
-        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-            if (Player* player = i->GetSource())
-                player->RemoveTimedAchievement(type, entry);
+    if (!PlayerList.empty())
+        for (auto player : PlayerList)
+            player->RemoveTimedAchievement(type, entry);
 }
 
 void InstanceScript::DoRemoveAurasDueToSpellOnPlayers(uint32 spell, bool includePets /*= false*/, bool includeControlled /*= false*/)
 {
-    Map::PlayerList const& playerList = instance->GetPlayers();
-    for (auto itr = playerList.begin(); itr != playerList.end(); ++itr)
-        DoRemoveAurasDueToSpellOnPlayer(itr->GetSource(), spell, includePets, includeControlled);
+    for (auto player : instance->GetPlayers())
+        DoRemoveAurasDueToSpellOnPlayer(player, spell, includePets, includeControlled);
 }
 
 void InstanceScript::DoRemoveAurasDueToSpellOnPlayer(Player* player, uint32 spell, bool includePets /*= false*/, bool includeControlled /*= false*/)
@@ -823,9 +817,8 @@ void InstanceScript::DoRemoveAurasDueToSpellOnPlayer(Player* player, uint32 spel
 
 void InstanceScript::DoCastSpellOnPlayers(uint32 spell, bool includePets /*= false*/, bool includeControlled /*= false*/)
 {
-    Map::PlayerList const& playerList = instance->GetPlayers();
-    for (auto itr = playerList.begin(); itr != playerList.end(); ++itr)
-        DoCastSpellOnPlayer(itr->GetSource(), spell, includePets, includeControlled);
+    for (auto player : instance->GetPlayers())
+        DoCastSpellOnPlayer(player, spell, includePets, includeControlled);
 }
 
 void InstanceScript::DoCastSpellOnPlayer(Player* player, uint32 spell, bool includePets /*= false*/, bool includeControlled /*= false*/)
@@ -925,18 +918,14 @@ void InstanceScript::UpdateEncounterState(EncounterCreditType type, uint32 credi
 
     if (dungeonId)
     {
-        Map::PlayerList const& players = instance->GetPlayers();
-        for (auto const& ref : players)
+        for (auto player : instance->GetPlayers())
         {
-            if (Player* player = ref.GetSource())
+            if (Group* grp = player->GetGroup())
             {
-                if (Group* grp = player->GetGroup())
+                if (grp->isLFGGroup())
                 {
-                    if (grp->isLFGGroup())
-                    {
-                        sLFGMgr->FinishDungeon(grp->GetGUID(), dungeonId, instance);
-                        return;
-                    }
+                    sLFGMgr->FinishDungeon(grp->GetGUID(), dungeonId, instance);
+                    return;
                 }
             }
         }

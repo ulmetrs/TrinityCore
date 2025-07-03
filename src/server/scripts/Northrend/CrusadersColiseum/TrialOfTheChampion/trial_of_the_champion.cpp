@@ -377,20 +377,17 @@ public:
             if (PlList.isEmpty())
                 return;
 
-            for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+            for (auto player : PlList)
             {
-                if (Player* player = i->GetSource())
-                {
-                    if (player->IsGameMaster())
-                        continue;
+                if (player->IsGameMaster())
+                    continue;
 
-                    if (player->IsAlive())
-                    {
-                        temp->SetHomePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
-                        temp->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
-                        temp->SetReactState(REACT_AGGRESSIVE);
-                        AddThreat(player, 0.0f, temp);
-                    }
+                if (player->IsAlive())
+                {
+                    temp->SetHomePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
+                    temp->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+                    temp->SetReactState(REACT_AGGRESSIVE);
+                    AddThreat(player, 0.0f, temp);
                 }
             }
         }

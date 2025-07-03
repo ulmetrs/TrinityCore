@@ -1047,18 +1047,17 @@ void Creature::Update(uint32 diff)
                 if (m_combatPulseTime == 0)
                 {
                     Map::PlayerList const& players = GetMap()->GetPlayers();
-                    if (!players.isEmpty())
-                        for (Map::PlayerList::const_iterator it = players.begin(); it != players.end(); ++it)
+                    if (!players.empty())
+                    {
+                        for (auto player : players)
                         {
-                            if (Player* player = it->GetSource())
-                            {
-                                if (player->IsGameMaster())
-                                    continue;
+                            if (player->IsGameMaster())
+                                continue;
 
-                                if (player->IsAlive() && IsHostileTo(player))
-                                    EngageWithTarget(player);
-                            }
+                            if (player->IsAlive() && IsHostileTo(player))
+                                EngageWithTarget(player);
                         }
+                    }
 
                     m_combatPulseTime = m_combatPulseDelay * IN_MILLISECONDS;
                 }
@@ -1519,17 +1518,13 @@ void Creature::SetLootRecipient(Unit* unit, bool withGroup)
 
             if (map && map->IsDungeon() && (isWorldBoss() || IsDungeonBoss()))
             {
-                Map::PlayerList const& PlayerList = map->GetPlayers();
-                for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                for (auto groupMember : map->GetPlayers())
                 {
-                    if (Player* groupMember = i->GetSource())
-                    {
-                        if (groupMember->IsGameMaster() /* || groupMember->IsSpectator() */) // No spectator in TC
-                            continue;
+                    if (groupMember->IsGameMaster() /* || groupMember->IsSpectator() */) // No spectator in TC
+                        continue;
 
-                        if (groupMember->GetGroup() == group)
-                            AddAllowedLooter(groupMember->GetGUID());
-                    }
+                    if (groupMember->GetGroup() == group)
+                        AddAllowedLooter(groupMember->GetGUID());
                 }
             }
         }

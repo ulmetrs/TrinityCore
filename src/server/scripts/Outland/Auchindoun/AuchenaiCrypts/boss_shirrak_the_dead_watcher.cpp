@@ -100,20 +100,20 @@ struct boss_shirrak_the_dead_watcher : public BossAI
         if (Inhibitmagic_Timer <= diff)
         {
             float dist;
-            Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-            for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                if (Player* i_pl = i->GetSource())
-                    if (i_pl->IsAlive() && (dist = i_pl->GetDistance(me)) < 45)
-                    {
-                        i_pl->RemoveAurasDueToSpell(SPELL_INHIBITMAGIC);
+            for (auto i_pl : me->GetMap()->GetPlayers())
+            {
+                if (i_pl->IsAlive() && (dist = i_pl->GetDistance(me)) < 45)
+                {
+                    i_pl->RemoveAurasDueToSpell(SPELL_INHIBITMAGIC);
+                    me->AddAura(SPELL_INHIBITMAGIC, i_pl);
+                    if (dist < 35)
                         me->AddAura(SPELL_INHIBITMAGIC, i_pl);
-                        if (dist < 35)
-                            me->AddAura(SPELL_INHIBITMAGIC, i_pl);
-                        if (dist < 25)
-                            me->AddAura(SPELL_INHIBITMAGIC, i_pl);
-                        if (dist < 15)
-                            me->AddAura(SPELL_INHIBITMAGIC, i_pl);
-                    }
+                    if (dist < 25)
+                        me->AddAura(SPELL_INHIBITMAGIC, i_pl);
+                    if (dist < 15)
+                        me->AddAura(SPELL_INHIBITMAGIC, i_pl);
+                }
+            }
             Inhibitmagic_Timer = 3000 + (rand32() % 1000);
         } else Inhibitmagic_Timer -= diff;
 

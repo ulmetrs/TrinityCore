@@ -19816,19 +19816,18 @@ bool Player::CheckInstanceValidity(bool /*isLogin*/)
             return false;
 
         Map::PlayerList const& players = map->GetPlayers();
-        if (!players.isEmpty())
-            for (Map::PlayerList::const_iterator it = players.begin(); it != players.end(); ++it)
+        if (!players.empty())
+        {
+            for (auto otherPlayer : players)
             {
-                if (Player* otherPlayer = it->GetSource())
-                {
-                    if (otherPlayer->IsGameMaster())
-                        continue;
-                    if (!otherPlayer->m_InstanceValid) // ignore players that currently have a homebind timer active
-                        continue;
-                    if (group != otherPlayer->GetGroup())
-                        return false;
-                }
+                if (otherPlayer->IsGameMaster())
+                    continue;
+                if (!otherPlayer->m_InstanceValid) // ignore players that currently have a homebind timer active
+                    continue;
+                if (group != otherPlayer->GetGroup())
+                    return false;
             }
+        }
     }
     else
     {

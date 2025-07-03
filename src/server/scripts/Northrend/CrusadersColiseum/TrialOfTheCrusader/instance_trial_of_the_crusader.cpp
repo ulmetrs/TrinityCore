@@ -308,10 +308,8 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                         {
                             --TrialCounter;
                             // decrease attempt counter at wipe
-                            Map::PlayerList const& PlayerList = instance->GetPlayers();
-                            for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
-                                if (Player* player = itr->GetSource())
-                                    player->SendUpdateWorldState(UPDATE_STATE_UI_COUNT, TrialCounter);
+                            for (auto player : instance->GetPlayers())
+                                player->SendUpdateWorldState(UPDATE_STATE_UI_COUNT, TrialCounter);
 
                             // if theres no more attemps allowed
                             if (!TrialCounter)
@@ -350,15 +348,13 @@ class instance_trial_of_the_crusader : public InstanceMapScript
 
             void HandlePlayerVehicle(bool apply)
             {
-                Map::PlayerList const &players = instance->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                    if (Player* player = itr->GetSource())
-                    {
-                        if (apply)
-                            player->CreateVehicleKit(PLAYER_VEHICLE_ID, 0);
-                        else
-                            player->RemoveVehicleKit();
-                    }
+                for (auto player : instance->GetPlayers())
+                {
+                    if (apply)
+                        player->CreateVehicleKit(PLAYER_VEHICLE_ID, 0);
+                    else
+                        player->RemoveVehicleKit();
+                }
             }
 
             void SetData(uint32 type, uint32 data) override

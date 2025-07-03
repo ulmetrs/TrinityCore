@@ -362,11 +362,9 @@ class boss_janalai : public CreatureScript
                     if (!map->IsDungeon())
                         return;
 
-                    Map::PlayerList const& PlayerList = map->GetPlayers();
-                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                        if (Player* i_pl = i->GetSource())
-                            if (i_pl->IsAlive())
-                                DoTeleportPlayer(i_pl, JanalainPos[0][0] - 5 + rand32() % 10, JanalainPos[0][1] - 5 + rand32() % 10, JanalainPos[0][2], 0);
+                    for (auto i_pl : map->GetPlayers())
+                        if (i_pl->IsAlive())
+                            DoTeleportPlayer(i_pl, JanalainPos[0][0] - 5 + rand32() % 10, JanalainPos[0][1] - 5 + rand32() % 10, JanalainPos[0][2], 0);
                     //DoCast(Temp, SPELL_SUMMON_PLAYERS, true) // core bug, spell does not work if too far
                     return;
                 }

@@ -238,22 +238,17 @@ struct boss_chromaggus : public BossAI
                         break;
                 case EVENT_AFFLICTION:
                     {
-                        Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                        for (auto player : me->GetMap()->GetPlayers())
                         {
-                            if (Player* player = itr->GetSource()->ToPlayer())
+                            DoCast(player, RAND(SPELL_BROODAF_BLUE, SPELL_BROODAF_BLACK, SPELL_BROODAF_RED, SPELL_BROODAF_BRONZE, SPELL_BROODAF_GREEN), true);
+
+                            if (player->HasAura(SPELL_BROODAF_BLUE) &&
+                                player->HasAura(SPELL_BROODAF_BLACK) &&
+                                player->HasAura(SPELL_BROODAF_RED) &&
+                                player->HasAura(SPELL_BROODAF_BRONZE) &&
+                                player->HasAura(SPELL_BROODAF_GREEN))
                             {
-                                DoCast(player, RAND(SPELL_BROODAF_BLUE, SPELL_BROODAF_BLACK, SPELL_BROODAF_RED, SPELL_BROODAF_BRONZE, SPELL_BROODAF_GREEN), true);
-
-                                    if (player->HasAura(SPELL_BROODAF_BLUE) &&
-                                        player->HasAura(SPELL_BROODAF_BLACK) &&
-                                        player->HasAura(SPELL_BROODAF_RED) &&
-                                        player->HasAura(SPELL_BROODAF_BRONZE) &&
-                                        player->HasAura(SPELL_BROODAF_GREEN))
-                                    {
-                                        DoCast(player, SPELL_CHROMATIC_MUT_1);
-                                    }
-
+                                DoCast(player, SPELL_CHROMATIC_MUT_1);
                             }
                         }
                     }

@@ -2742,27 +2742,23 @@ void GameObject::SetLootRecipient(Creature* creature)
 void GameObject::SetLootRecipient(Map* map)
 {
     Group* group = nullptr;
-    Map::PlayerList const& PlayerList = map->GetPlayers();
-    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+    for (auto groupMember : map->GetPlayers())
     {
-        if (Player* groupMember = i->GetSource())
+        if (groupMember->IsGameMaster() /* || groupMember->IsSpectator() */) // No spectator in TC
+            continue;
+
+        if (!m_lootRecipient)
+            m_lootRecipient = groupMember->GetGUID();
+
+        Group* memberGroup = groupMember->GetGroup();
+        if (memberGroup && !group)
         {
-            if (groupMember->IsGameMaster() /* || groupMember->IsSpectator() */) // No spectator in TC
-                continue;
-
-            if (!m_lootRecipient)
-                m_lootRecipient = groupMember->GetGUID();
-
-            Group* memberGroup = groupMember->GetGroup();
-            if (memberGroup && !group)
-            {
-                group = memberGroup;
-                m_lootRecipientGroup = group->GetGUID().GetCounter();
-            }
-
-            if (memberGroup == group)
-                AddAllowedLooter(groupMember->GetGUID());
+            group = memberGroup;
+            m_lootRecipientGroup = group->GetGUID().GetCounter();
         }
+
+        if (memberGroup == group)
+            AddAllowedLooter(groupMember->GetGUID());
     }
 
     if (!group)

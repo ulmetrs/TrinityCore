@@ -241,12 +241,10 @@ class boss_general_vezax : public CreatureScript
 
             void CheckShamanisticRage()
             {
-                // If Shaman has Shamanistic Rage and use it during the fight, it will cast Corrupted Rage on him
-                Map::PlayerList const& Players = me->GetMap()->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = Players.begin(); itr != Players.end(); ++itr)
-                    if (Player* player = itr->GetSource())
-                        if (player->HasSpell(SPELL_SHAMANTIC_RAGE))
-                            player->CastSpell(player, SPELL_CORRUPTED_RAGE, false);
+                // If Shaman has Shamanistic Rage and use it during the fight, it will cast Corrupted Rage on him;
+                for (auto player : me->GetMap()->GetPlayers())
+                    if (player->HasSpell(SPELL_SHAMANTIC_RAGE))
+                        player->CastSpell(player, SPELL_CORRUPTED_RAGE, false);
             }
 
             uint32 GetData(uint32 type) const override
@@ -284,17 +282,13 @@ class boss_general_vezax : public CreatureScript
             Unit* CheckPlayersInRange(uint8 playersMin, float rangeMin, float rangeMax)
             {
                 std::list<Player*> PlayerList;
-                Map::PlayerList const& Players = me->GetMap()->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = Players.begin(); itr != Players.end(); ++itr)
+                for (auto player : me->GetMap()->GetPlayers())
                 {
-                    if (Player* player = itr->GetSource())
-                    {
-                        float distance = player->GetDistance(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ());
-                        if (rangeMin > distance || distance > rangeMax)
-                            continue;
+                    float distance = player->GetDistance(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ());
+                    if (rangeMin > distance || distance > rangeMax)
+                        continue;
 
-                        PlayerList.push_back(player);
-                    }
+                    PlayerList.push_back(player);
                 }
 
                 if (PlayerList.empty())

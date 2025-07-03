@@ -621,17 +621,18 @@ bool Map::AddToMap(Transport* obj)
     _transports.insert(obj);
 
     // Broadcast creation to players
-    if (!GetPlayers().isEmpty())
+    Map::PlayerList const& players = GetPlayers();
+    if (!players.empty())
     {
-        for (Map::PlayerList::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+        for (auto player : players)
         {
-            if (itr->GetSource()->GetTransport() != obj)
+            if (player->GetTransport() != obj)
             {
                 UpdateData data;
-                obj->BuildCreateUpdateBlockForPlayer(&data, itr->GetSource());
+                obj->BuildCreateUpdateBlockForPlayer(&data, player);
                 WorldPacket packet;
                 data.BuildPacket(&packet);
-                itr->GetSource()->SendDirectMessage(&packet);
+                player->SendDirectMessage(&packet);
             }
         }
     }
@@ -1289,15 +1290,15 @@ void Map::RemoveFromMap(Transport* obj, bool remove)
     obj->RemoveFromWorld();
 
     Map::PlayerList const& players = GetPlayers();
-    if (!players.isEmpty())
+    if (!players.empty())
     {
         UpdateData data;
         obj->BuildOutOfRangeUpdateBlock(&data);
         WorldPacket packet;
         data.BuildPacket(&packet);
-        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-        if (itr->GetSource()->GetTransport() != obj)
-            itr->GetSource()->SendDirectMessage(&packet);
+        for (auto player : players)
+            if (player->GetTransport() != obj)
+                player->SendDirectMessage(&packet);
     }
 
     if (_transportsUpdateIter != _transports.end())
@@ -1482,19 +1483,19 @@ void Map::RemoveAllPlayers()
 {
     ZoneScopedNC("Map::RemoveAllPlayers", WORLD_UPDATE_COLOR)
 
-    if (HavePlayers())
-    {
-        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
-        {
-            Player* player = *iter;
-            ++iter; // Increment here incase of remove
+    if (_players.empty())
+        return;
 
-            if (!player->IsBeingTeleportedFar())
-            {
-                // this is happening for bg
-                TC_LOG_ERROR("maps", "Map::UnloadAll: player {} is still in map {} during unload, this should not happen!", player->GetName(), GetId());
-                player->TeleportTo(player->m_homebindMapId, player->m_homebindX, player->m_homebindY, player->m_homebindZ, player->GetOrientation());
-            }
+    for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
+    {
+        Player* player = *iter;
+        ++iter; // Increment here incase of remove
+
+        if (!player->IsBeingTeleportedFar())
+        {
+            // this is happening for bg
+            TC_LOG_ERROR("maps", "Map::UnloadAll: player {} is still in map {} during unload, this should not happen!", player->GetName(), GetId());
+            player->TeleportTo(player->m_homebindMapId, player->m_homebindX, player->m_homebindY, player->m_homebindZ, player->GetOrientation());
         }
     }
 }
@@ -4014,7 +4015,7 @@ bool InstanceMap::Reset(uint8 method)
     // note: since the map may not be loaded when the instance needs to be reset
     // the instance must be deleted from the DB by InstanceSaveManager
 
-    if (HavePlayers())
+    if (!_players.empty())
     {
         if (method == INSTANCE_RESET_ALL || method == INSTANCE_RESET_CHANGE_DIFFICULTY)
         {
@@ -4118,7 +4119,7 @@ void InstanceMap::UnloadAll()
 {
     ZoneScopedNC("InstanceMap::UnloadAll", WORLD_UPDATE_COLOR)
 
-    ASSERT(!HavePlayers());
+    ASSERT(_players.empty());
 
     if (m_resetAfterUnload == true)
     {
@@ -4140,7 +4141,7 @@ void InstanceMap::SetResetSchedule(bool on)
     // only for normal instances
     // the reset time is only scheduled when there are no payers inside
     // it is assumed that the reset time will rarely (if ever) change while the reset is scheduled
-    if (IsDungeon() && !HavePlayers() && !IsRaidOrHeroicDungeon())
+    if (IsDungeon() && _players.empty() && !IsRaidOrHeroicDungeon())
     {
         if (InstanceSave* save = sInstanceSaveMgr->GetInstanceSave(GetInstanceId()))
             sInstanceSaveMgr->ScheduleReset(on, save->GetResetTime(), InstanceSaveManager::InstResetEvent(0, GetId(), Difficulty(GetSpawnMode()), GetInstanceId()));
@@ -4322,16 +4323,16 @@ void BattlegroundMap::RemoveAllPlayers()
 {
     ZoneScopedNC("BattlegroundMap::RemoveAllPlayers", WORLD_UPDATE_COLOR)
 
-    if (HavePlayers())
-    {
-        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
-        {
-            Player* player = *iter;
-            ++iter; // Increment here incase of remove
+    if (_players.empty())
+        return;
 
-            if (!player->IsBeingTeleportedFar())
-                player->TeleportTo(player->GetBattlegroundEntryPoint());
-        }
+    for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
+    {
+        Player* player = *iter;
+        ++iter; // Increment here incase of remove
+
+        if (!player->IsBeingTeleportedFar())
+            player->TeleportTo(player->GetBattlegroundEntryPoint());
     }
 }
 
@@ -4998,16 +4999,12 @@ void Map::SetZoneOverrideLight(uint32 zoneId, uint32 areaLightId, uint32 overrid
 
 void Map::UpdateAreaDependentAuras()
 {
-    Map::PlayerList const& players = GetPlayers();
-    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+    for (auto player : _players)
     {
-        if (Player* player = itr->GetSource())
+        if (player->IsInWorld())
         {
-            if (player->IsInWorld())
-            {
-                player->UpdateAreaDependentAuras(player->GetAreaId());
-                player->UpdateZoneDependentAuras(player->GetZoneId());
-            }
+            player->UpdateAreaDependentAuras(player->GetAreaId());
+            player->UpdateZoneDependentAuras(player->GetZoneId());
         }
     }
 }
@@ -5017,7 +5014,7 @@ std::string Map::GetDebugInfo() const
     std::stringstream sstr;
     sstr << std::boolalpha
         << "Id: " << GetId() << " InstanceId: " << GetInstanceId() << " Difficulty: " << std::to_string(GetDifficulty())
-        << " HasPlayers: " << HavePlayers();
+        << " HasPlayers: " << !_players.empty();
     return sstr.str();
 }
 

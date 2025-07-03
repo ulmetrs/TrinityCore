@@ -156,11 +156,9 @@ struct npc_minigob_manabonk : public ScriptedAI
 
     void GetPlayersInDalaran(std::vector<Player*>& playerList) const
     {
-        Map::PlayerList const& players = me->GetMap()->GetPlayers();
-        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-            if (Player* player = itr->GetSource()->ToPlayer())
-                if (player->GetZoneId() == ZONE_DALARAN && !player->IsFlying() && !player->IsMounted() && !player->IsGameMaster())
-                    playerList.push_back(player);
+        for (auto player : me->GetMap()->GetPlayers())
+            if (player->GetZoneId() == ZONE_DALARAN && !player->IsFlying() && !player->IsMounted() && !player->IsGameMaster())
+                playerList.push_back(player);
     }
 
     static Player* SelectTargetInDalaran(std::vector<Player*>& PlayerInDalaranList)

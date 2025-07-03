@@ -284,11 +284,9 @@ struct boss_shade_of_akama : public BossAI
 
     void EnterEvadeModeIfNeeded()
     {
-        Map::PlayerList const& players = me->GetMap()->GetPlayers();
-        for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
-            if (Player* player = i->GetSource())
-                if (player->IsAlive() && !player->IsGameMaster() && IsInBoundary(player))
-                    return;
+        for (auto player : me->GetMap()->GetPlayers())
+            if (player->IsAlive() && !player->IsGameMaster() && IsInBoundary(player))
+                return;
 
         EnterEvadeMode(EVADE_REASON_NO_HOSTILES);
     }

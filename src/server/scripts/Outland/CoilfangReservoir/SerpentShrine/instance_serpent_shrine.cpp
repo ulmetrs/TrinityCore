@@ -123,39 +123,35 @@ class instance_serpent_shrine : public InstanceMapScript
                         Water = WATERSTATE_FRENZY;
 
                     Map::PlayerList const& PlayerList = instance->GetPlayers();
-                    if (PlayerList.isEmpty())
+                    if (PlayerList.empty())
                         return;
-                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                    for (auto player : PlayerList)
                     {
-                        if (Player* player = i->GetSource())
+                        if (player->IsAlive() && /*i->GetSource()->GetPositionZ() <= -21.434931f*/player->IsInWater())
                         {
-                            if (player->IsAlive() && /*i->GetSource()->GetPositionZ() <= -21.434931f*/player->IsInWater())
+                            if (Water == WATERSTATE_SCALDING)
                             {
-                                if (Water == WATERSTATE_SCALDING)
-                                {
-                                    if (!player->HasAura(SPELL_SCALDINGWATER))
-                                        player->CastSpell(player, SPELL_SCALDINGWATER, true);
+                                if (!player->HasAura(SPELL_SCALDINGWATER))
+                                    player->CastSpell(player, SPELL_SCALDINGWATER, true);
 
-                                }
-                                else
+                            }
+                            else
+                            {
+                                //spawn frenzy
+                                if (DoSpawnFrenzy)
                                 {
-                                    //spawn frenzy
-                                    if (DoSpawnFrenzy)
+                                    if (Creature* frenzy = player->SummonCreature(NPC_COILFANG_FRENZY, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2s))
                                     {
-                                        if (Creature* frenzy = player->SummonCreature(NPC_COILFANG_FRENZY, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2s))
-                                        {
-                                            frenzy->Attack(player, false);
-                                            frenzy->SetSwim(true);
-                                            frenzy->SetDisableGravity(true);
-                                        }
-                                        DoSpawnFrenzy = false;
+                                        frenzy->Attack(player, false);
+                                        frenzy->SetSwim(true);
+                                        frenzy->SetDisableGravity(true);
                                     }
+                                    DoSpawnFrenzy = false;
                                 }
                             }
-                            if (!player->IsInWater())
-                                player->RemoveAurasDueToSpell(SPELL_SCALDINGWATER);
                         }
-
+                        if (!player->IsInWater())
+                            player->RemoveAurasDueToSpell(SPELL_SCALDINGWATER);
                     }
                     WaterCheckTimer = 500;//remove stress from core
                 }

@@ -821,10 +821,8 @@ class instance_violet_hold : public InstanceMapScript
 
             bool CheckWipe() const
             {
-                Map::PlayerList const& players = instance->GetPlayers();
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                for (auto player : instance->GetPlayers())
                 {
-                    Player* player = itr->GetSource();
                     if (player->IsGameMaster())
                         continue;
 
@@ -868,7 +866,7 @@ class instance_violet_hold : public InstanceMapScript
             void Update(uint32 diff) override
             {
                 // if we don't have any player in the instance
-                if (!instance->HavePlayers())
+                if (instance->GetPlayers().empty())
                 {
                     if (EventState == IN_PROGRESS) // if event is in progress, mark as fail
                     {

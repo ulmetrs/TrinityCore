@@ -141,13 +141,10 @@ public:
 
         void UpdateMoira(Creature* moira)
         {
-            InstanceMap::PlayerList const& players = instance->GetPlayers();
-
-            for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
-                if (Player * player = i->GetSource())
-                    if ((player->GetTeamId() == TEAM_ALLIANCE && !player->IsActiveQuest(QUEST_THE_PRINCESS_SURPRISE))
-                        || (player->GetTeamId() == TEAM_HORDE && !player->IsActiveQuest(QUEST_THE_PRINCESS_SAVED)))
-                        return;
+            for (auto player : instance->GetPlayers())
+                if ((player->GetTeamId() == TEAM_ALLIANCE && !player->IsActiveQuest(QUEST_THE_PRINCESS_SURPRISE))
+                    || (player->GetTeamId() == TEAM_HORDE && !player->IsActiveQuest(QUEST_THE_PRINCESS_SAVED)))
+                    return;
 
             moira->UpdateEntry(NPC_PRIESTESS_THAURISSAN);
         }

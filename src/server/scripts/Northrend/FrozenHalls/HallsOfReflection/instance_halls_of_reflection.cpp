@@ -207,8 +207,8 @@ class instance_halls_of_reflection : public InstanceMapScript
                 if (!_teamInInstance)
                 {
                     Map::PlayerList const& players = instance->GetPlayers();
-                    if (!players.isEmpty())
-                        if (Player* player = players.begin()->GetSource())
+                    if (!players.empty())
+                        if (Player* player = players.front())
                             _teamInInstance = player->GetTeam();
                 }
 
@@ -391,8 +391,8 @@ class instance_halls_of_reflection : public InstanceMapScript
                 if (!_teamInInstance)
                 {
                     Map::PlayerList const& players = instance->GetPlayers();
-                    if (!players.isEmpty())
-                        if (Player* player = players.begin()->GetSource())
+                    if (!players.empty())
+                        if (Player* player = players.front())
                             _teamInInstance = player->GetTeam();
                 }
 
@@ -405,8 +405,8 @@ class instance_halls_of_reflection : public InstanceMapScript
                 if (!_teamInInstance)
                 {
                     Map::PlayerList const& players = instance->GetPlayers();
-                    if (!players.isEmpty())
-                        if (Player* player = players.begin()->GetSource())
+                    if (!players.empty())
+                        if (Player* player = players.front())
                             _teamInInstance = player->GetTeam();
                 }
 
@@ -517,7 +517,7 @@ class instance_halls_of_reflection : public InstanceMapScript
 
             void Update(uint32 diff) override
             {
-                if (!instance->HavePlayers())
+                if (instance->GetPlayers().empty())
                     return;
 
                 events.Update(diff);

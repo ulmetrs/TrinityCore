@@ -202,9 +202,9 @@ struct boss_ahune : public BossAI
             Unit::Kill(me, frozenCore);
 
         Map::PlayerList const& players = me->GetMap()->GetPlayers();
-        if (!players.isEmpty())
+        if (!players.empty())
         {
-            if (Group* group = players.begin()->GetSource()->GetGroup())
+            if (Group* group = players.front()->GetGroup())
                 if (group->isLFGGroup())
                     sLFGMgr->FinishDungeon(group->GetGUID(), 286, me->GetMap());
         }

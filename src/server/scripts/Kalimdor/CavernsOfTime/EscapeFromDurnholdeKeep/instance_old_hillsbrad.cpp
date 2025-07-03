@@ -73,12 +73,11 @@ public:
         {
             Map::PlayerList const& players = instance->GetPlayers();
 
-            if (!players.isEmpty())
+            if (!players.empty())
             {
-                for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                for (auto player : players)
                 {
-                    if (Player* player = itr->GetSource())
-                        player->KilledMonsterCredit(LODGE_QUEST_TRIGGER);
+                    player->KilledMonsterCredit(LODGE_QUEST_TRIGGER);
                 }
             }
         }

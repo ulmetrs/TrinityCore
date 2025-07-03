@@ -207,18 +207,15 @@ public:
                         TC_LOG_DEBUG("scripts", "Instance The Black Morass: Event completed.");
                         Map::PlayerList const& players = instance->GetPlayers();
 
-                        if (!players.isEmpty())
+                        if (!players.empty())
                         {
-                            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                            for (auto player : players)
                             {
-                                if (Player* player = itr->GetSource())
-                                {
-                                    if (player->GetQuestStatus(QUEST_OPENING_PORTAL) == QUEST_STATUS_INCOMPLETE)
-                                        player->AreaExploredOrEventHappens(QUEST_OPENING_PORTAL);
+                                if (player->GetQuestStatus(QUEST_OPENING_PORTAL) == QUEST_STATUS_INCOMPLETE)
+                                    player->AreaExploredOrEventHappens(QUEST_OPENING_PORTAL);
 
-                                    if (player->GetQuestStatus(QUEST_MASTER_TOUCH) == QUEST_STATUS_INCOMPLETE)
-                                        player->AreaExploredOrEventHappens(QUEST_MASTER_TOUCH);
-                                }
+                                if (player->GetQuestStatus(QUEST_MASTER_TOUCH) == QUEST_STATUS_INCOMPLETE)
+                                    player->AreaExploredOrEventHappens(QUEST_MASTER_TOUCH);
                             }
                         }
                     }

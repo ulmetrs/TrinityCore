@@ -353,17 +353,14 @@ class instance_stratholme : public InstanceMapScript
 
                                     Map::PlayerList const& players = instance->GetPlayers();
 
-                                    for (auto const& i : players)
+                                    for (auto const& player : players)
                                     {
-                                        if (Player* player = i.GetSource())
-                                        {
-                                            if (player->IsGameMaster())
-                                                continue;
+                                        if (player->IsGameMaster())
+                                            continue;
 
-                                            //! im not quite sure what this one is supposed to do
-                                            //! this is server-side spell
-                                            player->CastSpell(ysida, SPELL_YSIDA_CREDIT_EFFECT, true);
-                                        }
+                                        //! im not quite sure what this one is supposed to do
+                                        //! this is server-side spell
+                                        player->CastSpell(ysida, SPELL_YSIDA_CREDIT_EFFECT, true);
                                     }
                                 }
                                 events.CancelEvent(EVENT_BARON_RUN);

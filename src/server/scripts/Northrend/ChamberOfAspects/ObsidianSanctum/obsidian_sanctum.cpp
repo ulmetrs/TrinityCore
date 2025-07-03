@@ -618,17 +618,17 @@ struct npc_acolyte_of_shadron : public ScriptedAI
 
         Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
 
-        if (PlayerList.isEmpty())
+        if (PlayerList.empty())
             return;
 
-        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+        for (auto player : PlayerList)
         {
-            if (i->GetSource()->IsAlive() && i->GetSource()->HasAura(SPELL_TWILIGHT_SHIFT) && !i->GetSource()->GetVictim())
+            if (player->IsAlive() && player->HasAura(SPELL_TWILIGHT_SHIFT) && !player->GetVictim())
             {
-                i->GetSource()->CastSpell(i->GetSource(), SPELL_TWILIGHT_SHIFT_REMOVAL_ALL, true);
-                i->GetSource()->CastSpell(i->GetSource(), SPELL_TWILIGHT_RESIDUE, true);
-                i->GetSource()->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT);
-                i->GetSource()->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT_ENTER);
+                player->CastSpell(player, SPELL_TWILIGHT_SHIFT_REMOVAL_ALL, true);
+                player->CastSpell(player, SPELL_TWILIGHT_RESIDUE, true);
+                player->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT);
+                player->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT_ENTER);
             }
         }
 
@@ -691,20 +691,20 @@ struct npc_acolyte_of_vesperon : public ScriptedAI
 
         Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
 
-        if (PlayerList.isEmpty())
+        if (PlayerList.empty())
             return;
 
-        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+        for (auto player : PlayerList)
         {
-            if (i->GetSource()->IsAlive() && i->GetSource()->HasAura(SPELL_TWILIGHT_SHIFT) && !i->GetSource()->GetVictim())
+            if (player->IsAlive() && player->HasAura(SPELL_TWILIGHT_SHIFT) && !player->GetVictim())
             {
-                i->GetSource()->CastSpell(i->GetSource(), SPELL_TWILIGHT_SHIFT_REMOVAL_ALL, true);
-                i->GetSource()->CastSpell(i->GetSource(), SPELL_TWILIGHT_RESIDUE, true);
-                i->GetSource()->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT);
-                i->GetSource()->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT_ENTER);
+                player->CastSpell(player, SPELL_TWILIGHT_SHIFT_REMOVAL_ALL, true);
+                player->CastSpell(player, SPELL_TWILIGHT_RESIDUE, true);
+                player->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT);
+                player->RemoveAurasDueToSpell(SPELL_TWILIGHT_SHIFT_ENTER);
             }
-            if (i->GetSource()->IsAlive() && i->GetSource()->HasAura(SPELL_TWILIGHT_TORMENT_VESP) && !i->GetSource()->GetVictim())
-                i->GetSource()->RemoveAurasDueToSpell(SPELL_TWILIGHT_TORMENT_VESP);
+            if (player->IsAlive() && player->HasAura(SPELL_TWILIGHT_TORMENT_VESP) && !player->GetVictim())
+                player->RemoveAurasDueToSpell(SPELL_TWILIGHT_TORMENT_VESP);
         }
 
         instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_TWILIGHT_TORMENT_VESP_ACO, true, true);

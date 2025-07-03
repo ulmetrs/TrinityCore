@@ -189,9 +189,8 @@ public:
                     Map::PlayerList const& players = me->GetMap()->GetPlayers();
 
                     // get the best suitable target
-                    for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
+                    for (auto p : players)
                     {
-                        Player* p = i->GetSource();
                         if (p && p->IsAlive() // alive
                             && (!target || target->GetDistance2d(portal)>p->GetDistance2d(portal)) // closer than current best
                             && !p->HasAura(PlayerDebuff[j]) // not exhausted

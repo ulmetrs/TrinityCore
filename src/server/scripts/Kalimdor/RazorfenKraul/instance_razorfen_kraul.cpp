@@ -55,11 +55,9 @@ public:
 
         Player* GetPlayerInMap()
         {
-            Map::PlayerList const& players = instance->GetPlayers();
-            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+            for (auto player : instance->GetPlayers())
             {
-                if (Player* player = itr->GetSource())
-                    return player;
+                return player;
             }
             TC_LOG_DEBUG("scripts", "Instance Razorfen Kraul: GetPlayerInMap, but PlayerList is empty!");
             return nullptr;

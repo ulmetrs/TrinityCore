@@ -379,12 +379,10 @@ struct npc_thrall_old_hillsbrad : public EscortAI
                             ENSURE_AI(EscortAI, (Taretha->AI()))->Start(false, true, player->GetGUID());
                     }
 
-                    //kill credit Creature for quest
-                    Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                    //kill credit Creature for quest;
+                    for (auto player : me->GetMap()->GetPlayers())
                     {
-                        if (Player* player = itr->GetSource())
-                            player->KilledMonsterCredit(20156);
+                        player->KilledMonsterCredit(20156);
                     }
 
                     //alot will happen here, thrall and taretha talk, erozion appear at spot to explain

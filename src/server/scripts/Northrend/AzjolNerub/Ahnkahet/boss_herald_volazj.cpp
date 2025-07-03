@@ -229,10 +229,8 @@ struct boss_volazj : public BossAI
             // phase mask
             target->CastSpell(target, SPELL_INSANITY_TARGET + _insanityHandled, true);
             // summon twisted party members for this target
-            Map::PlayerList const& players = me->GetMap()->GetPlayers();
-            for (auto i = players.begin(); i != players.end(); ++i)
+            for (auto player : me->GetMap()->GetPlayers())
             {
-                Player* player = i->GetSource();
                 if (!player || !player->IsAlive())
                     continue;
                 // Summon clone
@@ -254,10 +252,8 @@ struct boss_volazj : public BossAI
 
     void ResetPlayersPhaseMask()
     {
-        Map::PlayerList const& players = me->GetMap()->GetPlayers();
-        for (auto i = players.begin(); i != players.end(); ++i)
+        for (auto player : me->GetMap()->GetPlayers())
         {
-            Player* player = i->GetSource();
             player->RemoveAurasDueToSpell(GetSpellForPhaseMask(player->GetPhaseMask()));
         }
     }
@@ -318,17 +314,13 @@ struct boss_volazj : public BossAI
         // Roll Insanity
         uint32 spell = GetSpellForPhaseMask(phase);
         uint32 spell2 = GetSpellForPhaseMask(nextPhase);
-        Map::PlayerList const& playerList = me->GetMap()->GetPlayers();
-        for (auto itr = playerList.begin(); itr != playerList.end(); ++itr)
+        for (auto player : me->GetMap()->GetPlayers())
         {
-            if (Player* player = itr->GetSource())
+            if (player->HasAura(spell))
             {
-                if (player->HasAura(spell))
-                {
-                    player->RemoveAurasDueToSpell(spell);
-                    if (spell2) // if there is still some different mask cast spell for it
-                        player->CastSpell(player, spell2, true);
-                }
+                player->RemoveAurasDueToSpell(spell);
+                if (spell2) // if there is still some different mask cast spell for it
+                    player->CastSpell(player, spell2, true);
             }
         }
     }

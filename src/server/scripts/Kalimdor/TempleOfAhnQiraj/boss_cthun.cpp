@@ -582,9 +582,8 @@ public:
                 if (WisperTimer <= diff)
                 {
                     //Play random sound to the zone
-                    Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-                    for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
-                        me->PlayDirectSound(RANDOM_SOUND_WHISPER, itr->GetSource());
+                    for (auto player : me->GetMap()->GetPlayers())
+                        me->PlayDirectSound(RANDOM_SOUND_WHISPER, player);
 
                     //One random wisper every 90 - 300 seconds
                     WisperTimer = urand(90000, 300000);

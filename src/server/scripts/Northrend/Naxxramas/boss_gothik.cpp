@@ -152,10 +152,8 @@ inline static bool IsOnSameSide(Position const* who, Position const* other)
 }
 static Player* FindEligibleTarget(Creature const* me, bool isGateOpen)
 {
-    Map::PlayerList const& players = me->GetMap()->GetPlayers();
-    for (Map::PlayerList::const_iterator it = players.begin(); it != players.end(); ++it)
+    for (auto player : me->GetMap()->GetPlayers())
     {
-        Player* player = it->GetSource();
         if (player && (isGateOpen || IsOnSameSide(me, player)) && me->CanSeeOrDetect(player) && me->IsValidAttackTarget(player) && player->isInAccessiblePlaceFor(me))
         {
             return player;

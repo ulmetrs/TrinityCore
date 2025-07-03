@@ -524,13 +524,11 @@ class spell_krick_explosive_barrage : public AuraScript
         Unit* caster = GetCaster();
         if (!caster || caster->GetTypeId() != TYPEID_UNIT)
             return;
-
-        Map::PlayerList const& players = caster->GetMap()->GetPlayers();
-        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+;
+        for (auto player : caster->GetMap()->GetPlayers())
         {
-            if (Player* player = itr->GetSource())
-                if (player->IsWithinDist(caster, 60.0f)) // don't know correct range
-                    caster->CastSpell(player, SPELL_EXPLOSIVE_BARRAGE_SUMMON, true);
+            if (player->IsWithinDist(caster, 60.0f)) // don't know correct range
+                caster->CastSpell(player, SPELL_EXPLOSIVE_BARRAGE_SUMMON, true);
         }
     }
 

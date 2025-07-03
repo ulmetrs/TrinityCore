@@ -738,21 +738,17 @@ struct npc_greyheart_spellbinder : public ScriptedAI
 
         if (Earthshock_Timer <= diff)
         {
-            Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-            for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
+            for (auto i_pl : me->GetMap()->GetPlayers())
             {
-                if (Player* i_pl = itr->GetSource())
-                {
-                    bool isCasting = false;
-                    for (uint8 i = 0; i < CURRENT_MAX_SPELL; ++i)
-                        if (i_pl->GetCurrentSpell(i))
-                            isCasting = true;
+                bool isCasting = false;
+                for (uint8 i = 0; i < CURRENT_MAX_SPELL; ++i)
+                    if (i_pl->GetCurrentSpell(i))
+                        isCasting = true;
 
-                    if (isCasting)
-                    {
-                        DoCast(i_pl, SPELL_EARTHSHOCK);
-                        break;
-                    }
+                if (isCasting)
+                {
+                    DoCast(i_pl, SPELL_EARTHSHOCK);
+                    break;
                 }
             }
             Earthshock_Timer = urand(8000, 15000);

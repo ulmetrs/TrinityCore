@@ -247,11 +247,11 @@ struct boss_the_lurker_below : public BossAI
             {
                 InRange = false;
                 Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-                if (!PlayerList.isEmpty())
+                if (!PlayerList.empty())
                 {
-                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                    for (auto player : PlayerList)
                     {
-                        if (me->IsWithinMeleeRange(i->GetSource()))
+                        if (me->IsWithinMeleeRange(player))
                             InRange = true;
                     }
                 }
@@ -262,11 +262,10 @@ struct boss_the_lurker_below : public BossAI
 
             if (RotTimer)
             {
-                Map::PlayerList const& PlayerList = me->GetMap()->GetPlayers();
-                for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                for (auto player : me->GetMap()->GetPlayers())
                 {
-                    if (i->GetSource() && i->GetSource()->IsAlive() && me->HasInArc(diff/20000.f*float(M_PI)*2.f, i->GetSource()) && me->IsWithinDist(i->GetSource(), SPOUT_DIST) && !i->GetSource()->IsInWater())
-                        DoCast(i->GetSource(), SPELL_SPOUT, true); // only knock back players in arc, in 100yards, not in water
+                    if (player && player->IsAlive() && me->HasInArc(diff/20000.f*float(M_PI)*2.f, player) && me->IsWithinDist(player, SPOUT_DIST) && !player->IsInWater())
+                        DoCast(player, SPELL_SPOUT, true); // only knock back players in arc, in 100yards, not in water
                 }
 
                 if (SpoutAnimTimer <= diff)
