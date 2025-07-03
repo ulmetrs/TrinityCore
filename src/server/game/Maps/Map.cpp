@@ -496,7 +496,7 @@ bool Map::AddPlayerToMap(Player* player)
     }
 
     // TODO investigate which thread adding is done one
-    _players.insert(player);
+    _players.push_back(player);
 
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
