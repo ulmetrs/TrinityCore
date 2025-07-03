@@ -502,7 +502,7 @@ bool InstanceScript::SetBossState(uint32 id, EncounterState state)
                 );
             for (auto& player : instance->GetPlayers()) // todo: decide what players can receive this
             {
-                player.GetSource()->UpdateAchievementCriteria(
+                player->UpdateAchievementCriteria(
                     AchievementCriteriaTypes::ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ENCOUNTER
                     , instance->GetEntry()->ID
                     , id
