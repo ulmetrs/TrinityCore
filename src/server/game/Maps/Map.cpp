@@ -1224,6 +1224,8 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         player->DestroyForNearbyPlayers(); // previous player->UpdateObjectVisibility(true)
 
+    _players.remove(player);
+
     if (player->IsInGrid())
         player->RemoveFromGrid();
     else
