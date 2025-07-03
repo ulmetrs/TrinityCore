@@ -483,7 +483,7 @@ uint32 MapManager::GetNumPlayersInInstances()
         if (!mapInstanced)
             continue;
         MapInstanced::Instances& maps = mapInstanced->GetInstances();
-        ret += std::accumulate(maps.begin(), maps.end(), 0u, [](uint32 total, MapInstanced::Instances::value_type const& value) { return total + value.second->GetPlayers().getSize(); });
+        ret += std::accumulate(maps.begin(), maps.end(), 0u, [](uint32 total, MapInstanced::Instances::value_type const& value) { return total + value.second->GetPlayers().size(); });
     }
     return ret;
 }
