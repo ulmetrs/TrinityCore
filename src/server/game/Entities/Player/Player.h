@@ -2219,10 +2219,6 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SetPassOnGroupLoot(bool bPassOnGroupLoot) { m_bPassOnGroupLoot = bPassOnGroupLoot; }
         bool GetPassOnGroupLoot() const { return m_bPassOnGroupLoot; }
 
-        // Set map to player and add reference
-        void SetMap(Map* map) override;
-        void ResetMap() override;
-
         // @epoch-begin
         bool CanTeleport() { return m_canTeleport; }
         void SetCanTeleport(bool value) { m_canTeleport = value; }
