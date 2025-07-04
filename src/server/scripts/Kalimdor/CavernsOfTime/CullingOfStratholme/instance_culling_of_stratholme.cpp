@@ -414,17 +414,16 @@ class instance_culling_of_stratholme : public InstanceMapScript
                         Creature* arthas = instance->GetCreature(_arthasGUID);
                         Position const& target = arthas ? arthas->GetPosition() : GetArthasSnapbackFor(_currentState);
 
-                        for (auto itr = instance->GetPlayers().begin(); itr != instance->GetPlayers().end(); ++itr)
+                        for (auto player : instance->GetPlayers())
                         {
-                            if (Player* player = itr->GetSource())
-                                if (player->GetGUID() == guid || !player->IsGameMaster())
-                                {
-                                    player->CombatStop(true);
-                                    const float offsetDist = 10;
-                                    float myAngle = rand_norm() * 2.0 * M_PI;
-                                    Position myTarget(target.GetPositionX() + std::sin(myAngle) * offsetDist, target.GetPositionY() + std::sin(myAngle) * offsetDist, target.GetPositionZ(), myAngle + M_PI);
-                                    player->NearTeleportTo(myTarget);
-                                }
+                            if (player->GetGUID() == guid || !player->IsGameMaster())
+                            {
+                                player->CombatStop(true);
+                                const float offsetDist = 10;
+                                float myAngle = rand_norm() * 2.0 * M_PI;
+                                Position myTarget(target.GetPositionX() + std::sin(myAngle) * offsetDist, target.GetPositionY() + std::sin(myAngle) * offsetDist, target.GetPositionZ(), myAngle + M_PI);
+                                player->NearTeleportTo(myTarget);
+                            }
                         }
                         break;
                     }

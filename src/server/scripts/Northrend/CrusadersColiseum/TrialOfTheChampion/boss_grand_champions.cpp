@@ -98,8 +98,8 @@ void AggroAllPlayers(Creature* temp)
 {
     Map::PlayerList const& PlList = temp->GetMap()->GetPlayers();
 
-    if (PlList.isEmpty())
-            return;
+    if (PlList.empty())
+        return;
 
     for (auto player :PlList)
     {

@@ -144,7 +144,7 @@ public:
         //what other conditions to check?
         bool CanProgressEvent()
         {
-            if (instance->GetPlayers().isEmpty())
+            if (instance->GetPlayers().empty())
                 return false;
 
             return true;
