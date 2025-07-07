@@ -807,6 +807,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND]    = sConfigMgr->GetBoolDefault("AllowTwoSide.AddFriend", false);
     m_bool_configs[CONFIG_NAME_RESERVATION] = sConfigMgr->GetBoolDefault("NameReservation", false);
     m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = sConfigMgr->GetBoolDefault("AlwaysUpdateWaypointCreatures", false);
+    m_bool_configs[CONFIG_SKIP_EXPANSION_MAPS_ON_LOAD] = sConfigMgr->GetBoolDefault("SkipExpansionMapsOnLoad", false);
     /** @epoch-end */
 
     m_int_configs[CONFIG_MIN_PLAYER_NAME]                     = sConfigMgr->GetIntDefault ("MinPlayerName",  2);
@@ -1693,8 +1694,9 @@ void World::SetInitialWorldSettings()
 
     std::vector<uint32> mapIds;
     for (uint32 mapId = 0; mapId < sMapStore.GetNumRows(); mapId++)
-        if (sMapStore.LookupEntry(mapId))
-            mapIds.push_back(mapId);
+        if (auto entry = sMapStore.LookupEntry(mapId))
+            if (!entry->IsExpansionMap() || !getBoolConfig(CONFIG_SKIP_EXPANSION_MAPS_ON_LOAD))
+                mapIds.push_back(mapId);
 
     vmmgr2->InitializeThreadUnsafe(mapIds);
 

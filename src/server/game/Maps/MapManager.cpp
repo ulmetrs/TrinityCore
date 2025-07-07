@@ -138,8 +138,6 @@ Map* MapManager::CreateBaseMap(uint32 mapId)
     if (map)
         return map;
 
-    std::lock_guard<std::mutex> lock(_mapsLock);
-
     MapEntry const* entry = sMapStore.LookupEntry(mapId);
     ASSERT(entry);
 
@@ -189,9 +187,14 @@ Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint3
 {
     ZoneScopedNC("MapManager::CreateMap", WORLD_UPDATE_COLOR)
 
-    Map* map = CreateBaseMap(id);
+    Map* map = FindBaseMap(id);
     if (!map)
-        return nullptr;
+    {
+        // Base maps are pre-loaded on startup - if we have set them to not load but some code needs the map you will
+        // pay a performance spike here
+        std::lock_guard<std::mutex> lock(_mapsLock);
+        map = CreateBaseMap(id);
+    }
 
     MapInstanced* mapInstanced = map->ToMapInstanced();
     if (mapInstanced)
@@ -206,13 +209,13 @@ Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint3
     }
 
     MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-    if (!mapPartitioned)
-        return nullptr;
+    ASSERT(mapPartitioned);
 
     uint32 partitionId = mapPartitioned->CalculatePartitionId(pos);
+    if (partitionId == mapPartitioned->GetPartitionId())
+        return mapPartitioned;
 
-    // Additional logic to check for existing partition
-    return mapPartitioned->CreatePartition(id, partitionId);
+    return mapPartitioned->FindPartition(partitionId);
 }
 
 // Use this for queries where we do not want to create the map directly
@@ -232,9 +235,8 @@ Map* MapManager::FindMap(uint32 mapid, Position const& pos, uint32 instanceId) c
     MapPartitioned* mapPartitioned = map->ToMapPartitioned();
     if (!mapPartitioned)
         return nullptr;
-        
+
     uint32 partitionId = mapPartitioned->CalculatePartitionId(pos);
-    // For partitions the base map is the default/fallback partition, so return it
     if (partitionId == mapPartitioned->GetPartitionId())
         return mapPartitioned;
 
@@ -263,6 +265,10 @@ Map* MapManager::FindPartition(uint32 mapId, uint32 partitionId) const
     MapPartitioned* mapPartitioned = baseMap->ToMapPartitioned();
     if (!mapPartitioned)
         return nullptr;
+
+    uint32 partitionId = mapPartitioned->CalculatePartitionId(pos);
+    if (partitionId == mapPartitioned->GetPartitionId())
+        return mapPartitioned;
 
     return mapPartitioned->FindPartition(partitionId);
 }

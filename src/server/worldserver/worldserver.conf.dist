@@ -4501,6 +4501,16 @@ DontCacheRandomMovementPaths = 0
 AlwaysUpdateWaypointCreatures = 0
 
 #
+#    SkipExpansionMapsOnLoad
+#       Description: Map data is now loaded on startup, this setting skips any maps that are marked as
+#                    expansion, useful for when they will never be used.  If a player is teleported to
+#                    one of these maps the entire tick will need to wait for the map to load.
+#       Default:    0 - (Disabled)
+#                   1 - (Enabled)
+
+SkipExpansionMapsOnLoad = 1
+
+#
 #
 ###################################################################################################
 
