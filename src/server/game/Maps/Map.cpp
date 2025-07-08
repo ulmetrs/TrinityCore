@@ -488,6 +488,10 @@ bool Map::AddPlayerToMap(Player* player)
 {
     ZoneScopedN("Map::AddPlayerToMap")
 
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    TC_LOG_DEBUG("threads", "Adding player {} to map {} on thread {}", player->GetName(), GetId(), oss.str());
+
     CellCoord cellCoord = Trinity::ComputeCellCoord(player->GetPositionX(), player->GetPositionY());
     if (!cellCoord.IsCoordValid())
     {
@@ -720,10 +724,6 @@ void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::Obj
             cell.SetNoCreate();
             Visit(cell, gridVisitor);
             Visit(cell, worldVisitor);
-
-            // mark the grid as well to avoid processing notifies for inactive grids
-            NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-            grid->SetGridState(GRID_STATE_ACTIVE);
         }
     }
 }
@@ -1074,8 +1074,6 @@ void Map::Update(uint32 t_diff)
 
     UpdateWeather(t_diff);
 
-    ProcessRelocationNotifies(t_diff);
-
     {
         ZoneScopedN("Map::Update::ScriptMgr")
 
@@ -1109,97 +1107,6 @@ void Map::UpdateWeather(uint32 t_diff)
             zoneInfo.second.DefaultWeather.reset();
 
     _weatherUpdateTimer.Reset();
-}
-
-struct ResetNotifier
-{
-    template<class T>inline void resetNotify(GridRefManager<T> &m)
-    {
-        for (typename GridRefManager<T>::iterator iter=m.begin(); iter != m.end(); ++iter)
-            iter->GetSource()->ResetAllNotifies();
-    }
-    template<class T> void Visit(GridRefManager<T> &) { }
-    void Visit(CreatureMapType &m) { resetNotify<Creature>(m);}
-    void Visit(PlayerMapType &m) { resetNotify<Player>(m);}
-};
-
-void Map::ProcessRelocationNotifies(const uint32 diff)
-{
-    ZoneScopedN("Map::ProcessRelocationNotifies")
-
-    if (_players.empty() && m_activeNonPlayers.empty())
-        return;
-
-    for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
-    {
-        NGridType *grid = i->GetSource();
-        if (grid->GetGridState() != GRID_STATE_ACTIVE)
-            continue;
-
-        grid->getRelocationTimer().TUpdate(diff);
-        if (!grid->getRelocationTimer().TPassed())
-            continue;
-
-        uint32 gx = grid->getX(), gy = grid->getY();
-        CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
-        CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-        for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
-        {
-            for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
-            {
-                uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-                if (!isCellMarked(cell_id))
-                    continue;
-
-                CellCoord pair(x, y);
-                Cell cell(pair);
-                cell.SetNoCreate();
-
-                /** @epoch-start */
-                Trinity::DelayedUnitRelocation cell_relocation(cell, pair, *this, 100);
-                /** @epoch-end */
-                TypeContainerVisitor<Trinity::DelayedUnitRelocation, GridTypeMapContainer  > grid_object_relocation(cell_relocation);
-                TypeContainerVisitor<Trinity::DelayedUnitRelocation, WorldTypeMapContainer > world_object_relocation(cell_relocation);
-                Visit(cell, grid_object_relocation);
-                Visit(cell, world_object_relocation);
-            }
-        }
-    }
-
-    ResetNotifier reset;
-    TypeContainerVisitor<ResetNotifier, GridTypeMapContainer >  grid_notifier(reset);
-    TypeContainerVisitor<ResetNotifier, WorldTypeMapContainer > world_notifier(reset);
-    for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); ++i)
-    {
-        NGridType *grid = i->GetSource();
-        if (grid->GetGridState() != GRID_STATE_ACTIVE)
-            continue;
-
-        if (!grid->getRelocationTimer().TPassed())
-            continue;
-
-        // TODO experiment with resetting vis state inside the above loop
-        grid->SetGridState(GRID_STATE_INACTIVE);
-        grid->getRelocationTimer().TReset(diff, m_VisibilityNotifyPeriod);
-        uint32 gx = grid->getX(), gy = grid->getY();
-        CellCoord cell_min(gx*MAX_NUMBER_OF_CELLS, gy*MAX_NUMBER_OF_CELLS);
-        CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-        for (uint32 x = cell_min.x_coord; x < cell_max.x_coord; ++x)
-        {
-            for (uint32 y = cell_min.y_coord; y < cell_max.y_coord; ++y)
-            {
-                uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-                if (!isCellMarked(cell_id))
-                    continue;
-
-                CellCoord pair(x, y);
-                Cell cell(pair);
-                cell.SetNoCreate();
-                Visit(cell, grid_notifier);
-                Visit(cell, world_notifier);
-            }
-        }
-    }
 }
 
 void Map::RemovePlayerFromMap(Player* player, bool remove)
@@ -3953,6 +3860,9 @@ void InstanceMap::RemovePlayerFromMap(Player* player, bool remove)
 {
     ZoneScopedN("InstanceMap::RemovePlayerFromMap")
 
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    TC_LOG_DEBUG("threads", "Removing player {} from map {} on thread {}", player->GetName(), GetId(), oss.str());
     TC_LOG_DEBUG("maps", "MAP: Removing player '{}' from instance '{}' of map '{}' before relocating to another map", player->GetName(), GetInstanceId(), GetMapName());
 
     if (i_data)

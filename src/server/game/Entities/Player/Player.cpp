@@ -127,6 +127,8 @@
 #include "AnticheatMgr.h"
 // @epoch-end
 
+using namespace Trinity;
+
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 
 #define PLAYER_SKILL_INDEX(x)       (PLAYER_SKILL_INFO_1_1 + ((x)*3))
@@ -1057,6 +1059,8 @@ void Player::Update(uint32 p_time)
     if (!IsInWorld())
         return;
 
+    ZoneScopedN("Player::Update")
+
     // undelivered mail
     if (m_nextMailDelivereTime && m_nextMailDelivereTime <= GameTime::GetGameTime())
     {
@@ -1401,6 +1405,25 @@ void Player::Update(uint32 p_time)
 
     if (IsHasDelayedTeleport())
         TeleportTo(m_teleport_dest, m_teleport_options);
+
+    // For now, do this at the end of the update
+    // Periodically send player updated visibility of all surrounding units
+    vis_Update.TUpdate(p_time);
+    if (vis_Update.TPassed())
+    {
+        vis_Update.TReset(p_time, GetMap()->GetVisibilityNotifyPeriod());
+
+        WorldObject const* viewPoint = m_seer;
+        if (viewPoint->isNeedNotify(NOTIFY_VISIBILITY_CHANGED) && (this == viewPoint || viewPoint->IsPositionValid()))
+        {
+            ZoneScopedN("Player::Update::RelocationNotifier")
+            PlayerRelocationNotifier relocate(*this);
+            Cell::VisitAllObjects(viewPoint, relocate, 100, false);
+            relocate.SendToSelf();
+        }
+
+        ResetAllNotifies();
+    }
 }
 
 void Player::setDeathState(DeathState s)

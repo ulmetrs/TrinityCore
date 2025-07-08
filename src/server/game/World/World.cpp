@@ -1692,6 +1692,9 @@ void World::SetInitialWorldSettings()
     // Load IP Location Database
     sIPLocation->Load();
 
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    TC_LOG_DEBUG("threads", "Loading maps on thread {}", oss.str());
     std::vector<uint32> mapIds;
     for (uint32 mapId = 0; mapId < sMapStore.GetNumRows(); mapId++)
         if (auto entry = sMapStore.LookupEntry(mapId))

@@ -20,6 +20,7 @@
 
 #include "Object.h"
 #include "CombatManager.h"
+#include "Random.h"
 #include "SharedDefines.h"
 #include "SpellAuraDefines.h"
 #include "ThreatManager.h"
@@ -2012,6 +2013,7 @@ class TC_GAME_API Unit : public WorldObject
 
         uint32 m_reactiveTimer[MAX_REACTIVE];
         uint32 m_regenTimer;
+        PeriodicTimer vis_Update;
 
         Vehicle* m_vehicle;
         Trinity::unique_trackable_ptr<Vehicle> m_vehicleKit;

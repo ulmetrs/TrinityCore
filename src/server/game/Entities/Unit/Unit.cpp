@@ -61,6 +61,7 @@
 #include "Player.h"
 #include "PlayerAI.h"
 #include "QuestDef.h"
+#include "Random.h"
 #include "ReputationMgr.h"
 #include "ScheduledChangeAI.h"
 #include "SharedDefines.h"
@@ -313,7 +314,8 @@ Unit::Unit(bool isWorldObject) :
     m_removedAurasCount(0), m_charmer(nullptr), m_charmed(nullptr),
     i_motionMaster(new MotionMaster(this)), m_regenTimer(0), m_vehicle(nullptr), m_vehicleKit(nullptr),
     m_unitTypeMask(UNIT_MASK_NONE), m_Diminishing(), m_combatManager(this), m_threatManager(this),
-    m_aiLocked(false), m_comboTarget(nullptr), m_comboPoints(0), _spellHistory(new SpellHistory(this))
+    m_aiLocked(false), m_comboTarget(nullptr), m_comboPoints(0), _spellHistory(new SpellHistory(this)),
+    vis_Update(0, irand(0, DEFAULT_VISIBILITY_NOTIFY_PERIOD))
 {
     m_objectType |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;

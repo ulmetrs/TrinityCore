@@ -27,15 +27,6 @@
 #include "Util.h"
 #include "Random.h"
 
-#define DEFAULT_VISIBILITY_NOTIFY_PERIOD      1000
-
-typedef enum
-{
-    GRID_STATE_INACTIVE = 0,
-    GRID_STATE_ACTIVE = 1,
-    MAX_GRID_STATE = 2
-} grid_state_t;
-
 template
 <
 uint32 N,
@@ -48,8 +39,7 @@ class NGrid
     public:
         typedef Grid<ACTIVE_OBJECT, WORLD_OBJECT_TYPES, GRID_OBJECT_TYPES> GridType;
         NGrid(uint32 id, int32 x, int32 y) :
-            i_gridId(id), i_x(x), i_y(y),
-            i_cellstate(GRID_STATE_INACTIVE), i_GridObjectDataLoaded(false), vis_Update(0, irand(0, DEFAULT_VISIBILITY_NOTIFY_PERIOD))
+            i_gridId(id), i_x(x), i_y(y), i_GridObjectDataLoaded(false)
         { }
 
         GridType& GetGridType(const uint32 x, const uint32 y)
@@ -65,8 +55,6 @@ class NGrid
         }
 
         uint32 GetGridId(void) const { return i_gridId; }
-        grid_state_t GetGridState(void) const { return i_cellstate; }
-        void SetGridState(grid_state_t s) { i_cellstate = s; }
         int32 getX() const { return i_x; }
         int32 getY() const { return i_y; }
 
@@ -76,8 +64,6 @@ class NGrid
         }
         bool isGridObjectDataLoaded() const { return i_GridObjectDataLoaded; }
         void setGridObjectDataLoaded(bool pLoaded) { i_GridObjectDataLoaded = pLoaded; }
-
-        PeriodicTimer& getRelocationTimer() { return vis_Update; }
 
         // Visit all Grids (cells) in NGrid (grid)
         template<class T, class TT>
@@ -110,9 +96,7 @@ class NGrid
         GridReference<NGrid<N, ACTIVE_OBJECT, WORLD_OBJECT_TYPES, GRID_OBJECT_TYPES> > i_Reference;
         int32 i_x;
         int32 i_y;
-        grid_state_t i_cellstate;
         GridType i_cells[N][N];
         bool i_GridObjectDataLoaded;
-        PeriodicTimer vis_Update;
 };
 #endif
