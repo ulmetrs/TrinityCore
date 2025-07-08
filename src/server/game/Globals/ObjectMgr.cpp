@@ -2455,9 +2455,12 @@ ObjectGuid::LowType ObjectMgr::AddGameObjectData(uint32 entry, uint32 mapId, Pos
     if (!goinfo)
         return 0;
 
-    Map* map = sMapMgr->CreateMap(mapId, pos);
+    Map* map = sMapMgr->FindMap(mapId, pos);
     if (!map)
+    {
+        TC_LOG_ERROR("misc", "AddGameObjectData: cannot add gameobject entry {} to map, map not found", entry);
         return 0;
+    }
 
     ObjectGuid::LowType spawnId = GenerateGameObjectSpawnId();
 
@@ -2504,9 +2507,12 @@ ObjectGuid::LowType ObjectMgr::AddCreatureData(uint32 entry, uint32 mapId, Posit
 
     uint32 level = cInfo->minlevel == cInfo->maxlevel ? cInfo->minlevel : urand(cInfo->minlevel, cInfo->maxlevel); // Only used for extracting creature base stats
     CreatureBaseStats const* stats = GetCreatureBaseStats(level, cInfo->unit_class);
-    Map* map = sMapMgr->CreateMap(mapId, pos);
+    Map* map = sMapMgr->FindMap(mapId, pos);
     if (!map)
+    {
+        TC_LOG_ERROR("misc", "AddCreatureData: cannot add creature entry {} to map, map not found", entry);
         return 0;
+    }
 
     ObjectGuid::LowType spawnId = GenerateCreatureSpawnId();
     CreatureData& data = NewOrExistCreatureData(spawnId);

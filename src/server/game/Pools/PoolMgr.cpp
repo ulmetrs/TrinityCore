@@ -174,8 +174,8 @@ void PoolGroup<Creature>::Despawn1Object(ObjectGuid::LowType guid, bool alwaysDe
     {
         sObjectMgr->RemoveCreatureFromGrid(guid, data);
 
-        Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
-        if (!map->Instanceable())
+        Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+        if (map && !map->Instanceable())
         {
             auto creatureBounds = map->GetCreatureBySpawnIdStore().equal_range(guid);
             for (auto itr = creatureBounds.first; itr != creatureBounds.second;)
@@ -202,8 +202,8 @@ void PoolGroup<GameObject>::Despawn1Object(ObjectGuid::LowType guid, bool always
     {
         sObjectMgr->RemoveGameobjectFromGrid(guid, data);
 
-        Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
-        if (!map->Instanceable())
+        Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+        if (map && !map->Instanceable())
         {
             auto gameobjectBounds = map->GetGameObjectBySpawnIdStore().equal_range(guid);
             for (auto itr = gameobjectBounds.first; itr != gameobjectBounds.second;)
@@ -323,12 +323,18 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj)
 {
     if (CreatureData const* data = sObjectMgr->GetCreatureData(obj->guid))
     {
+        Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+        if (!map)
+        {
+            TC_LOG_ERROR("pool", "PoolGroup<Creature>::Spawn1Object: Map {} not found", data->mapId);
+            return;
+        }
+
         sObjectMgr->AddCreatureToGrid(obj->guid, data);
 
         // Spawn if necessary (loaded grids only)
-        Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
         // We use spawn coords to spawn
-        if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
+        if (map && !map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
         {
             Creature* creature = new Creature();
             //TC_LOG_DEBUG("pool", "Spawning creature {}", guid);
@@ -347,10 +353,17 @@ void PoolGroup<GameObject>::Spawn1Object(PoolObject* obj)
 {
     if (GameObjectData const* data = sObjectMgr->GetGameObjectData(obj->guid))
     {
+        Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+        if (!map)
+        {
+            TC_LOG_ERROR("pool", "PoolGroup<GameObject>::Spawn1Object: Map {} not found", data->mapId);
+            return;
+        }
+
         sObjectMgr->AddGameobjectToGrid(obj->guid, data);
         // Spawn if necessary (loaded grids only)
         // this base map checked as non-instanced and then only existed
-        Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
+        
         // We use current coords to unspawn, not spawn coords since creature can have changed grid
         if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
         {
@@ -402,8 +415,8 @@ void PoolGroup<Creature>::RemoveRespawnTimeFromDB(ObjectGuid::LowType guid)
 {
     if (CreatureData const* data = sObjectMgr->GetCreatureData(guid))
     {
-        Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
-        if (!map->Instanceable())
+        Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+        if (map && !map->Instanceable())
         {
             map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, guid, nullptr, true);
         }
@@ -415,8 +428,8 @@ void PoolGroup<GameObject>::RemoveRespawnTimeFromDB(ObjectGuid::LowType guid)
 {
     if (GameObjectData const* data = sObjectMgr->GetGameObjectData(guid))
     {
-        Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
-        if (!map->Instanceable())
+        Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+        if (map && !map->Instanceable())
         {
             map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, guid, nullptr, true);
         }

@@ -1301,10 +1301,16 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
         // Add to correct cell
         if (CreatureData const* data = sObjectMgr->GetCreatureData(*itr))
         {
+            Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+            if (!map)
+            {
+                TC_LOG_ERROR("gameevent", "GameEventMgr::GameEventSpawn: Can't create creature entry: {}, map not found.", *itr);
+                continue;
+            }
+
             sObjectMgr->AddCreatureToGrid(*itr, data);
 
             // Spawn if necessary (loaded grids only)
-            Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
             map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, *itr);
             // We use spawn coords to spawn
             if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
@@ -1329,10 +1335,16 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
         // Add to correct cell
         if (GameObjectData const* data = sObjectMgr->GetGameObjectData(*itr))
         {
+            Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+            if (!map)
+            {
+                TC_LOG_ERROR("gameevent", "GameEventMgr::GameEventSpawn: Can't create gameobject entry: {}, map not found.", *itr);
+                continue;
+            }
+
             sObjectMgr->AddGameobjectToGrid(*itr, data);
+
             // Spawn if necessary (loaded grids only)
-            // this base map checked as non-instanced and then only existed
-            Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
             map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, *itr);
             // We use current coords to unspawn, not spawn coords since creature can have changed grid
             if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))

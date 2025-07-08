@@ -434,7 +434,7 @@ void Creature::UpdateMapPartition(Map* forcedMap)
     if (!currentMap || !currentMap->IsWorldMap())
         return;
 
-    Map* newMap = forcedMap ? forcedMap : sMapMgr->CreateMap(currentMap->GetId(), GetPosition());
+    Map* newMap = forcedMap ? forcedMap : sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     if (!newMap || newMap == currentMap)
         return;
 

@@ -2106,7 +2106,7 @@ void Player::UpdateMapPartition(Map* forcedMap)
     if (!currentMap || !currentMap->IsWorldMap())
         return;
 
-    Map* newMap = forcedMap ? forcedMap : sMapMgr->CreateMap(currentMap->GetId(), GetPosition(), this);
+    Map* newMap = forcedMap ? forcedMap : sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     // We don't change partitions if already in the correct partition
     if (!newMap || newMap == currentMap)
         return;

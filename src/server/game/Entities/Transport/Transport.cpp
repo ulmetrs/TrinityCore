@@ -749,7 +749,7 @@ void Transport::UpdateMapPartition()
     if (!currentMap || !currentMap->IsWorldMap())
         return;
 
-    Map* newMap = sMapMgr->CreateMap(currentMap->GetId(), GetPosition());
+    Map* newMap = sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     // Sanity checks
     if (!newMap || newMap == currentMap)
         return;
