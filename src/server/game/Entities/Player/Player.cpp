@@ -2134,8 +2134,6 @@ void Player::UpdateMapPartition(Map* forcedMap)
     if (!newMap || newMap == currentMap)
         return;
 
-    TC_LOG_DEBUG("partitions", "Player::UpdateMapPartition {} Moving From Partition {} To Partition {} ", GetGUID(), currentMap->GetPartitionId(), newMap->GetPartitionId());
-
     // Experiment with all of the things we should set off when we cross partitions, these are taken from teleport
     DuelComplete(DUEL_FLED);
     SetSelection(ObjectGuid::Empty);

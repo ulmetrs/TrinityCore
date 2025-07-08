@@ -441,8 +441,6 @@ void Creature::UpdateMapPartition(Map* forcedMap)
     if (!newMap || newMap == currentMap)
         return;
 
-    TC_LOG_DEBUG("partitions", "Creature::UpdateMapPartition {} Moving From Partition {} To Partition {} ", GetGUID(), currentMap->GetPartitionId(), newMap->GetPartitionId());
-
     // If this unit is a vehicle force update its passengers
     Vehicle* vehicle = GetVehicleKit();
     if (vehicle)
