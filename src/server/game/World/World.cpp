@@ -1695,11 +1695,18 @@ void World::SetInitialWorldSettings()
     std::ostringstream oss;
     oss << std::this_thread::get_id();
     TC_LOG_DEBUG("threads", "Loading maps on thread {}", oss.str());
+
     std::vector<uint32> mapIds;
+    std::vector<uint32> loadMapIds;
     for (uint32 mapId = 0; mapId < sMapStore.GetNumRows(); mapId++)
+    {
         if (auto entry = sMapStore.LookupEntry(mapId))
+        {
+            mapIds.push_back(mapId);
             if (entry->Expansion() == 0 || !getBoolConfig(CONFIG_SKIP_EXPANSION_MAPS_ON_LOAD))
-                mapIds.push_back(mapId);
+                loadMapIds.push_back(mapId);
+        }
+    }
 
     vmmgr2->InitializeThreadUnsafe(mapIds);
 
@@ -1710,7 +1717,7 @@ void World::SetInitialWorldSettings()
     sObjectMgr->LoadMapPartitions();
 
     TC_LOG_INFO("server.loading", "Loading Base Maps...");
-    sMapMgr->LoadBaseMaps(mapIds);
+    sMapMgr->LoadBaseMaps(loadMapIds);
 
     TC_LOG_INFO("server.loading", "Initializing PlayerDump tables...");
     PlayerDump::InitializeTables();
