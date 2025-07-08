@@ -266,7 +266,6 @@ Map* MapManager::FindPartition(uint32 mapId, uint32 partitionId) const
     if (!mapPartitioned)
         return nullptr;
 
-    uint32 partitionId = mapPartitioned->CalculatePartitionId(pos);
     if (partitionId == mapPartitioned->GetPartitionId())
         return mapPartitioned;
 
