@@ -489,6 +489,10 @@ bool Map::AddPlayerToMap(Player* player)
 {
     ZoneScopedN("Map::AddPlayerToMap")
 
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    TC_LOG_DEBUG("threads", "Adding player {} to map {} on thread {}", player->GetName(), GetId(), oss.str());
+
     CellCoord cellCoord = Trinity::ComputeCellCoord(player->GetPositionX(), player->GetPositionY());
     if (!cellCoord.IsCoordValid())
     {
@@ -1106,6 +1110,10 @@ void Map::UpdateWeather(uint32 t_diff)
 void Map::RemovePlayerFromMap(Player* player, bool remove)
 {
     ZoneScopedN("Map::RemovePlayerFromMap")
+
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    TC_LOG_DEBUG("threads", "Removing player {} from map {} on thread {}", player->GetName(), GetId(), oss.str());
 
     // Before leaving map, update zone/area for stats
     player->UpdateZone(MAP_INVALID_ZONE, 0);
