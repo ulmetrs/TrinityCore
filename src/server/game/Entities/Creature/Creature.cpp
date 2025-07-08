@@ -1843,8 +1843,7 @@ bool Creature::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap, 
     
     if (FormationInfo const* formationInfo = sFormationMgr->GetFormationInfo(spawnId))
         if (CreatureGroup* formation = sFormationMgr->GetCreatureGroup(formationInfo->LeaderSpawnId, map))
-            if (Creature* leader = formation->GetLeader())
-                spawnPoint = leader->GetPosition();
+            spawnPoint = formation->GetRespawnPosition(this, spawnPoint);
 
     if (!Create(map->GenerateLowGuid<HighGuid::Unit>(), map, data->phaseMask, data->id, spawnPoint, data, 0U , !m_respawnCompatibilityMode))
         return false;

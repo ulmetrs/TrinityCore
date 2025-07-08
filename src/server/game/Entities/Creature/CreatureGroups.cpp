@@ -421,3 +421,20 @@ bool CreatureGroup::CanLeaderStartMoving() const
 
     return true;
 }
+
+Position CreatureGroup::GetRespawnPosition(Creature* member, Position const& spawnPoint) const
+{
+    if (!_leader)
+        return spawnPoint;
+
+    uint8 groupAI = ASSERT_NOTNULL(sFormationMgr->GetFormationInfo(member->GetSpawnId()))->GroupAI;
+    if (!groupAI)
+        return spawnPoint;
+
+    if (groupAI & FLAG_IDLE_IN_FORMATION)
+    {
+        return _leader->GetRandomNearPosition(3.0f);
+    }
+
+    return spawnPoint;
+}
