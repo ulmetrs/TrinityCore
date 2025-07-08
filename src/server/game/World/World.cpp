@@ -1695,7 +1695,7 @@ void World::SetInitialWorldSettings()
     std::vector<uint32> mapIds;
     for (uint32 mapId = 0; mapId < sMapStore.GetNumRows(); mapId++)
         if (auto entry = sMapStore.LookupEntry(mapId))
-            if (!entry->IsExpansionMap() || !getBoolConfig(CONFIG_SKIP_EXPANSION_MAPS_ON_LOAD))
+            if (entry->Expansion() == 0 || !getBoolConfig(CONFIG_SKIP_EXPANSION_MAPS_ON_LOAD))
                 mapIds.push_back(mapId);
 
     vmmgr2->InitializeThreadUnsafe(mapIds);
