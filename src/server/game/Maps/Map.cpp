@@ -49,6 +49,7 @@
 #include "Weather.h"
 #include "WeatherMgr.h"
 #include "World.h"
+#include <algorithm> // for std::remove
 #include <boost/heap/fibonacci_heap.hpp>
 #include <unordered_set>
 #include <vector>
@@ -769,6 +770,9 @@ void Map::Update(uint32 t_diff)
 
     _dynamicTree.update(t_diff);
 
+    // Copy _players, we can remove from map in player update
+    std::vector<Player*> players = _players;
+
     {
         ZoneScopedN("Map::Update::WorldSessions")
 
@@ -776,11 +780,8 @@ void Map::Update(uint32 t_diff)
         std::map<uint32, uint32> opcode_map;
 
         /// update worldsessions for existing players
-        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
+        for (auto player : players)
         {
-            Player* player = *iter;
-            ++iter; // Increment here incase of remove
-
             if (player && player->IsInWorld())
             {
                 ZoneScopedN("Map::Update::WorldSessions::Player")
@@ -835,11 +836,8 @@ void Map::Update(uint32 t_diff)
 
         // the player iterator is stored in the map object
         // to make sure calls to Map::Remove don't invalidate it
-        for (auto iter = _players.begin(); iter != _players.end(); /* no increment */)
+        for (auto player : players)
         {
-            Player* player = *iter;
-            ++iter; // Increment here incase of remove
-
             if (!player || !player->IsInWorld())
                 continue;
 
@@ -1131,7 +1129,7 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         player->DestroyForNearbyPlayers(); // previous player->UpdateObjectVisibility(true)
 
-    _players.remove(player);
+    _players.erase(std::remove(_players.begin(), _players.end(), player), _players.end());
 
     if (player->IsInGrid())
         player->RemoveFromGrid();
@@ -1163,6 +1161,8 @@ void Map::RemovePlayerFromPartition(Player* player)
     // note: RemoveFromWorld does this for inWorld objects
     //if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
     //    player->DestroyForNearbyPlayers(); // previous player->UpdateObjectVisibility(true)
+
+    _players.erase(std::remove(_players.begin(), _players.end(), player), _players.end());
 
     if (player->IsInGrid())
         player->RemoveFromGrid();
