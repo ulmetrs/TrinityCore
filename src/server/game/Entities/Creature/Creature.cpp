@@ -29,6 +29,7 @@
 #include "GameEventMgr.h"
 #include "GameTime.h"
 #include "GossipDef.h"
+#include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
 #include "GroupMgr.h"
@@ -61,6 +62,8 @@
 #include "TSMap.h"
 #include "TSBossAI.h"
 // @tswow-end
+
+using namespace Trinity;
 
 CreatureMovementData::CreatureMovementData() : Ground(CreatureGroundMovementType::Run), Flight(CreatureFlightMovementType::None), Swim(true), Rooted(false), Chase(CreatureChaseMovementType::Run),
 Random(CreatureRandomMovementType::Walk), InteractionPauseTimer(sWorld->getIntConfig(CONFIG_CREATURE_STOP_FOR_PLAYER)) { }
@@ -437,8 +440,6 @@ void Creature::UpdateMapPartition(Map* forcedMap)
     Map* newMap = forcedMap ? forcedMap : sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     if (!newMap || newMap == currentMap)
         return;
-
-    TC_LOG_DEBUG("partitions", "Creature::UpdateMapPartition {} Moving From Partition {} To Partition {} ", GetGUID(), currentMap->GetPartitionId(), newMap->GetPartitionId());
 
     // If this unit is a vehicle force update its passengers
     Vehicle* vehicle = GetVehicleKit();
@@ -1111,6 +1112,21 @@ void Creature::Update(uint32 diff)
         }
         default:
             break;
+    }
+
+    // For now, do this at the end of the update
+    vis_Update.TUpdate(diff);
+    if (vis_Update.TPassed())
+    {
+        vis_Update.TReset(diff, GetMap()->GetVisibilityNotifyPeriod());
+
+        if (isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
+        {
+            CreatureRelocationNotifier relocate(*this);
+            Cell::VisitAllObjects(this, relocate, 100, false);
+        }
+
+        ResetAllNotifies();
     }
 }
 

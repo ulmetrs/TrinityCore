@@ -1687,7 +1687,7 @@ void World::SetInitialWorldSettings()
 
     // Load IP Location Database
     sIPLocation->Load();
-
+ 
     std::vector<uint32> mapIds;
     for (uint32 mapId = 0; mapId < sMapStore.GetNumRows(); mapId++)
         if (sMapStore.LookupEntry(mapId))

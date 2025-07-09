@@ -393,8 +393,7 @@ class TC_GAME_API Map
         virtual void Update(uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
-        int32 GetVisibilityNotifyPeriod() const { return m_VisibilityNotifyPeriod; }
-
+        float GetVisibilityNotifyPeriod() const { return m_VisibilityNotifyPeriod; }
         //function for setting up visibility distance for maps on per-type/per-Id basis
         virtual void InitVisibilityDistance();
 
@@ -736,14 +735,14 @@ class TC_GAME_API Map
         uint32 m_unloadTimer;
         float m_VisibleDistance;
         int32 m_VisibilityNotifyPeriod;
-
         DynamicMapTree _dynamicTree;
 
-        PlayerList _players;
+        MapRefManager m_mapRefManager;
+        MapRefManager::iterator m_mapRefIter;
 
-        typedef std::set<WorldObject*> ActiveObjects;
-        ActiveObjects _activeObjects;
-        ActiveObjects::iterator _activeObjectsIter;
+        typedef std::set<WorldObject*> ActiveNonPlayers;
+        ActiveNonPlayers m_activeNonPlayers;
+        ActiveNonPlayers::iterator m_activeNonPlayersIter;
 
         typedef std::set<Creature*> WaypointCreatures;
         WaypointCreatures _waypointCreatures;
@@ -765,9 +764,9 @@ class TC_GAME_API Map
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
-        //these functions used to process player/mob aggro reactions and
-        //visibility calculations. Highly optimized for massive calculations
-        void ProcessRelocationNotifies(const uint32 diff);
+        NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+        GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+        std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
 
         bool i_scriptLock;
         std::set<WorldObject*> i_objectsToRemove;
