@@ -1133,7 +1133,7 @@ bool GameObject::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap
     Position spawnPoint = data->spawnPoint;
 
     // Only load game objects into their respective partitions
-    if (!allowAnyPartition && sMapMgr->FindPartition(map->GetId(), spawnPoint) != map)
+    if (!allowAnyPartition && sMapMgr->FindMap(map->GetId(), spawnPoint, map->GetInstanceId()) != map)
         return false;
 
     uint32 entry = data->id;

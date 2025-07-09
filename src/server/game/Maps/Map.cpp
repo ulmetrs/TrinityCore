@@ -4454,7 +4454,7 @@ void Map::LoadRespawnTimes()
                 {
                     // We only load respawns for the current partition, we don't save partitionId to the database so that this can
                     // be dynamically calculated at runtime
-                    if (sMapMgr->FindPartition(GetId(), data->spawnPoint) != this)
+                    if (sMapMgr->FindMap(GetId(), data->spawnPoint, GetInstanceId()) != this)
                         continue;
 
                     SaveRespawnTime(type, spawnId, data->id, time_t(respawnTime), Trinity::ComputeGridCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY()).GetId(), nullptr, true);
