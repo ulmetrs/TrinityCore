@@ -167,7 +167,7 @@ Map* MapPartitioned::CreatePartition(uint32 mapId, uint32 partitionId)
 Map* MapPartitioned::FindPartition(uint32 partitionId) const
 {
     if (GetPartitionId() == partitionId)
-        return this;
+        return static_cast<Map*>(const_cast<MapPartitioned*>(this));
     auto it = _partitions.find(partitionId);
     return (it != _partitions.end()) ? it->second.get() : nullptr;
 }
