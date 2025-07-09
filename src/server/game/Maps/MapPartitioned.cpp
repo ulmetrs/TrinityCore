@@ -172,7 +172,7 @@ Map* MapPartitioned::FindPartition(uint32 partitionId) const
     return (it != _partitions.end()) ? it->second.get() : nullptr;
 }
 
-Map* MapPartitioned::FindPartition(Position const& pos)
+Map* MapPartitioned::FindPartition(Position const& pos) const
 {
     uint32 partitionId = CalculatePartitionId(pos);
     return FindPartition(partitionId);
