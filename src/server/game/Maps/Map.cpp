@@ -3637,20 +3637,14 @@ template TC_GAME_API bool Map::AddToMap(Creature*);
 template TC_GAME_API bool Map::AddToMap(GameObject*);
 template TC_GAME_API bool Map::AddToMap(DynamicObject*);
 
-template TC_GAME_API bool Map::AddToPartition(Corpse*);
 template TC_GAME_API bool Map::AddToPartition(Creature*);
-template TC_GAME_API bool Map::AddToPartition(GameObject*);
-template TC_GAME_API bool Map::AddToPartition(DynamicObject*);
 
 template TC_GAME_API void Map::RemoveFromMap(Corpse*, bool);
 template TC_GAME_API void Map::RemoveFromMap(Creature*, bool);
 template TC_GAME_API void Map::RemoveFromMap(GameObject*, bool);
 template TC_GAME_API void Map::RemoveFromMap(DynamicObject*, bool);
 
-template TC_GAME_API void Map::RemoveFromPartition(Corpse*);
 template TC_GAME_API void Map::RemoveFromPartition(Creature*);
-template TC_GAME_API void Map::RemoveFromPartition(GameObject*);
-template TC_GAME_API void Map::RemoveFromPartition(DynamicObject*);
 
 /* ******* Partition Maps ******* */
 
