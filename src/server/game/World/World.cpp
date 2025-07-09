@@ -1699,7 +1699,10 @@ void World::SetInitialWorldSettings()
         {
             mapIds.push_back(mapId);
             if (entry->Expansion() == 0 && entry->Instanceable())
+            {
+                TC_LOG_INFO("server.loading", "Added instance map id to be preloaded {}", mapId);
                 nonExpansionInstanceMapIds.push_back(mapId);
+            }
         }
     }
 
