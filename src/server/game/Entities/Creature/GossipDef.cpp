@@ -458,6 +458,14 @@ void PlayerMenu::SendQuestQueryResponse(Quest const* quest) const
 
 void PlayerMenu::SendQuestGiverOfferReward(Quest const* quest, ObjectGuid npcGUID, bool autoLaunched) const
 {
+    // @epoch-begin
+    FIRE_ID(
+        quest->events.id
+        , Quest,OnSendQuestGiverOfferReward
+        , TSQuest(quest)
+    );
+    // @epoch-end
+
     WorldPackets::Quest::QuestGiverOfferRewardMessage packet;
 
     packet.Title = quest->GetTitle();
