@@ -2369,10 +2369,7 @@ void World::SetInitialWorldSettings()
     {
         TC_LOG_INFO("server.loading", "Pre-loading instance map data enabled");
         for (uint32 mapId : nonExpansionInstanceMapIds)
-        {
-            TC_LOG_INFO("server.loading", "Creating instance map {}", mapId);
             sMapMgr->CreateMap(mapId, {});
-        }
         sMapMgr->DoForAllMaps([](Map* map)
         {
             if (map->Instanceable())
