@@ -236,6 +236,13 @@ void Map::LoadAllCells()
             LoadGrid((cellX + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL, (cellY + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL);
 }
 
+void Map::LoadAllGrids()
+{
+    for (unsigned int gx=0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
+        for (unsigned int gy=0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
+            EnsureGridCreated(GridCoord((MAX_NUMBER_OF_GRIDS - 1) - gx, (MAX_NUMBER_OF_GRIDS - 1) - gy)); // This transform is pointless but leaving for consistency
+}
+
 Map::Map(uint32 id, uint32 instanceOrPartitionId):
 i_mapEntry(sMapStore.LookupEntry(id)),
 m_unloadTimer(0), m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),

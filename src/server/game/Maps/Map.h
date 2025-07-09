@@ -413,6 +413,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void LoadGrid(float x, float y);
         void LoadAllCells();
+        void LoadAllGrids();
         void UnloadGrid(NGridType& ngrid);
         virtual void UnloadAll();
 

@@ -2340,7 +2340,7 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Calculate guild limitation(s) reset time...");
     InitGuildResetTime();
 
-    // Preload all cells, if required for the base maps
+    // Preload all cells (map data and objects), if required for the base maps
     if (sWorld->getBoolConfig(CONFIG_BASEMAP_LOAD_GRIDS))
     {
         sMapMgr->DoForAllMaps([](Map* map)
@@ -2349,6 +2349,19 @@ void World::SetInitialWorldSettings()
             {
                 TC_LOG_INFO("server.loading", "Pre-loading base map data for map {} partition {}", map->GetId(), map->GetPartitionId());
                 map->LoadAllCells();
+            }
+        });
+    }
+
+    // Preload all grids (map data)
+    if (sWorld->getBoolConfig(CONFIG_INSTANCEMAP_LOAD_GRIDS))
+    {
+        sMapMgr->DoForAllMaps([](Map* map)
+        {
+            if (map->Instanceable())
+            {
+                TC_LOG_INFO("server.loading", "Pre-loading instance map data for map {}", map->GetId());
+                map->LoadAllGrids();
             }
         });
     }
