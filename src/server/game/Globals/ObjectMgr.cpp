@@ -11386,8 +11386,7 @@ void ObjectMgr::LoadMapPartitions()
         partition.mapId  = fields[1].GetUInt32();
         partition.partitionId   = fields[2].GetUInt32();
         partition.priority = fields[3].GetUInt32();
-        if (partition.partitionId == 0)
-            continue;
+        ASSERT(partition.partitionId != 0);
 
         std::string polygon = fields[4].GetString();
         std::vector<Position> points;
