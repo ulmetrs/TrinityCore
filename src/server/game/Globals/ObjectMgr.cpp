@@ -11390,15 +11390,11 @@ void ObjectMgr::LoadMapPartitions()
 
         std::string polygon = fields[4].GetString();
         std::vector<Position> points;
-        try {
-            json j = json::parse(polygon);
-            for (const auto& pt : j) {
-                float x = pt.at("x").get<float>();
-                float y = pt.at("y").get<float>();
-                points.emplace_back(x, y);
-            }
-        } catch (const std::exception& e) {
-            TC_LOG_ERROR("server.loading", "Failed to parse polygon JSON for map partition {}: {}", partition.id, e.what());
+        json j = json::parse(polygon);
+        for (const auto& pt : j) {
+            float x = pt.at("x").get<float>();
+            float y = pt.at("y").get<float>();
+            points.emplace_back(x, y);
         }
         partition.polygon = points;
 
