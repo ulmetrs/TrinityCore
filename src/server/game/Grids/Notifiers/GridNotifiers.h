@@ -74,19 +74,6 @@ namespace Trinity
         void Visit(PlayerMapType &);
     };
 
-    struct TC_GAME_API DelayedUnitRelocation
-    {
-        Map &i_map;
-        Cell &cell;
-        CellCoord &p;
-        const float i_radius;
-        DelayedUnitRelocation(Cell &c, CellCoord &pair, Map &map, float radius) :
-            i_map(map), cell(c), p(pair), i_radius(radius) { }
-        template<class T> void Visit(GridRefManager<T> &) { }
-        void Visit(CreatureMapType &);
-        void Visit(PlayerMapType   &);
-    };
-
     struct TC_GAME_API AIRelocationNotifier
     {
         Unit &i_unit;
