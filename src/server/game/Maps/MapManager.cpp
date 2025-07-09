@@ -246,6 +246,19 @@ Map* MapManager::FindPartition(uint32 mapId, Position const& pos) const
     return mapPartitioned->FindPartition(pos);
 }
 
+uint32 MapManager::CalculatePartitionId(uint32 mapId, Position const& pos) const
+{
+    Map* baseMap = FindBaseMap(mapId);
+    if (!baseMap)
+        return 0;
+
+    MapPartitioned* mapPartitioned = baseMap->ToMapPartitioned();
+    if (!mapPartitioned)
+        return 0;
+
+    return mapPartitioned->CalculatePartitionId(pos);
+}
+
 Map::EnterState MapManager::PlayerCannotEnter(uint32 mapid, Player* player, bool loginCheck)
 {
     MapEntry const* entry = sMapStore.LookupEntry(mapid);

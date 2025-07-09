@@ -50,6 +50,7 @@ class TC_GAME_API MapPartitioned : public Map
         Map* CreatePartition(uint32 mapId, uint32 partitionId);
         Map* FindPartition(uint32 partitionId) const;
         Map* FindPartition(Position const& pos) const;
+        uint32 CalculatePartitionId(Position const& pos) const;
 
         Partitions &GetPartitions() { return _partitions; }
         PartitionEntries &GetPartitionEntries() { return _partitionEntries; }
@@ -63,7 +64,6 @@ class TC_GAME_API MapPartitioned : public Map
             return nullptr;
         }
     private:
-        uint32 CalculatePartitionId(Position const& pos) const;
         static bool IsPointInPolygon(Position const& pos, PartitionPolygon const& polygon);
 
         Partitions _partitions; // The actual maps

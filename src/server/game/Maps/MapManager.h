@@ -55,6 +55,7 @@ class TC_GAME_API MapManager
         Map* FindContinent(uint32 mapId) const;
         Map* FindPartition(uint32 mapId, uint32 partitionId) const;
         Map* FindPartition(uint32 mapId, Position const& pos) const;
+        uint32 CalculatePartitionId(uint32 mapId, Position const& pos) const;
 
         uint32 GetAreaId(uint32 phaseMask, uint32 mapid, float x, float y, float z) const
         {
