@@ -45,7 +45,6 @@ class TC_GAME_API MapManager
         ChainedRange<Map::PlayerList> GetContinentPlayers(uint32 mapId);
 
         Map* CreateMap(uint32 mapId, Position const& pos, Player* player = nullptr, uint32 loginInstanceId = 0);
-        uint32 CalculatePartitionId(uint32 mapid, Position const& pos);
         Map* FindBaseMap(uint32 mapId) const
         {
             BaseMaps::const_iterator iter = _baseMaps.find(mapId);

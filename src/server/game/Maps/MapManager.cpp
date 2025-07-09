@@ -105,54 +105,52 @@ ChainedRange<Map::PlayerList> MapManager::GetContinentPlayers(uint32 mapId)
     return mapPartitioned->GetAllPlayers();
 }
 
-// This should normally only be called indirectly via CreateMap, but can also be used to
-// create the base maps needed to query for instances or partitions.
 Map* MapManager::CreateBaseMap(uint32 id)
 {
-    ZoneScopedN("MapManager::CreateBaseMap")
-
-    // BaseMaps are maps that manage other maps.
-    // MapInstanced manages its instances, and MapPartitioned manages its partitions.
     Map* map = FindBaseMap(id);
+    if (map)
+        return map;
 
-    if (map == nullptr)
+    std::lock_guard<std::mutex> lock(_mapsLock);
+
+    // try again after lock
+    map = FindBaseMap(id);
+    if (map)
+        return map;
+
+    MapEntry const* entry = sMapStore.LookupEntry(id);
+    ASSERT(entry);
+
+    if (entry->Instanceable())
     {
-        std::lock_guard<std::mutex> lock(_mapsLock);
+        map = new MapInstanced(id);
+        std::unique_ptr<Map> ptr(map); 
+        _baseMaps[id] = std::move(ptr);
+    }
+    else
+    {
+        map = new MapPartitioned(id);
+        std::unique_ptr<Map> ptr(map); 
+        _baseMaps[id] = std::move(ptr);
 
-        MapEntry const* entry = sMapStore.LookupEntry(id);
-        ASSERT(entry);
+        MapPartitioned* mapPartitioned = map->ToMapPartitioned();
 
-        if (entry->Instanceable())
+        // Create all partitions for this map before loading respawns and corpses
+        for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
         {
-            map = new MapInstanced(id);
-            std::unique_ptr<Map> ptr(map); 
-            _baseMaps[id] = std::move(ptr);
+            mapPartitioned->CreatePartition(id, partitionEntry.partitionId);
         }
-        else
+
+        map->LoadRespawnTimes();
+        map->LoadCorpseData();
+        sScriptMgr->OnCreateMap(map);
+
+        for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
         {
-            map = new MapPartitioned(id);
-            std::unique_ptr<Map> ptr(map); 
-            _baseMaps[id] = std::move(ptr);
-
-            MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-
-            // Create all partitions for this map before loading respawns and corpses
-            for (auto& partitionEntry : mapPartitioned->GetPartitionEntries())
-            {
-                mapPartitioned->CreatePartition(id, partitionEntry.partitionId);
-            }
-
-            map->LoadRespawnTimes();
-            map->LoadCorpseData();
-            sScriptMgr->OnCreateMap(map);
-
-            for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
-            {
-                partitionPtr.get()->LoadRespawnTimes();
-                partitionPtr.get()->LoadCorpseData();
-                // Call on create after loading respawns and corpses for consistency
-                sScriptMgr->OnCreateMap(partitionPtr.get());
-            }
+            partitionPtr.get()->LoadRespawnTimes();
+            partitionPtr.get()->LoadCorpseData();
+            // Call on create after loading respawns and corpses for consistency
+            sScriptMgr->OnCreateMap(partitionPtr.get());
         }
     }
 
@@ -164,11 +162,8 @@ Map* MapManager::CreateBaseMap(uint32 id)
 // player is required if the map is instanceable
 Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint32 loginInstanceId)
 {
-    ZoneScopedNC("Map* MapManager::CreateMap", WORLD_UPDATE_COLOR)
-
     Map* map = CreateBaseMap(id);
-    if (!map)
-        return nullptr;
+    ASSERT(map);
 
     MapInstanced* mapInstanced = map->ToMapInstanced();
     if (mapInstanced)
@@ -178,31 +173,17 @@ Map* MapManager::CreateMap(uint32 id, Position const& pos, Player* player, uint3
         if (!player)
             return map;
 
-        // Additional Logic to check for existing instance
+        // Additional Logic to check for existing instance or create new one
         return mapInstanced->CreateInstanceForPlayer(id, player, loginInstanceId);
     }
 
     MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-    if (!mapPartitioned)
-        return nullptr;
+    ASSERT(mapPartitioned);
 
-    uint32 partitionId = mapPartitioned->CalculatePartitionId(pos);
+    map = mapPartitioned->FindPartition(pos);
+    ASSERT(map);
 
-    // Additional logic to check for existing partition
-    return mapPartitioned->CreatePartition(id, partitionId);
-}
-
-uint32 MapManager::CalculatePartitionId(uint32 mapid, Position const& pos)
-{
-    Map* map = CreateBaseMap(mapid);
-    if (!map)
-        return 0;
-
-    MapPartitioned* mapPartitioned = map->ToMapPartitioned();
-    if (!mapPartitioned)
-        return 0;
-
-    return mapPartitioned->CalculatePartitionId(pos);
+    return map;
 }
 
 // Use this for queries where we do not want to create the map directly
@@ -222,13 +203,8 @@ Map* MapManager::FindMap(uint32 mapid, Position const& pos, uint32 instanceId) c
     MapPartitioned* mapPartitioned = map->ToMapPartitioned();
     if (!mapPartitioned)
         return nullptr;
-        
-    uint32 partitionId = mapPartitioned->CalculatePartitionId(pos);
-    // For partitions the base map is the default/fallback partition, so return it
-    if (partitionId == mapPartitioned->GetPartitionId())
-        return mapPartitioned;
 
-    return mapPartitioned->FindPartition(partitionId);
+    return mapPartitioned->FindPartition(pos);
 }
 
 Map* MapManager::FindContinent(uint32 mapId) const

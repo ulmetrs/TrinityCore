@@ -196,7 +196,7 @@ bool Corpse::LoadCorpseFromDB(ObjectGuid::LowType guid, Field* fields, Map* map)
 
     // We only load corpses for the current partition, we don't save partitionId to the database so that this can
     // be dynamically calculated at runtime
-    if (mapId != map->GetId() || sMapMgr->CalculatePartitionId(map->GetId(), GetPosition()) != map->GetPartitionId())
+    if (mapId != map->GetId() || sMapMgr->FindPartition(map->GetId(), GetPosition()) != map)
         return false;
 
     _cellCoord = Trinity::ComputeCellCoord(GetPositionX(), GetPositionY());

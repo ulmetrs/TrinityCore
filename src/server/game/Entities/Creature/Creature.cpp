@@ -1951,7 +1951,7 @@ bool Creature::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap, 
     Position spawnPoint = data->spawnPoint;
 
     // Only load creatures into their respective partitions
-    if (!allowAnyPartition && sMapMgr->CalculatePartitionId(map->GetId(), spawnPoint) != map->GetPartitionId())
+    if (!allowAnyPartition && sMapMgr->FindPartition(map->GetId(), spawnPoint) != map)
         return false;
 
     m_spawnId = spawnId;

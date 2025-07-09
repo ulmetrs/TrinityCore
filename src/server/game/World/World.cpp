@@ -2353,6 +2353,7 @@ void World::SetInitialWorldSettings()
     // Preload all cells (map data and objects), if required for the base maps
     if (sWorld->getBoolConfig(CONFIG_BASEMAP_LOAD_GRIDS))
     {
+        TC_LOG_INFO("server.loading", "Pre-loading base map data enabled");
         sMapMgr->DoForAllMaps([](Map* map)
         {
             if (!map->Instanceable())
@@ -2366,8 +2367,12 @@ void World::SetInitialWorldSettings()
     // Preload all grids (map data)
     if (sWorld->getBoolConfig(CONFIG_INSTANCEMAP_LOAD_GRIDS))
     {
+        TC_LOG_INFO("server.loading", "Pre-loading instance map data enabled");
         for (uint32 mapId : nonExpansionInstanceMapIds)
+        {
+            TC_LOG_INFO("server.loading", "Creating instance map {}", mapId);
             sMapMgr->CreateMap(mapId, {});
+        }
         sMapMgr->DoForAllMaps([](Map* map)
         {
             if (map->Instanceable())

@@ -10446,7 +10446,7 @@ bool Unit::ShouldRelocateUpdateMapPartition()
         return false;
 
     _lastCheckedPartitionPosition = GetPosition();
-    return sMapMgr->CalculatePartitionId(GetMap()->GetId(), GetPosition()) != GetMap()->GetPartitionId();
+    return sMapMgr->FindPartition(GetMap()->GetId(), GetPosition()) != GetMap();
 }
 
 void Unit::CleanupBeforeRemoveFromMap(bool finalCleanup)
