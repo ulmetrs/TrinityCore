@@ -1692,9 +1692,16 @@ void World::SetInitialWorldSettings()
     sIPLocation->Load();
  
     std::vector<uint32> mapIds;
+    std::vector<uint32> nonExpansionInstanceMapIds;
     for (uint32 mapId = 0; mapId < sMapStore.GetNumRows(); mapId++)
-        if (sMapStore.LookupEntry(mapId))
+    {
+        if (auto entry = sMapStore.LookupEntry(mapId))
+        {
             mapIds.push_back(mapId);
+            if (entry->Expansion() == 0 && entry->Instanceable())
+                nonExpansionInstanceMapIds.push_back(mapId);
+        }
+    }
 
     vmmgr2->InitializeThreadUnsafe(mapIds);
 
@@ -2356,6 +2363,8 @@ void World::SetInitialWorldSettings()
     // Preload all grids (map data)
     if (sWorld->getBoolConfig(CONFIG_INSTANCEMAP_LOAD_GRIDS))
     {
+        for (uint32 mapId : nonExpansionInstanceMapIds)
+            sMapMgr->CreateMap(mapId, {});
         sMapMgr->DoForAllMaps([](Map* map)
         {
             if (map->Instanceable())
