@@ -7219,7 +7219,9 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 
     if (zone->Flags & AREA_FLAG_LINKED_CHAT)                     // Is in a capital city
     {
-        if (!pvpInfo.IsHostile || zone->IsSanctuary())
+        /** @epoch-start */
+        if (!pvpInfo.IsInHostileArea || zone->IsSanctuary())
+        /** @epoch-end */
             SetRestFlag(REST_FLAG_IN_CITY);
 
         pvpInfo.IsInNoPvPArea = true;
