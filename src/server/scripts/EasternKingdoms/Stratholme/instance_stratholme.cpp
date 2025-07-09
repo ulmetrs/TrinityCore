@@ -588,9 +588,8 @@ class instance_stratholme : public InstanceMapScript
 
                                 Position const* gateTrapPos = &GateTrapPos[i];
                                 // Check that the trap is not on cooldown, if so check if player/pet is in range
-                                for (MapReference const& itr : instance->GetPlayers())
+                                for (Player* player : instance->GetPlayers())
                                 {
-                                    Player* player = itr.GetSource();
                                     if (player->IsGameMaster())
                                         continue;
 

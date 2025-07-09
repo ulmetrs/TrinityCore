@@ -224,7 +224,13 @@ public:
         else
             player->SaveRecallPosition(); // save only in non-flight case
 
-        Map const* map = sMapMgr->CreateMap(mapId, Position(x, y));
+        Map const* map = sMapMgr->FindMap(mapId, Position(x, y));
+        if (!map)
+        {
+            handler->PSendSysMessage(LANG_INVALID_TARGET_COORD, x, y, mapId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
         float z = std::max(map->GetHeight(x, y, MAX_HEIGHT), map->GetWaterLevel(x, y));
 
         player->TeleportTo(mapId, x, y, z, player->GetOrientation());
@@ -275,7 +281,13 @@ public:
         AreaTableEntry const* zoneEntry = areaEntry->ParentAreaID ? sAreaTableStore.LookupEntry(areaEntry->ParentAreaID) : areaEntry;
         ASSERT(zoneEntry);
 
-        Map const* map = sMapMgr->CreateMap(zoneEntry->ContinentID, Position(x, y));
+        Map const* map = sMapMgr->FindMap(zoneEntry->ContinentID, Position(x, y));
+        if (!map)
+        {
+            handler->PSendSysMessage(LANG_INVALID_TARGET_COORD, x, y, zoneEntry->ContinentID);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
 
         if (map->Instanceable())
         {
@@ -327,7 +339,13 @@ public:
                 handler->SetSentErrorMessage(true);
                 return false;
             }
-            Map const* map = sMapMgr->CreateMap(mapId, Position(x, y));
+            Map const* map = sMapMgr->FindMap(mapId, Position(x, y));
+            if (!map)
+            {
+                handler->PSendSysMessage(LANG_INVALID_TARGET_COORD, x, y, mapId);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
             z = std::max(map->GetHeight(x, y, MAX_HEIGHT), map->GetWaterLevel(x, y));
         }
 

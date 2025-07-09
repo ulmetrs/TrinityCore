@@ -108,7 +108,6 @@ class instance_deadmines : public InstanceMapScript
                             ShootCannon();
                             BlastOutDoor();
                             LeverStucked();
-                            instance->LoadGrid(-22.8f, -797.24f); // Loads Mr. Smite's grid.
                             if (Creature* smite = instance->GetCreature(MrSmiteGUID)) // goes off when door blows up
                                 smite->AI()->Talk(SAY_ALARM1);
                             State = PIRATES_ATTACK;

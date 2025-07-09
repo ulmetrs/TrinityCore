@@ -201,8 +201,7 @@ InstanceMap* MapInstanced::CreateInstance(uint32 InstanceId, InstanceSave* save,
     bool load_data = save != nullptr;
     map->CreateInstanceData(load_data);
 
-    if (sWorld->getBoolConfig(CONFIG_INSTANCEMAP_LOAD_GRIDS))
-        map->LoadAllCells();
+    map->LoadWorldObjects();
 
     Trinity::unique_trackable_ptr<Map>& ptr = _instances[InstanceId];
     ptr.reset(map);

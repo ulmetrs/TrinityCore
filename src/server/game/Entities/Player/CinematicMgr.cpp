@@ -60,7 +60,6 @@ void CinematicMgr::BeginCinematic()
             if (!pos.IsPositionValid())
                 return;
 
-            player->GetMap()->LoadGrid(pos.GetPositionX(), pos.GetPositionY());
             if (TempSummon* cinematicObject = player->SummonCreature(VISUAL_WAYPOINT, pos.m_positionX, pos.m_positionY, pos.m_positionZ, 0.0f, TEMPSUMMON_TIMED_DESPAWN, 5min))
             {
                 m_CinematicObjectGUID = cinematicObject->GetGUID();

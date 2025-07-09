@@ -25,7 +25,7 @@
 #include "GridDefines.h"
 #include "GridRefManager.h"
 #include "MapDefines.h"
-#include "MapRefManager.h"
+#include "MapQuadTree.h"
 #include "MPSCQueue.h"
 #include "ObjectGuid.h"
 #include "PathGenerator.h"
@@ -79,7 +79,6 @@ struct SummonPropertiesEntry;
 enum Difficulty : uint8;
 enum WeatherState : uint32;
 
-namespace Trinity { struct ObjectUpdater; }
 namespace VMAP { enum class ModelIgnoreFlags : uint32; }
 namespace G3D { class Plane; }
 
@@ -351,9 +350,8 @@ private:
     const std::vector<ListType*>& lists_;
 };
 
-class TC_GAME_API Map : public GridRefManager<NGridType>
+class TC_GAME_API Map
 {
-    friend class MapReference;
     public:
         Map(uint32 id, uint32 instanceOrPartitionId, Map* parent = nullptr);
         virtual ~Map();
@@ -391,10 +389,12 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> bool AddToPartition(T *);
         template<class T> void RemoveFromPartition(T *);
 
-        void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
+        void UpdateNearbyObjects(WorldObject* obj);
         virtual void Update(uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
+        int32 GetVisibilityNotifyPeriod() const { return m_VisibilityNotifyPeriod; }
+
         //function for setting up visibility distance for maps on per-type/per-Id basis
         virtual void InitVisibilityDistance();
 
@@ -406,13 +406,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T, class CONTAINER>
         void Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor);
 
-        bool IsGridLoaded(uint32 gridId) const { return IsGridLoaded(GridCoord(gridId % MAX_NUMBER_OF_GRIDS, gridId / MAX_NUMBER_OF_GRIDS)); }
-        bool IsGridLoaded(float x, float y) const { return IsGridLoaded(Trinity::ComputeGridCoord(x, y)); }
-        bool IsGridLoaded(Position const& pos) const { return IsGridLoaded(pos.GetPositionX(), pos.GetPositionY()); }
-
-        void LoadGrid(float x, float y);
-        void LoadAllCells();
-        void UnloadGrid(NGridType& ngrid);
+        void LoadWorldObjects();
+        void UnloadGrid(uint32 gx, uint32 gy);
         virtual void UnloadAll();
 
         uint32 GetId() const;
@@ -489,13 +484,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void AddObjectToSwitchList(WorldObject* obj, bool on);
         virtual void DelayedUpdate(uint32 diff);
 
-        void resetMarkedCells() { marked_cells.reset(); }
-        bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }
-        void markCell(uint32 pCellId) { marked_cells.set(pCellId); }
-
-        bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
+        bool HavePlayers() const { return !_players.empty(); }
         uint32 GetPlayersCountExceptGMs() const;
-        bool ActiveObjectsNearGrid(NGridType const& ngrid) const;
 
         void AddWorldObject(WorldObject* obj) { i_worldObjects.insert(obj); }
         void RemoveWorldObject(WorldObject* obj) { i_worldObjects.erase(obj); }
@@ -503,11 +493,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void SendToPlayers(WorldPacket const* data) const;
         bool SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession const* self = nullptr, uint32 team = 0) const;
 
-        typedef MapRefManager PlayerList;
-        PlayerList const& GetPlayers() const { return m_mapRefManager; }
+        typedef std::vector<Player*> PlayerList;
+        PlayerList const& GetPlayers() const { return _players; }
         virtual ChainedRange<PlayerList> GetAllPlayers() const
         {
-            std::vector<PlayerList*> lists(1, const_cast<PlayerList*>(&m_mapRefManager));
+            std::vector<PlayerList> lists(1, const_cast<PlayerList&>(_players));
             return ChainedRange<PlayerList>(lists);
         }
 
@@ -518,51 +508,49 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         // must called with AddToWorld/AddToPartition
         void AddToActive(WorldObject* obj)
         {
-            m_activeNonPlayers.insert(obj);
+            _activeObjects.insert(obj);
         }
 
         // must called with RemoveFromWorld/RemoveFromPartition
         void RemoveFromActive(WorldObject* obj)
         {
-            if (m_activeNonPlayersIter != m_activeNonPlayers.end())
+            if (_activeObjectsIter != _activeObjects.end())
             {
-                ActiveNonPlayers::iterator itr = m_activeNonPlayers.find(obj);
-                if (itr == m_activeNonPlayers.end())
+                ActiveObjects::iterator itr = _activeObjects.find(obj);
+                if (itr == _activeObjects.end())
                     return;
-                if (itr == m_activeNonPlayersIter)
-                    ++m_activeNonPlayersIter;
-                m_activeNonPlayers.erase(itr);
+                if (itr == _activeObjectsIter)
+                    ++_activeObjectsIter;
+                _activeObjects.erase(itr);
             }
             else
-                m_activeNonPlayers.erase(obj);
+                _activeObjects.erase(obj);
         }
 
         // must called with AddToWorld/AddToPartition
         void AddToWaypointCreatures(Creature* creature)
         {
-            m_waypointCreatures.insert(creature);
+            _waypointCreatures.insert(creature);
         }
 
         // must called with RemoveFromWorld/RemoveFromPartition
         void RemoveFromWaypointCreatures(Creature* creature)
         {
-            if (m_waypointCreaturesIter != m_waypointCreatures.end())
+            if (_waypointCreaturesIter != _waypointCreatures.end())
             {
-                WaypointCreatures::iterator itr = m_waypointCreatures.find(creature);
-                if (itr == m_waypointCreatures.end())
+                WaypointCreatures::iterator itr = _waypointCreatures.find(creature);
+                if (itr == _waypointCreatures.end())
                     return;
-                if (itr == m_waypointCreaturesIter)
-                    ++m_waypointCreaturesIter;
-                m_waypointCreatures.erase(itr);
+                if (itr == _waypointCreaturesIter)
+                    ++_waypointCreaturesIter;
+                _waypointCreatures.erase(itr);
             }
             else
-                m_waypointCreatures.erase(creature);
+                _waypointCreatures.erase(creature);
         }
 
         template<class T> void SwitchGridContainers(T* obj, bool on);
         std::unordered_map<ObjectGuid::LowType /*leaderSpawnId*/, CreatureGroup*> CreatureGroupHolder;
-
-        void UpdateIteratorBack(Player* player);
 
         TempSummon* SummonCreature(uint32 entry, Position const& pos, SummonPropertiesEntry const* properties = nullptr, uint32 duration = 0, WorldObject* summoner = nullptr, uint32 spellId = 0, uint32 vehId = 0, bool visibleOnlyBySummoner = false, uint8 levelOverride = 0);
         void SummonCreatureGroup(uint8 group, std::list<TempSummon*>* list = nullptr);
@@ -597,15 +585,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         typedef std::unordered_multimap<ObjectGuid::LowType, GameObject*> GameObjectBySpawnIdContainer;
         GameObjectBySpawnIdContainer& GetGameObjectBySpawnIdStore() { return _gameobjectBySpawnIdStore; }
         GameObjectBySpawnIdContainer const& GetGameObjectBySpawnIdStore() const { return _gameobjectBySpawnIdStore; }
-
-        std::unordered_set<Corpse*> const* GetCorpsesInCell(uint32 cellId) const
-        {
-            auto itr = _corpsesByCell.find(cellId);
-            if (itr != _corpsesByCell.end())
-                return &itr->second;
-
-            return nullptr;
-        }
 
         Corpse* GetCorpseByPlayer(ObjectGuid const& ownerGuid) const
         {
@@ -725,12 +704,12 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         size_t GetActiveNonPlayersCount() const
         {
-            return m_activeNonPlayers.size();
+            return _activeObjects.size();
         }
 
         size_t GetWaypointCreaturesCount() const
         {
-            return m_waypointCreatures.size();
+            return _waypointCreatures.size();
         }
 
         virtual std::string GetDebugInfo() const;
@@ -740,28 +719,14 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void LoadMap(int gx, int gy);
         void LoadMMap(int gx, int gy);
         GridMap* GetGrid(float x, float y);
-
         void SendInitSelf(Player* player);
-
-        bool IsGridLoaded(GridCoord const&) const;
-        bool EnsureGridLoaded(Cell const&);
-
-        void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
-
-        NGridType* getNGrid(uint32 x, uint32 y) const
-        {
-            ASSERT(x < MAX_NUMBER_OF_GRIDS && y < MAX_NUMBER_OF_GRIDS, "x = %u, y = %u", x, y);
-            return i_grids[x][y];
-        }
-
-        void setNGrid(NGridType* grid, uint32 x, uint32 y);
         void ScriptsProcess();
-
         void SendObjectUpdates();
         void UpdateMapPartitions();
 
     protected:
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+        MapQuadTree _quadTree;
 
         Map* _parent;
         std::mutex _mapLock;
@@ -770,20 +735,19 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         Trinity::unique_weak_ptr<Map> m_weakRef;
         uint32 m_unloadTimer;
         float m_VisibleDistance;
-        DynamicMapTree _dynamicTree;
-
-        MapRefManager m_mapRefManager;
-        MapRefManager::iterator m_mapRefIter;
-
         int32 m_VisibilityNotifyPeriod;
 
-        typedef std::set<WorldObject*> ActiveNonPlayers;
-        ActiveNonPlayers m_activeNonPlayers;
-        ActiveNonPlayers::iterator m_activeNonPlayersIter;
+        DynamicMapTree _dynamicTree;
+
+        PlayerList _players;
+
+        typedef std::set<WorldObject*> ActiveObjects;
+        ActiveObjects _activeObjects;
+        ActiveObjects::iterator _activeObjectsIter;
 
         typedef std::set<Creature*> WaypointCreatures;
-        WaypointCreatures m_waypointCreatures;
-        WaypointCreatures::iterator m_waypointCreaturesIter;
+        WaypointCreatures _waypointCreatures;
+        WaypointCreatures::iterator _waypointCreaturesIter;
 
         // Objects that must update even in inactive grids without activating them
         typedef std::set<Transport*> TransportsContainer;
@@ -801,14 +765,9 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
-        NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
-        std::bitset<MAX_NUMBER_OF_GRIDS*MAX_NUMBER_OF_GRIDS> marked_grids;
-        std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
-
         //these functions used to process player/mob aggro reactions and
         //visibility calculations. Highly optimized for massive calculations
         void ProcessRelocationNotifies(const uint32 diff);
-        
 
         bool i_scriptLock;
         std::set<WorldObject*> i_objectsToRemove;
@@ -877,7 +836,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
     private:
         // Type specific code for add/remove to/from grid
         template<class T>
-        void AddToGrid(T* object, Cell const& cell);
+        void AddToGrid(T* object);
 
         template<class T>
         void DeleteFromWorld(T*);
@@ -925,13 +884,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         MapStoredObjectTypesContainer _objectsStore;
         CreatureBySpawnIdContainer _creatureBySpawnIdStore;
         GameObjectBySpawnIdContainer _gameobjectBySpawnIdStore;
-        std::unordered_map<uint32/*cellId*/, std::unordered_set<Corpse*>> _corpsesByCell;
+
         std::unordered_map<ObjectGuid, Corpse*> _corpsesByPlayer;
+        std::unordered_set<Corpse*> _corpses;
         std::unordered_set<Corpse*> _corpseBones;
         std::unordered_set<Object*> _updateObjects;
-        std::unordered_set<Creature*> _relocatedCreatures;
-        std::unordered_set<GameObject*> _relocatedGameObjects;
-        std::unordered_set<DynamicObject*> _relocatedDynamicObjects;
         std::unordered_set<Player*> _updateMapPartitionPlayers;
         std::unordered_set<Creature*> _updateMapPartitionCreatures;
         MPSCQueue<FarSpellCallback> _farSpellCallbacks;
@@ -1063,20 +1020,4 @@ class TC_GAME_API BattlegroundMap : public Map
         uint8 _spawnMode;
         Battleground* m_bg;
 };
-
-template<class T, class CONTAINER>
-inline void Map::Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor)
-{
-    const uint32 x = cell.GridX();
-    const uint32 y = cell.GridY();
-    const uint32 cell_x = cell.CellX();
-    const uint32 cell_y = cell.CellY();
-
-    if (!cell.NoCreate())
-        EnsureGridLoaded(cell);
-
-    NGridType* grid = getNGrid(x, y);
-    if (grid && grid->isGridObjectDataLoaded())
-        grid->VisitGrid(cell_x, cell_y, visitor);
-}
 #endif

@@ -224,20 +224,8 @@ void Transport::Update(uint32 diff)
             UpdatePosition(_currentFrame->Node->Loc.X, _currentFrame->Node->Loc.Y, _currentFrame->Node->Loc.Z, _currentFrame->InitialOrientation);
         else
         {
-            /* There are four possible scenarios that trigger loading/unloading passengers:
-              1. transport moves from inactive to active grid
-              2. the grid that transport is currently in becomes active
-              3. transport moves from active to inactive grid
-              4. the grid that transport is currently in unloads
-            */
-            bool gridActive = GetMap()->IsGridLoaded(GetPositionX(), GetPositionY());
-
-            if (_staticPassengers.empty() && gridActive) // 2.
+            if (_staticPassengers.empty())
                 LoadStaticPassengers();
-            else if (!_staticPassengers.empty() && !gridActive)
-                // 4. - if transports stopped on grid edge, some passengers can remain in active grids
-                //      unload all static passengers otherwise passengers won't load correctly when the grid that transport is currently in becomes active
-                UnloadStaticPassengers();
         }
     }
 
@@ -550,7 +538,6 @@ TempSummon* Transport::SummonPassenger(uint32 entry, Position const& pos, TempSu
 
 void GenericTransport::UpdatePosition(float x, float y, float z, float o)
 {
-    bool newActive = GetMap()->IsGridLoaded(x, y);
     Cell oldCell(GetPositionX(), GetPositionY());
 
     Relocate(x, y, z, o);
@@ -564,13 +551,10 @@ void GenericTransport::UpdatePosition(float x, float y, float z, float o)
       3. transport moves from active to inactive grid
       4. the grid that transport is currently in unloads
     */
-    if (_staticPassengers.empty() && newActive) // 1.
+    if (_staticPassengers.empty())
         LoadStaticPassengers();
-    else if (!_staticPassengers.empty() && !newActive && oldCell.DiffGrid(Cell(GetPositionX(), GetPositionY()))) // 3.
-        UnloadStaticPassengers();
     else
         UpdatePassengerPositions(_staticPassengers);
-    // 4. is handed by grid unload
 }
 
 void Transport::LoadStaticPassengers()
@@ -579,20 +563,17 @@ void Transport::LoadStaticPassengers()
     if (!mapId)
         return;
 
-    CellObjectGuidsMap const* cells = sObjectMgr->GetMapObjectGuids(mapId, GetMap()->GetSpawnMode());
-    if (!cells)
+    MapObjectGuids const* guids = sObjectMgr->GetMapObjectGuids(mapId, GetMap()->GetSpawnMode());
+    if (!guids)
         return;
 
-    for (auto const& [cellId, guids] : *cells)
-    {
-        // GameObjects on transport
-        for (ObjectGuid::LowType spawnId : guids.gameobjects)
-            CreateGOPassenger(spawnId, sObjectMgr->GetGameObjectData(spawnId));
+    // GameObjects on transport
+    for (ObjectGuid::LowType spawnId : guids->gameobjects)
+        CreateGOPassenger(spawnId, sObjectMgr->GetGameObjectData(spawnId));
 
-        // Creatures on transport
-        for (ObjectGuid::LowType spawnId : guids.creatures)
-            CreateNPCPassenger(spawnId, sObjectMgr->GetCreatureData(spawnId));
-    }
+    // Creatures on transport
+    for (ObjectGuid::LowType spawnId : guids->creatures)
+        CreateNPCPassenger(spawnId, sObjectMgr->GetCreatureData(spawnId));
 }
 
 void Transport::UnloadStaticPassengers()
@@ -703,7 +684,9 @@ void Transport::DelayedTeleportTransport()
           z = _nextFrame->Node->Loc.Z,
           o =_nextFrame->InitialOrientation;
 
-    Map* newMap = sMapMgr->CreateMap(_nextFrame->Node->ContinentID, {x, y, z, o});
+    Map* newMap = sMapMgr->FindMap(_nextFrame->Node->ContinentID, {x, y, z, o});
+    ASSERT(newMap);
+
     GetMap()->RemoveFromMap<Transport>(this, false);
     SetMap(newMap);
 
@@ -749,7 +732,7 @@ void Transport::UpdateMapPartition()
     if (!currentMap || !currentMap->IsWorldMap())
         return;
 
-    Map* newMap = sMapMgr->CreateMap(currentMap->GetId(), GetPosition());
+    Map* newMap = sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     // Sanity checks
     if (!newMap || newMap == currentMap)
         return;

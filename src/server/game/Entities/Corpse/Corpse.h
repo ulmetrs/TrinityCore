@@ -72,9 +72,6 @@ class TC_GAME_API Corpse : public WorldObject, public GridObject<Corpse>
         void ResetGhostTime();
         CorpseType GetType() const { return m_type; }
 
-        CellCoord const& GetCellCoord() const { return _cellCoord; }
-        void SetCellCoord(CellCoord const& cellCoord) { _cellCoord = cellCoord; }
-
         Loot loot;                                          // remove insignia ONLY at BG
         Player* lootRecipient;
 
@@ -83,6 +80,5 @@ class TC_GAME_API Corpse : public WorldObject, public GridObject<Corpse>
     private:
         CorpseType m_type;
         time_t m_time;
-        CellCoord _cellCoord;
 };
 #endif

@@ -777,7 +777,7 @@ bool BfGraveyard::HasNpc(ObjectGuid guid)
 Creature* Battlefield::SpawnCreature(uint32 entry, Position const& pos)
 {
     //Get map object
-    Map* map = sMapMgr->CreateMap(m_MapId, pos);
+    Map* map = sMapMgr->FindMap(m_MapId, pos);
     if (!map)
     {
         TC_LOG_ERROR("bg.battlefield", "Battlefield::SpawnCreature: Can't create creature entry: {}, map not found.", entry);
@@ -806,7 +806,7 @@ Creature* Battlefield::SpawnCreature(uint32 entry, Position const& pos)
 GameObject* Battlefield::SpawnGameObject(uint32 entry, Position const& pos, QuaternionData const& rot)
 {
     // Get map object
-    Map* map = sMapMgr->CreateMap(m_MapId, pos);
+    Map* map = sMapMgr->FindMap(m_MapId, pos);
     if (!map)
         return nullptr;
 

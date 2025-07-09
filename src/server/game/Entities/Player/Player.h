@@ -30,7 +30,6 @@
 #include "GroupReference.h"
 #include "ItemDefines.h"
 #include "ItemEnchantmentMgr.h"
-#include "MapReference.h"
 #include "PetDefines.h"
 #include "PlayerTaxi.h"
 #include "QuestDef.h"
@@ -2220,8 +2219,6 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SetPassOnGroupLoot(bool bPassOnGroupLoot) { m_bPassOnGroupLoot = bPassOnGroupLoot; }
         bool GetPassOnGroupLoot() const { return m_bPassOnGroupLoot; }
 
-        MapReference &GetMapRef() { return m_mapRef; }
-
         // Set map to player and add reference
         void SetMap(Map* map) override;
         void ResetMap() override;
@@ -2599,8 +2596,6 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void ScheduleDelayedOperation(uint32 operation) { if (operation < DELAYED_END) m_DelayedOperations |= operation; }
 
         bool IsInstanceLoginGameMasterException() const;
-
-        MapReference m_mapRef;
 
         uint32 m_lastFallTime;
         float  m_lastFallZ;

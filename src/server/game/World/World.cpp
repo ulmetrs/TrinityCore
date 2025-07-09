@@ -703,8 +703,6 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_PRESERVE_CUSTOM_CHANNELS] = sConfigMgr->GetBoolDefault("PreserveCustomChannels", false);
     m_int_configs[CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION] = sConfigMgr->GetIntDefault("PreserveCustomChannelDuration", 14);
     m_int_configs[CONFIG_PRESERVE_CUSTOM_CHANNEL_INTERVAL] = sConfigMgr->GetIntDefault("PreserveCustomChannelInterval", 5);
-    m_bool_configs[CONFIG_BASEMAP_LOAD_GRIDS] = sConfigMgr->GetBoolDefault("BaseMapLoadAllGrids", false);
-    m_bool_configs[CONFIG_INSTANCEMAP_LOAD_GRIDS] = sConfigMgr->GetBoolDefault("InstanceMapLoadAllGrids", false);
     m_int_configs[CONFIG_INTERVAL_SAVE] = sConfigMgr->GetIntDefault("PlayerSaveInterval", 15 * MINUTE * IN_MILLISECONDS);
     m_int_configs[CONFIG_INTERVAL_DISCONNECT_TOLERANCE] = sConfigMgr->GetIntDefault("DisconnectToleranceInterval", 0);
     m_bool_configs[CONFIG_STATS_SAVE_ONLY_ON_LOGOUT] = sConfigMgr->GetBoolDefault("PlayerSave.Stats.SaveOnlyOnLogout", true);
@@ -806,7 +804,6 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_EMOTE]    = sConfigMgr->GetBoolDefault("AllowTwoSide.Interaction.Emote", false);
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND]    = sConfigMgr->GetBoolDefault("AllowTwoSide.AddFriend", false);
     m_bool_configs[CONFIG_NAME_RESERVATION] = sConfigMgr->GetBoolDefault("NameReservation", false);
-    m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = sConfigMgr->GetBoolDefault("AlwaysUpdateWaypointCreatures", false);
     /** @epoch-end */
 
     m_int_configs[CONFIG_MIN_PLAYER_NAME]                     = sConfigMgr->GetIntDefault ("MinPlayerName",  2);
@@ -2343,18 +2340,15 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Calculate guild limitation(s) reset time...");
     InitGuildResetTime();
 
-    // Preload all cells, if required for the base maps
-    if (sWorld->getBoolConfig(CONFIG_BASEMAP_LOAD_GRIDS))
+    // Load continent map objects
+    sMapMgr->DoForAllMaps([](Map* map)
     {
-        sMapMgr->DoForAllMaps([](Map* map)
+        if (!map->Instanceable())
         {
-            if (!map->Instanceable())
-            {
-                TC_LOG_INFO("server.loading", "Pre-loading base map data for map {} partition {}", map->GetId(), map->GetPartitionId());
-                map->LoadAllCells();
-            }
-        });
-    }
+            TC_LOG_INFO("server.loading", "Loading world objects for map {} partition {}", map->GetId(), map->GetPartitionId());
+            map->LoadWorldObjects();
+        }
+    });
 
     uint32 startupDuration = GetMSTimeDiffToNow(startupBegin);
 

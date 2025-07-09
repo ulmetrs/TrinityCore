@@ -518,7 +518,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
         return false;
     }
 
-    SetMap(sMapMgr->CreateMap(info->mapId, GetPosition(), this));
+    SetMap(sMapMgr->CreateMap(info->mapId, this));
 
     uint8 powertype = cEntry->DisplayPower;
 
@@ -2106,7 +2106,7 @@ void Player::UpdateMapPartition(Map* forcedMap)
     if (!currentMap || !currentMap->IsWorldMap())
         return;
 
-    Map* newMap = forcedMap ? forcedMap : sMapMgr->CreateMap(currentMap->GetId(), GetPosition(), this);
+    Map* newMap = forcedMap ? forcedMap : sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     // We don't change partitions if already in the correct partition
     if (!newMap || newMap == currentMap)
         return;
@@ -18154,7 +18154,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     // NOW player must have valid map
     // load the player's map here if it's not already loaded
     if (!map)
-        map = sMapMgr->CreateMap(mapId, GetPosition(), this, instanceId);
+        map = sMapMgr->CreateMap(mapId, this, instanceId);
 
     AreaTrigger const* areaTrigger = nullptr;
     bool check = false;
@@ -18206,7 +18206,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
             if (mapId != areaTrigger->target_mapId)
             {
                 mapId = areaTrigger->target_mapId;
-                map = sMapMgr->CreateMap(mapId, GetPosition(), this);
+                map = sMapMgr->CreateMap(mapId, this);
             }
         }
         else
@@ -18222,7 +18222,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     {
         mapId = info->mapId;
         Relocate(info->positionX, info->positionY, info->positionZ, 0.0f);
-        map = sMapMgr->CreateMap(mapId, GetPosition(), this);
+        map = sMapMgr->CreateMap(mapId, this);
         if (!map)
         {
             TC_LOG_ERROR("entities.player.loading", "Player::LoadFromDB: Player '{}' ({}) Map: {}, X: {}, Y: {}, Z: {}, O: {}. Invalid default map coordinates or instance couldn't be created.",
@@ -23291,7 +23291,7 @@ void Player::UpdateVisibilityForPlayer()
 {
     // updates visibility of all objects around point of view for current player
     Trinity::VisibleNotifier notifier(*this);
-    Cell::VisitAllObjects(m_seer, notifier, GetSightRange());
+    GetMap()->VisitAllObjects(m_seer, notifier, GetSightRange());
     notifier.SendToSelf();   // send gathered data
 }
 
@@ -26738,24 +26738,6 @@ void Player::RemoveAtLoginFlag(AtLoginFlags flags, bool persist /*= false*/)
 
         CharacterDatabase.Execute(stmt);
     }
-}
-
-void Player::ResetMap()
-{
-    // this may be called during Map::Update
-    // after decrement+unlink, ++m_mapRefIter will continue correctly
-    // when the first element of the list is being removed
-    // nocheck_prev will return the padding element of the RefManager
-    // instead of nullptr in the case of prev
-    GetMap()->UpdateIteratorBack(this);
-    Unit::ResetMap();
-    GetMapRef().unlink();
-}
-
-void Player::SetMap(Map* map)
-{
-    Unit::SetMap(map);
-    m_mapRef.link(map, this);
 }
 
 void Player::_LoadGlyphs(PreparedQueryResult result)

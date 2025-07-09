@@ -34,7 +34,6 @@ EndScriptData */
 #include "RBAC.h"
 #include "WorldSession.h"
 #include "Map.h"
-#include "MapReference.h"
 
 using namespace Trinity::ChatCommands;
 
@@ -424,12 +423,10 @@ public:
         }
 
         Player* teleportTo = nullptr;
-        for (const MapReference& _ref : map->GetPlayers())
-            if (Player* _player = _ref.GetSource())
-            {
-                teleportTo = _player;
-                break;
-            }
+        for (Player* _player : map->GetPlayers())
+            teleportTo = _player;
+            break;
+        }
 
         if (!teleportTo)
         {

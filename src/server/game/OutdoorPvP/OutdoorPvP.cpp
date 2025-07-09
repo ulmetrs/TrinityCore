@@ -658,7 +658,7 @@ void OutdoorPvP::BroadcastWorker(Worker& _worker, uint32 zoneId)
 void OutdoorPvP::SetMapFromZone(uint32 zone)
 {
     AreaTableEntry const* areaTable = sAreaTableStore.AssertEntry(zone);
-    Map* map = sMapMgr->CreateMap(areaTable->ContinentID, Position()); // FIXMe use correct position to get right partition
-    ASSERT(!map->Instanceable());
+    Map* map = sMapMgr->FindMap(areaTable->ContinentID, Position()); // FIXMe use correct position to get right partition
+    ASSERT(map && !map->Instanceable());
     m_map = map;
 }

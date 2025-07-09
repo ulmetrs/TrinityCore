@@ -27,7 +27,6 @@
 #include "Language.h"
 #include "Log.h"
 #include "Map.h"
-#include "MapReference.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "GuardMgr.h"
@@ -99,21 +98,18 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= nullptr*/)
     if (!map->HavePlayers())
         return;
 
-    for (MapReference const& ref : map->GetPlayers())
+    for (Player* player : map->GetPlayers())
     {
-        if (Player* player = ref.GetSource())
-        {
-            if (!player->IsAlive() || !CombatManager::CanBeginCombat(creature, player))
-                continue;
+        if (!player->IsAlive() || !CombatManager::CanBeginCombat(creature, player))
+            continue;
 
-            creature->EngageWithTarget(player);
+        creature->EngageWithTarget(player);
 
-            for (Unit* pet : player->m_Controlled)
-                creature->EngageWithTarget(pet);
+        for (Unit* pet : player->m_Controlled)
+            creature->EngageWithTarget(pet);
 
-            if (Unit* vehicle = player->GetVehicleBase())
-                creature->EngageWithTarget(vehicle);
-        }
+        if (Unit* vehicle = player->GetVehicleBase())
+            creature->EngageWithTarget(vehicle);
     }
 }
 

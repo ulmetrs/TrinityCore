@@ -1298,16 +1298,17 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
 
     for (GuidList::iterator itr = mGameEventCreatureGuids[internal_event_id].begin(); itr != mGameEventCreatureGuids[internal_event_id].end(); ++itr)
     {
-        // Add to correct cell
         if (CreatureData const* data = sObjectMgr->GetCreatureData(*itr))
         {
+            Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+            if (!map)
+                continue;
+
             sObjectMgr->AddCreatureToGrid(*itr, data);
 
-            // Spawn if necessary (loaded grids only)
-            Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
             map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, *itr);
-            // We use spawn coords to spawn
-            if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
+
+            if (!map->Instanceable())
             {
                 Creature* creature = new Creature();
                 //TC_LOG_DEBUG("misc", "Spawning creature {}", *itr);
@@ -1329,13 +1330,15 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
         // Add to correct cell
         if (GameObjectData const* data = sObjectMgr->GetGameObjectData(*itr))
         {
+            Map* map = sMapMgr->FindMap(data->mapId, data->spawnPoint);
+            if (!map)
+                continue;
+
             sObjectMgr->AddGameobjectToGrid(*itr, data);
-            // Spawn if necessary (loaded grids only)
-            // this base map checked as non-instanced and then only existed
-            Map* map = sMapMgr->CreateMap(data->mapId, data->spawnPoint);
+
             map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, *itr);
-            // We use current coords to unspawn, not spawn coords since creature can have changed grid
-            if (!map->Instanceable() && map->IsGridLoaded(data->spawnPoint))
+
+            if (!map->Instanceable())
             {
                 GameObject* pGameobject = GameObject::CreateGameObject(data->id);
                 //TC_LOG_DEBUG("misc", "Spawning gameobject {}", *itr);

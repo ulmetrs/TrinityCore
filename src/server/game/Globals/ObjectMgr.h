@@ -521,14 +521,13 @@ struct BroadcastText
 
 typedef std::unordered_map<uint32, BroadcastText> BroadcastTextContainer;
 
-typedef std::set<ObjectGuid::LowType> CellGuidSet;
-struct CellObjectGuids
+typedef std::set<ObjectGuid::LowType> LowTypeGuidSet;
+struct MapObjectGuids
 {
-    CellGuidSet creatures;
-    CellGuidSet gameobjects;
+    LowTypeGuidSet creatures;
+    LowTypeGuidSet gameobjects;
 };
-typedef std::unordered_map<uint32/*cell_id*/, CellObjectGuids> CellObjectGuidsMap;
-typedef std::unordered_map<uint32/*(mapid, spawnMode) pair*/, CellObjectGuidsMap> MapObjectGuids;
+typedef std::unordered_map<uint32/*(mapid, spawnMode) pair*/, MapObjectGuids> MapObjectGuidsMap;
 
 struct TrinityString
 {
@@ -1372,9 +1371,7 @@ class TC_GAME_API ObjectMgr
             return nullptr;
         }
 
-        CellObjectGuids const* GetCellObjectGuids(uint16 mapid, uint8 spawnMode, uint32 cell_id);
-
-        CellObjectGuidsMap const* GetMapObjectGuids(uint16 mapid, uint8 spawnMode);
+        MapObjectGuids const* GetMapObjectGuids(uint16 mapid, uint8 spawnMode);
 
         /**
          * Gets temp summon data for all creatures of specified group.
@@ -1792,7 +1789,7 @@ class TC_GAME_API ObjectMgr
         typedef std::unordered_map<uint32, ItemSetNameEntry> ItemSetNameContainer;
         ItemSetNameContainer _itemSetNameStore;
 
-        MapObjectGuids _mapObjectGuidsStore;
+        MapObjectGuidsMap _mapObjectGuidsStore;
         CreatureDataContainer _creatureDataStore;
         CreatureTemplateContainer _creatureTemplateStore;
         CreatureModelContainer _creatureModelStore;

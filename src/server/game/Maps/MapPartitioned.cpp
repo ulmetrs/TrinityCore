@@ -29,17 +29,15 @@
 MapPartitioned::MapPartitioned(uint32 id) : Map(id, 0)
 {
     PartitionEntries const* entries = sObjectMgr->GetMapPartitions(id);
+    if (!entries || entries->empty())
+        return;
 
-    if (entries && !entries->empty())
-    {
-        PartitionEntries sortedEntries = *entries;
+    PartitionEntries sortedEntries = *entries;
+    std::sort(sortedEntries.begin(), sortedEntries.end(), [](const MapPartition& a, const MapPartition& b) {
+        return a.priority > b.priority;
+    });
 
-        std::sort(sortedEntries.begin(), sortedEntries.end(), [](const MapPartition& a, const MapPartition& b) {
-            return a.priority > b.priority;
-        });
-
-        _partitionEntries = std::move(sortedEntries);
-    }
+    _partitionEntries = std::move(sortedEntries);
 }
 
 static const int8 BOUNDARY_VISUALIZE_STEP_SIZE = 5;

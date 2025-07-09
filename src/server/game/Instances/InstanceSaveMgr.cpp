@@ -616,8 +616,8 @@ void InstanceSaveManager::_ResetInstance(uint32 mapid, uint32 instanceId)
 {
     ZoneScopedNC("InstanceSaveManager::_ResetInstance", WORLD_UPDATE_COLOR)
     TC_LOG_DEBUG("maps", "InstanceSaveMgr::_ResetInstance {}, {}", mapid, instanceId);
-    Map const* map = sMapMgr->CreateMap(mapid, {});
-    if (!map->Instanceable())
+    Map const* map = sMapMgr->FindMap(mapid, {});
+    if (!map || !map->Instanceable())
         return;
 
     InstanceSaveHashMap::iterator itr = m_instanceSaveById.find(instanceId);
@@ -707,7 +707,9 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
     }
 
     // note: this isn't fast but it's meant to be executed very rarely
-    Map* baseMap = sMapMgr->CreateMap(mapid, {});
+    Map* baseMap = sMapMgr->FindMap(mapid, {});
+    if (!baseMap)
+        return;
     uint32 timeLeft;
 
     for (auto& [_, map] : baseMap->ToMapInstanced()->GetInstances())

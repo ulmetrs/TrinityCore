@@ -597,6 +597,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         Optional<float> m_visibilityDistanceOverride;
         bool const m_isStoredInWorldObjectGridContainer;
         ZoneScript* m_zoneScript;
+        uint32 _lastUpdateTime;
 
         // transports
         GenericTransport* m_transport;

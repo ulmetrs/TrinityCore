@@ -124,7 +124,7 @@ public:
                 if (handler->GetSession())
                     thisMap = handler->GetSession()->GetPlayer()->GetMap();
                 else
-                    thisMap = sMapMgr->CreateMap(mapId, Position(x, y));
+                    thisMap = sMapMgr->FindMap(mapId, Position(x, y));
 
                 // If map found, try to find active version of this creature
                 if (thisMap)
@@ -403,7 +403,7 @@ public:
                 if (handler->GetSession())
                     thisMap = handler->GetSession()->GetPlayer()->GetMap();
                 else
-                    thisMap = sMapMgr->CreateMap(mapId, Position(x, y));
+                    thisMap = sMapMgr->FindMap(mapId, Position(x, y));
 
                 // If map found, try to find active version of this object
                 if (thisMap)

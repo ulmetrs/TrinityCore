@@ -409,10 +409,9 @@ void ScriptedAI::DoTeleportAll(float x, float y, float z, float o)
     if (!map->IsDungeon())
         return;
 
-    for (MapReference const& mapref : map->GetPlayers())
-        if (Player* player = mapref.GetSource())
-            if (player->IsAlive())
-                player->TeleportTo(me->GetMapId(), x, y, z, o, TELE_TO_NOT_LEAVE_COMBAT);
+    for (Player* player : map->GetPlayers())
+        if (player->IsAlive())
+            player->TeleportTo(me->GetMapId(), x, y, z, o, TELE_TO_NOT_LEAVE_COMBAT);
 }
 
 Unit* ScriptedAI::DoSelectLowestHpFriendly(float range, uint32 minHPDiff)

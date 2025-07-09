@@ -67,7 +67,7 @@ class TC_GAME_API MapManager
         std::vector<uint32> GetContinentPartitionIds(uint32 mapId);
         ChainedRange<Map::PlayerList> GetContinentPlayers(uint32 mapId);
 
-        Map* CreateMap(uint32 mapId, Position const& pos, Player* player = nullptr, uint32 loginInstanceId = 0);
+        Map* CreateMap(uint32 mapId, Player* player, uint32 loginInstanceId = 0);
         uint32 CalculatePartitionId(uint32 mapid, Position const& pos);
         Map* FindBaseMap(uint32 mapId) const
         {
@@ -81,21 +81,24 @@ class TC_GAME_API MapManager
 
         uint32 GetAreaId(uint32 phaseMask, uint32 mapid, float x, float y, float z) const
         {
-            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->FindBaseMap(mapid);
+            ASSERT(m);
             return m->GetAreaId(phaseMask, x, y, z);
         }
         uint32 GetAreaId(uint32 phaseMask, uint32 mapid, Position const& pos) const { return GetAreaId(phaseMask, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
         uint32 GetAreaId(uint32 phaseMask, WorldLocation const& loc) const { return GetAreaId(phaseMask, loc.GetMapId(), loc); }
         uint32 GetZoneId(uint32 phaseMask, uint32 mapid, float x, float y, float z) const
         {
-            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->FindBaseMap(mapid);
+            ASSERT(m);
             return m->GetZoneId(phaseMask, x, y, z);
         }
         uint32 GetZoneId(uint32 phaseMask, uint32 mapid, Position const& pos) const { return GetZoneId(phaseMask, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
         uint32 GetZoneId(uint32 phaseMask, WorldLocation const& loc) const { return GetZoneId(phaseMask, loc.GetMapId(), loc); }
         void GetZoneAndAreaId(uint32 phaseMask, uint32& zoneid, uint32& areaid, uint32 mapid, float x, float y, float z) const
         {
-            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->FindBaseMap(mapid);
+            ASSERT(m);
             m->GetZoneAndAreaId(phaseMask, zoneid, areaid, x, y, z);
         }
         void GetZoneAndAreaId(uint32 phaseMask, uint32& zoneid, uint32& areaid, uint32 mapid, Position const& pos) const { GetZoneAndAreaId(phaseMask, zoneid, areaid, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
@@ -113,7 +116,6 @@ class TC_GAME_API MapManager
             i_timer.Reset();
         }
 
-        //void LoadGrid(int mapid, int instId, float x, float y, WorldObject const* obj, bool no_unload = false);
         void UnloadAll();
 
         Map::EnterState PlayerCannotEnter(uint32 mapid, Player* player, bool loginCheck = false);

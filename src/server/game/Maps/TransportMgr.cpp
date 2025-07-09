@@ -415,7 +415,7 @@ Transport* TransportMgr::CreateTransport(uint32 entry, ObjectGuid::LowType guid 
     }
 
     // use preset map for instances (need to know which instance)
-    trans->SetMap(map ? map : sMapMgr->CreateMap(mapId, Position(x, y)));
+    trans->SetMap(map ? map : sMapMgr->FindMap(mapId, Position(x, y)));
     if (map && map->IsDungeon())
         trans->m_zoneScript = map->ToInstanceMap()->GetInstanceScript();
 

@@ -31,6 +31,7 @@
 #include <stack>
 #include <queue>
 
+#define DEFAULT_VISIBILITY_NOTIFY_PERIOD 1000
 #define VISUAL_WAYPOINT 1 // Creature Entry ID used for waypoints show, visible only for GMs
 #define WORLD_TRIGGER 12999
 
@@ -1945,6 +1946,8 @@ class TC_GAME_API Unit : public WorldObject
 
         std::string GetDebugInfo() const override;
 
+        PeriodicTimer& GetVisNotifyTimer() { return _visNotify; }
+
     protected:
         explicit Unit (bool isWorldObject);
 
@@ -2113,6 +2116,7 @@ class TC_GAME_API Unit : public WorldObject
 
         typedef std::unordered_map<uint64 /*visibleFlag(uint32) + updateType(uint8)*/, BuildValuesCachedBuffer>  ValuesUpdateCache;
         ValuesUpdateCache _valuesUpdateCache;
+        PeriodicTimer _visNotify;
 };
 
 namespace Trinity

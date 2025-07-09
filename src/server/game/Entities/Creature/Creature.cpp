@@ -434,7 +434,7 @@ void Creature::UpdateMapPartition(Map* forcedMap)
     if (!currentMap || !currentMap->IsWorldMap())
         return;
 
-    Map* newMap = forcedMap ? forcedMap : sMapMgr->CreateMap(currentMap->GetId(), GetPosition());
+    Map* newMap = forcedMap ? forcedMap : sMapMgr->FindMap(currentMap->GetId(), GetPosition());
     if (!newMap || newMap == currentMap)
         return;
 
@@ -877,6 +877,13 @@ void Creature::SetPhaseMask(uint32 newPhaseMask, bool update, uint64 newPhaseId)
 
 void Creature::Update(uint32 diff)
 {
+    // Guard against multiple updates in the same tick
+    uint32 updateTime = GameTime::GetGameTimeMS();
+    if (_lastUpdateTime == updateTime)
+        return;
+
+    _lastUpdateTime = updateTime;
+
     if (m_outfit && !_changesMask.GetBit(UNIT_FIELD_DISPLAYID) && Unit::GetDisplayId() == CreatureOutfit::invisible_model)
     {
         // has outfit, displayid is invisible and displayid update already sent to clients

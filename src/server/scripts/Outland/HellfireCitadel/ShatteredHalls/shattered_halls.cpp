@@ -40,7 +40,6 @@ class at_nethekurse_exit : public AreaTriggerScript
                 {
                     Creature* executioner = nullptr;
 
-                    is->instance->LoadGrid(Executioner.GetPositionX(), Executioner.GetPositionY());
                     if (Creature* kargath = ObjectAccessor::GetCreature(*player, is->GetGuidData(NPC_KARGATH_BLADEFIST)))
                     {
                         if (is->GetGuidData(NPC_SHATTERED_EXECUTIONER).IsEmpty())

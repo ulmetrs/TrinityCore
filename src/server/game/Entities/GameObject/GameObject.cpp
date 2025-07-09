@@ -495,6 +495,13 @@ bool GameObject::Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, u
 
 void GameObject::Update(uint32 diff)
 {
+    // Guard against multiple updates in the same tick
+    uint32 updateTime = GameTime::GetGameTimeMS();
+    if (_lastUpdateTime == updateTime)
+        return;
+
+    _lastUpdateTime = updateTime;
+
     // @tswow-begin
     m_tsWorldEntity.tick(TSWorldObject(this));
     m_tsCollisions.Tick(TSWorldObject(this));
