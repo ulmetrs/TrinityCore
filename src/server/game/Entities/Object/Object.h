@@ -328,8 +328,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         void _Create(ObjectGuid::LowType guidlow, HighGuid guidhigh, uint32 phaseMask);
         void AddToWorld() override;
         void RemoveFromWorld() override;
-        virtual void AddToPartition();
-        virtual void RemoveFromPartition();
 
         void GetNearPoint2D(WorldObject const* searcher, float& x, float& y, float distance, float absAngle) const;
         void GetNearPoint(WorldObject const* searcher, float& x, float& y, float& z, float distance2d, float absAngle) const;
@@ -591,6 +589,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         GuidUnorderedSet const& GetAllowedLooters() const;
 
     protected:
+        uint32 m_lastUpdate;
         std::string m_name;
         bool m_isActive;
         bool m_isFarVisible;

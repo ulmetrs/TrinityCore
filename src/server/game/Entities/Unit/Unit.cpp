@@ -10350,7 +10350,7 @@ void Unit::AddToPartition()
     if (IsInWorld())
         return;
 
-    WorldObject::AddToPartition();
+    WorldObject::AddToWorld();
     //i_motionMaster->AddToWorld();
 
     _lastCheckedPartitionPosition = GetPosition();
@@ -10418,7 +10418,7 @@ void Unit::RemoveFromPartition()
     //    }
     //}
 
-    WorldObject::RemoveFromPartition();
+    WorldObject::RemoveFromWorld();
 
     m_duringRemoveFromWorld = false;
 }

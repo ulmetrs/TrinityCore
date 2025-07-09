@@ -878,6 +878,13 @@ void Creature::SetPhaseMask(uint32 newPhaseMask, bool update, uint64 newPhaseId)
 
 void Creature::Update(uint32 diff)
 {
+    // max 1 tick per 1 ms
+    uint32 tick = GameTime::GetGameTimeMS();
+    if (tick == m_lastUpdate)
+        return;
+
+    m_lastUpdate = tick;
+
     if (m_outfit && !_changesMask.GetBit(UNIT_FIELD_DISPLAYID) && Unit::GetDisplayId() == CreatureOutfit::invisible_model)
     {
         // has outfit, displayid is invisible and displayid update already sent to clients

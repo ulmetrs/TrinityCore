@@ -1056,13 +1056,23 @@ void Player::UpdateInvisibilityDrunkDetect()
 
 void Player::Update(uint32 p_time)
 {
+    // max 1 tick per 1 ms
+    uint32 tick = GameTime::GetGameTimeMS();
+    if (tick == m_lastUpdate)
+        return;
+
+    m_lastUpdate = tick;
+
     if (!IsInWorld())
         return;
 
     ZoneScopedN("Player::Update")
 
+    // many updates are per second
+    time_t now = GameTime::GetGameTime();
+
     // undelivered mail
-    if (m_nextMailDelivereTime && m_nextMailDelivereTime <= GameTime::GetGameTime())
+    if (m_nextMailDelivereTime && m_nextMailDelivereTime <= now)
     {
         SendNewMail();
         ++unReadMails;
@@ -1075,7 +1085,7 @@ void Player::Update(uint32 p_time)
     _cinematicMgr->m_cinematicDiff += p_time;
     if (_cinematicMgr->m_cinematicCamera && _cinematicMgr->m_activeCinematicCameraId && GetMSTimeDiffToNow(_cinematicMgr->m_lastCinematicCheck) > CINEMATIC_UPDATEDIFF)
     {
-        _cinematicMgr->m_lastCinematicCheck = GameTime::GetGameTimeMS();
+        _cinematicMgr->m_lastCinematicCheck = tick;
         _cinematicMgr->UpdateCinematicLocation(p_time);
     }
 
@@ -1084,8 +1094,6 @@ void Player::Update(uint32 p_time)
     ExecuteSortedCastRequests();
     Unit::Update(p_time);
     SetCanDelayTeleport(false);
-
-    time_t now = GameTime::GetGameTime();
 
     UpdatePvPFlag(now);
 
@@ -1216,11 +1224,10 @@ void Player::Update(uint32 p_time)
     {
         if (roll_chance_i(3) && _restTime > 0)      // freeze update
         {
-            time_t currTime = GameTime::GetGameTime();
-            time_t timeDiff = currTime - _restTime;
+            time_t timeDiff = now - _restTime;
             if (timeDiff >= 10)                             // freeze update
             {
-                _restTime = currTime;
+                _restTime = now;
 
                 float bubble = 0.125f * sWorld->getRate(RATE_REST_INGAME);
                 float extraPerSec = ((float)GetUInt32Value(PLAYER_NEXT_LEVEL_XP) / 72000.0f) * bubble;

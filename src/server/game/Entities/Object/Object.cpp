@@ -1093,29 +1093,6 @@ void WorldObject::ProcessPositionDataChanged(PositionFullTerrainStatus const& da
 
 void WorldObject::AddToWorld()
 {
-    // TODO should we check this
-    //if (IsInWorld())
-    //    return;
-
-    Object::AddToWorld();
-    GetMap()->GetZoneAndAreaId(GetPhaseMask(), m_zoneId, m_areaId, GetPositionX(), GetPositionY(), GetPositionZ());
-}
-
-void WorldObject::RemoveFromWorld()
-{
-    if (!IsInWorld())
-        return;
-
-    DestroyForNearbyPlayers();
-
-    Object::RemoveFromWorld();
-    // @tswow-begin
-    RemoveFromAllGroups();
-    // @tswow-end
-}
-
-void WorldObject::AddToPartition()
-{
     if (IsInWorld())
         return;
 
@@ -1123,7 +1100,7 @@ void WorldObject::AddToPartition()
     GetMap()->GetZoneAndAreaId(GetPhaseMask(), m_zoneId, m_areaId, GetPositionX(), GetPositionY(), GetPositionZ());
 }
 
-void WorldObject::RemoveFromPartition()
+void WorldObject::RemoveFromWorld()
 {
     if (!IsInWorld())
         return;

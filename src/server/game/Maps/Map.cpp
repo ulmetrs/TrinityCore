@@ -3632,43 +3632,6 @@ bool Map::SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession c
     return foundPlayerToSend;
 }
 
-bool Map::ActiveObjectsNearGrid(NGridType const& ngrid) const
-{
-    CellCoord cell_min(ngrid.getX() * MAX_NUMBER_OF_CELLS, ngrid.getY() * MAX_NUMBER_OF_CELLS);
-    CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-    //we must find visible range in cells so we unload only non-visible cells...
-    float viewDist = GetVisibilityRange();
-    int cell_range = (int)ceilf(viewDist / SIZE_OF_GRID_CELL) + 1;
-
-    cell_min.dec_x(cell_range);
-    cell_min.dec_y(cell_range);
-    cell_max.inc_x(cell_range);
-    cell_max.inc_y(cell_range);
-
-    for (MapRefManager::const_iterator iter = m_mapRefManager.begin(); iter != m_mapRefManager.end(); ++iter)
-    {
-        Player* player = iter->GetSource();
-
-        CellCoord p = Trinity::ComputeCellCoord(player->GetPositionX(), player->GetPositionY());
-        if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
-            (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            return true;
-    }
-
-    for (ActiveNonPlayers::const_iterator iter = m_activeNonPlayers.begin(); iter != m_activeNonPlayers.end(); ++iter)
-    {
-        WorldObject* obj = *iter;
-
-        CellCoord p = Trinity::ComputeCellCoord(obj->GetPositionX(), obj->GetPositionY());
-        if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
-            (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            return true;
-    }
-
-    return false;
-}
-
 template TC_GAME_API bool Map::AddToMap(Corpse*);
 template TC_GAME_API bool Map::AddToMap(Creature*);
 template TC_GAME_API bool Map::AddToMap(GameObject*);

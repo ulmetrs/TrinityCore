@@ -136,6 +136,13 @@ bool DynamicObject::CreateDynamicObject(ObjectGuid::LowType guidlow, Unit* caste
 
 void DynamicObject::Update(uint32 p_time)
 {
+    // max 1 tick per 1 ms
+    uint32 tick = GameTime::GetGameTimeMS();
+    if (tick == m_lastUpdate)
+        return;
+
+    m_lastUpdate = tick;
+
     // caster has to be always available and in the same map
     ASSERT(_caster);
     ASSERT(_caster->GetMap() == GetMap());
