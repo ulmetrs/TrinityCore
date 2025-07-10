@@ -72,7 +72,6 @@ void QuadTree<T>::Clear()
 template<typename T>
 void QuadTree<T>::Insert(T* obj)
 {
-    TC_LOG_DEBUG("quadtrees", "Begin Inser object {}", obj->GetGUID().ToString());
     float x = obj->GetPositionX();
     float y = obj->GetPositionY();
     if (x < _bounds.minX || x > _bounds.maxX || y < _bounds.minY || y > _bounds.maxY) {
@@ -97,23 +96,19 @@ void QuadTree<T>::Insert(T* obj)
             if (currentNode)
                 currentNode->Remove(obj);
 
-            TC_LOG_DEBUG("quadtrees", "Inserting object {} into node", obj->GetGUID().ToString());
             node->objects.push_back(obj);
             obj->SetQuadNode(node);
 
             if (node->objects.size() > static_cast<size_t>(node->maxObjects) && node->depth < node->maxDepth)
             {
-                TC_LOG_DEBUG("quadtrees", "Subdividing node at depth {} (max: {})", node->depth, node->maxDepth);
                 node->Subdivide();
 
                 // Re-insert objects into children
                 auto objs = std::move(node->objects);
                 node->objects.clear();
-                TC_LOG_DEBUG("quadtrees", "Re-inserting objects into children");
                 for (T* o : objs)
                 {
                     int idx = node->GetChildIndex(o->GetPositionX(), o->GetPositionY());
-                    TC_LOG_DEBUG("quadtrees", "Re-inserting object {} into child {}", o->GetGUID().ToString(), idx);
                     node->children[idx]->objects.push_back(o);
                     o->SetQuadNode(node->children[idx].get());
                 }
@@ -126,7 +121,6 @@ void QuadTree<T>::Insert(T* obj)
             node = node->children[idx].get();
         }
     }
-    TC_LOG_DEBUG("quadtrees", "End Insert object {} into node", obj->GetGUID().ToString());
 }
 
 template<typename T>
