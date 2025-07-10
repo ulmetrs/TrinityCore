@@ -382,8 +382,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             return false;
         }
 
-        // For debugging/profiling
-        uint64 _updateCount = 0;
         void CreateQuadTree()
         {
             _quadTree = new MapQuadTree(GetMapBounds());

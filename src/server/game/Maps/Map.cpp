@@ -383,6 +383,7 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -433,6 +434,7 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -543,6 +545,7 @@ bool Map::AddPlayerToMap(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "AddPlayerToMap QuadTree Insert");
         _quadTree->Insert(player);
     }
 
@@ -585,6 +588,7 @@ bool Map::AddPlayerToPartition(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "AddPlayerToPartition QuadTree Insert");
         _quadTree->Insert(player);
     }
 
@@ -640,8 +644,8 @@ bool Map::AddToMap(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
         _quadTree->Insert(obj);
-        obj->setActive(true);
     }
 
     //Must already be set before AddToMap. Usually during obj->Create.
@@ -727,6 +731,7 @@ bool Map::AddToPartition(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "AddToPartition QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -751,6 +756,19 @@ bool Map::IsGridLoaded(GridCoord const& p) const
 {
     NGridType* grid = getNGrid(p.x_coord, p.y_coord);
     return grid && grid->isGridObjectDataLoaded();
+}
+
+void Map::VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater)
+{
+    // Check for valid position
+    if (!obj->IsPositionValid())
+        return;
+
+    float minX = obj->GetPositionX() - obj->GetGridActivationRange();
+    float minY = obj->GetPositionY() - obj->GetGridActivationRange();
+    float maxX = obj->GetPositionX() + obj->GetGridActivationRange();
+    float maxY = obj->GetPositionY() + obj->GetGridActivationRange();
+    _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
 }
 
 void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)
@@ -883,6 +901,70 @@ void Map::Update(uint32 t_diff)
     // for pets
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
+    uint32_t updaterMask = MAPQT_ALL & ~MAPQT_WORLD_PLAYER & ~MAPQT_GRID_CORPSE & ~MAPQT_WORLD_CORPSE;
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        ZoneScopedN("Map::Update::PlayersQuadTree")
+
+        // the player iterator is stored in the map object
+        // to make sure calls to Map::Remove don't invalidate it
+        for (m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
+        {
+            Player* player = m_mapRefIter->GetSource();
+
+            if (!player || !player->IsInWorld())
+                continue;
+
+            // update players at tick
+            player->Update(t_diff);
+
+            VisitNearbyObjectsOf(player, updaterMask, updater);
+
+            // If player is using far sight or mind vision, visit that object too
+            if (WorldObject* viewPoint = player->GetViewpoint())
+                VisitNearbyObjectsOf(viewPoint, updaterMask, updater);
+
+            // Handle updates for creatures in combat with player and are more than 60 yards away
+            if (player->IsInCombat())
+            {
+                std::vector<Unit*> toVisit;
+                for (auto const& pair : player->GetCombatManager().GetPvECombatRefs())
+                    if (Creature* unit = pair.second->GetOther(player)->ToCreature())
+                        if (unit->GetMapId() == player->GetMapId() && !unit->IsWithinDistInMap(player, GetVisibilityRange(), false))
+                            toVisit.push_back(unit);
+                for (Unit* unit : toVisit)
+                    VisitNearbyObjectsOf(unit, updaterMask, updater);
+            }
+
+            { // Update any creatures that own auras the player has applications of
+                std::unordered_set<Unit*> toVisit;
+                for (std::pair<uint32, AuraApplication*> pair : player->GetAppliedAuras())
+                {
+                    if (Unit* caster = pair.second->GetBase()->GetCaster())
+                        if (caster->GetTypeId() != TYPEID_PLAYER && !caster->IsWithinDistInMap(player, GetVisibilityRange(), false))
+                            toVisit.insert(caster);
+                }
+                for (Unit* unit : toVisit)
+                    VisitNearbyObjectsOf(unit, updaterMask, updater);
+            }
+
+            { // Update player's summons
+                std::vector<Unit*> toVisit;
+
+                // Totems
+                for (ObjectGuid const& summonGuid : player->m_SummonSlot)
+                    if (summonGuid)
+                        if (Creature* unit = GetCreature(summonGuid))
+                            if (unit->GetMapId() == player->GetMapId() && !unit->IsWithinDistInMap(player, GetVisibilityRange(), false))
+                                toVisit.push_back(unit);
+
+                for (Unit* unit : toVisit)
+                    VisitNearbyObjectsOf(unit, updaterMask, updater);
+            }
+        }
+    }
+    else
     {
         ZoneScopedN("Map::Update::Players")
 
@@ -944,12 +1026,33 @@ void Map::Update(uint32 t_diff)
         }
     }
 
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        ZoneScopedN("Map::Update::ActiveObjectsQuadTree")
+
+        // non-player active objects, increasing iterator in the loop in case of object removal
+        // TODO should objects be removed during update? I thought they get put in move list
+        for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
+        {
+            WorldObject* obj = *m_activeNonPlayersIter;
+            ++m_activeNonPlayersIter;
+
+            if (!obj || !obj->IsInWorld())
+                continue;
+
+            {
+                ZoneScopedN("Map::Update::ActiveObjects::ActiveNonPlayer")
+
+                VisitNearbyObjectsOf(obj, updaterMask, updater);
+            }
+        }
+    }
+    else
     {
         ZoneScopedN("Map::Update::ActiveObjects")
 
         // non-player active objects, increasing iterator in the loop in case of object removal
         // TODO should objects be removed during update? I thought they get put in move list
-        _updateCount = 0;
         for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
         {
             WorldObject* obj = *m_activeNonPlayersIter;
@@ -964,45 +1067,6 @@ void Map::Update(uint32 t_diff)
                 VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
             }
         }
-        if (_updateCount > 0)
-            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via Grid", GetId(), _updateCount);
-    }
-
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        ZoneScopedN("Map::Update::ActiveObjectsQuadTree")
-
-        // non-player active objects, increasing iterator in the loop in case of object removal
-        // TODO should objects be removed during update? I thought they get put in move list
-        _updateCount = 0;
-        for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
-        {
-            WorldObject* obj = *m_activeNonPlayersIter;
-            ++m_activeNonPlayersIter;
-
-            if (!obj || !obj->IsInWorld())
-                continue;
-
-            {
-                ZoneScopedN("Map::Update::ActiveObjects::ActiveNonPlayer")
-
-                // Check for valid position
-                if (!obj->IsPositionValid())
-                    continue;
-
-                float minX = obj->GetPositionX() - obj->GetGridActivationRange();
-                float minY = obj->GetPositionY() - obj->GetGridActivationRange();
-                float maxX = obj->GetPositionX() + obj->GetGridActivationRange();
-                float maxY = obj->GetPositionY() + obj->GetGridActivationRange();
-                uint32_t mask = MAPQT_ALL
-                    & ~MAPQT_WORLD_PLAYER
-                    & ~MAPQT_GRID_CORPSE
-                    & ~MAPQT_WORLD_CORPSE;
-                _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
-            }
-        }
-        if (_updateCount > 0)
-            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via QuadTree", GetId(), _updateCount);
     }
 
     // TODO make this permanent
@@ -1020,6 +1084,7 @@ void Map::Update(uint32 t_diff)
             if (!creature || !creature->IsInWorld() || !creature->IsPositionValid())
                 continue;
 
+            // TODO remove this when quad trees are permanent
             CellCoord cellCoord = creature->GetCell().GetCellCoord();
             // The waypoint creature has already ticked its update from the above if the cell its in is marked
             if (isCellMarked(cellCoord.GetId()))
@@ -1082,6 +1147,11 @@ void Map::Update(uint32 t_diff)
 
         for (Creature* creature : _relocatedCreatures)
         {
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                _quadTree->Insert(creature);
+            }
+
             Cell old_cell = creature->GetCell();
             Cell new_cell(creature->GetPositionX(), creature->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1108,6 +1178,11 @@ void Map::Update(uint32 t_diff)
 
         for (GameObject* go : _relocatedGameObjects)
         {
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                _quadTree->Insert(go);
+            }
+
             Cell old_cell = go->GetCell();
             Cell new_cell(go->GetPositionX(), go->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1132,6 +1207,11 @@ void Map::Update(uint32 t_diff)
 
         for (DynamicObject* dynObj : _relocatedDynamicObjects)
         {
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                _quadTree->Insert(dynObj);
+            }
+
             Cell old_cell = dynObj->GetCell();
             Cell new_cell(dynObj->GetPositionX(), dynObj->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1213,8 +1293,11 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 
     player->CombatStop();
 
-    if (player->GetQuadNode())
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        TC_LOG_DEBUG("quadtrees", "RemovePlayerFromMap QuadNode Remove");
         static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
+    }
 
     bool const inWorld = player->IsInWorld();
     player->RemoveFromWorld();
@@ -1247,8 +1330,11 @@ void Map::RemovePlayerFromPartition(Player* player)
 
     player->CombatStop();
 
-    if (player->GetQuadNode())
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        TC_LOG_DEBUG("quadtrees", "RemovePlayerFromPartition QuadNode Remove");
         static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
+    }
 
     //bool const inWorld = player->IsInWorld();
     player->RemoveFromPartition();
@@ -1267,9 +1353,6 @@ void Map::RemoveFromMap(T *obj, bool remove)
 {
     ZoneScopedN("Map::RemoveFromMap")
 
-    if (obj->GetQuadNode())
-        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
 
@@ -1282,6 +1365,12 @@ void Map::RemoveFromMap(T *obj, bool remove)
     // note: RemoveFromWorld does this for inWorld objects
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    }
 
     obj->RemoveFromGrid();
 
@@ -1333,9 +1422,6 @@ void Map::RemoveFromPartition(T *obj)
 {
     ZoneScopedN("Map::RemoveFromPartition")
 
-    if (obj->GetQuadNode())
-        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromPartition();
 
@@ -1348,6 +1434,12 @@ void Map::RemoveFromPartition(T *obj)
     // note: RemoveFromWorld does this for inWorld objects
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        TC_LOG_DEBUG("quadtrees", "RemoveFromPartition QuadNode Remove");
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    }
 
     obj->RemoveFromGrid();  
 
@@ -1362,6 +1454,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        TC_LOG_DEBUG("quadtrees", "PlayerRelocation QuadTree Insert");
         _quadTree->Insert(player);
     }
 
@@ -1392,11 +1485,6 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        _quadTree->Insert(creature);
-    }
-
     Cell old_cell = creature->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1405,6 +1493,11 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     }
     else
     {
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            _quadTree->Insert(creature);
+        }
+
         creature->UpdatePositionData();
         creature->UpdateObjectVisibility(false);
 
@@ -1417,11 +1510,6 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 {
     go->Relocate(x, y, z, orientation);
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        _quadTree->Insert(go);
-    }
-
     Cell old_cell = go->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1430,6 +1518,11 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
     }
     else
     {
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            _quadTree->Insert(go);
+        }
+
         go->UpdateModelPosition();
         go->UpdatePositionData();
         go->UpdateObjectVisibility(false);
@@ -1440,11 +1533,6 @@ void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float
 {
     dynObj->Relocate(x, y, z, orientation);
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        _quadTree->Insert(dynObj);
-    }
-
     Cell old_cell = dynObj->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1453,6 +1541,11 @@ void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float
     }
     else
     {
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            _quadTree->Insert(dynObj);
+        }
+
         dynObj->UpdatePositionData();
         dynObj->UpdateObjectVisibility(false);
     }

@@ -495,12 +495,6 @@ bool GameObject::Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, u
 
 void GameObject::Update(uint32 diff)
 {
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        if (Map* map = GetMap())
-            ++map->_updateCount;
-    }
-
     // max 1 tick per 1 ms
     uint32 tick = GameTime::GetGameTimeMS();
     if (tick == m_lastUpdate)
