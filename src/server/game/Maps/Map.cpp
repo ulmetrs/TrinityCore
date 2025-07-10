@@ -964,7 +964,8 @@ void Map::Update(uint32 t_diff)
                 VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
             }
         }
-        TC_LOG_DEBUG("quadtrees", "Active Objects Updated {} objects via Grid", _updateCount);
+        if (_updateCount > 0)
+            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via Grid", GetMapId(), _updateCount);
     }
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
@@ -1000,7 +1001,8 @@ void Map::Update(uint32 t_diff)
                 _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
             }
         }
-        TC_LOG_DEBUG("quadtrees", "Active Objects Updated {} objects via QuadTree", _updateCount);
+        if (_updateCount > 0)
+            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via QuadTree", GetMapId(), _updateCount);
     }
 
     // TODO make this permanent
@@ -1211,6 +1213,9 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 
     player->CombatStop();
 
+    if (player->GetQuadNode())
+        static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
+
     bool const inWorld = player->IsInWorld();
     player->RemoveFromWorld();
     SendRemoveTransports(player);
@@ -1242,6 +1247,9 @@ void Map::RemovePlayerFromPartition(Player* player)
 
     player->CombatStop();
 
+    if (player->GetQuadNode())
+        static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
+
     //bool const inWorld = player->IsInWorld();
     player->RemoveFromPartition();
     SendRemoveTransports(player);
@@ -1258,6 +1266,9 @@ template<class T>
 void Map::RemoveFromMap(T *obj, bool remove)
 {
     ZoneScopedN("Map::RemoveFromMap")
+
+    if (obj->GetQuadNode())
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
 
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
@@ -1321,6 +1332,9 @@ template<class T>
 void Map::RemoveFromPartition(T *obj)
 {
     ZoneScopedN("Map::RemoveFromPartition")
+
+    if (obj->GetQuadNode())
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
 
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromPartition();
