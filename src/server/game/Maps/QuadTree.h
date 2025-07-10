@@ -19,6 +19,7 @@
 #define TRINITY_QUADTREE_H
 
 #include "GridDefines.h"
+#include "Object.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
