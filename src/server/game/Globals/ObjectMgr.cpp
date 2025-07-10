@@ -2437,7 +2437,7 @@ void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* 
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.creatures.insert(guid);
 
-            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
             tree_guids.creatures.insert(guid);
         }
     }
@@ -2454,7 +2454,7 @@ void ObjectMgr::RemoveCreatureFromGrid(ObjectGuid::LowType guid, CreatureData co
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.creatures.erase(guid);
 
-            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
             tree_guids.creatures.erase(guid);
         }
     }
@@ -2970,7 +2970,7 @@ void ObjectMgr::AddGameobjectToGrid(ObjectGuid::LowType guid, GameObjectData con
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.gameobjects.insert(guid);
 
-            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
             tree_guids.gameobjects.insert(guid);
         }
     }
@@ -2987,7 +2987,7 @@ void ObjectMgr::RemoveGameobjectFromGrid(ObjectGuid::LowType guid, GameObjectDat
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.gameobjects.erase(guid);
 
-            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
             tree_guids.gameobjects.erase(guid);
         }
     }
