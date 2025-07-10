@@ -53,7 +53,6 @@ class InstanceScript;
 class Item;
 class Map;
 class Player;
-class QuadNode;
 class Spell;
 class SpellCastTargets;
 class SpellEffectInfo;
