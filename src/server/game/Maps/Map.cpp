@@ -765,11 +765,7 @@ void Map::VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpd
     if (!obj->IsPositionValid())
         return;
 
-    float minX = obj->GetPositionX() - obj->GetGridActivationRange();
-    float minY = obj->GetPositionY() - obj->GetGridActivationRange();
-    float maxX = obj->GetPositionX() + obj->GetGridActivationRange();
-    float maxY = obj->GetPositionY() + obj->GetGridActivationRange();
-    _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
+    _quadTree->QueryCircle(mask, obj->GetPositionX(), obj->GetPositionY(), obj->GetGridActivationRange(), updater);
 }
 
 void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)

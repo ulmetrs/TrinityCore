@@ -28,6 +28,7 @@
 #include "Item.h"
 #include "Log.h"
 #include "Map.h"
+#include "MapQuadTree.h"
 #include "MiscPackets.h"
 #include "MovementInfo.h"
 #include "MovementPacketBuilder.h"
@@ -2050,7 +2051,14 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
 
     // call MoveInLineOfSight for nearby creatures
     Trinity::AIRelocationNotifier notifier(*summon);
-    Cell::VisitAllObjects(summon, notifier, GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, summon->GetPositionX(), summon->GetPositionY(), GetVisibilityRange(), notifier);
+    }
+    else
+    {
+        Cell::VisitAllObjects(summon, notifier, GetVisibilityRange());
+    }
 
     return summon;
 }
@@ -3612,7 +3620,15 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
 {
     //updates object's visibility for nearby players
     Trinity::VisibleChangesNotifier notifier(*this);
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32 mask = MAPQT_WORLD & ~MAPQT_GAMEOBJECT & ~MAPQT_CORPSE;
+        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    }
 }
 
 struct WorldObjectChangeAccumulator

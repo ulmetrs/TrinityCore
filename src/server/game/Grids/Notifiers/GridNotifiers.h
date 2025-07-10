@@ -70,6 +70,12 @@ namespace Trinity
         void Visit(PlayerMapType &);
         void Visit(CreatureMapType &);
         void Visit(DynamicObjectMapType &);
+
+        void operator()(Player* p);
+        void operator()(GameObject* g) { }
+        void operator()(Creature* c);
+        void operator()(DynamicObject* d);
+        void operator()(Corpse* c) { }
     };
 
     struct TC_GAME_API PlayerRelocationNotifier : public VisibleNotifier
@@ -109,6 +115,12 @@ namespace Trinity
         explicit AIRelocationNotifier(Unit &unit) : i_unit(unit), isCreature(unit.GetTypeId() == TYPEID_UNIT)  { }
         template<class T> void Visit(GridRefManager<T> &) { }
         void Visit(CreatureMapType &);
+
+        void operator()(Player* p) { }
+        void operator()(GameObject* g) { }
+        void operator()(Creature* c);
+        void operator()(DynamicObject* d) { }
+        void operator()(Corpse* c) { }
     };
 
     struct TC_GAME_API MessageDistDeliverer

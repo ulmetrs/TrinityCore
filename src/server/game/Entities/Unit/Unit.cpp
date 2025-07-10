@@ -45,6 +45,7 @@
 #include "Log.h"
 #include "LootMgr.h"
 #include "MapManager.h"
+#include "MapQuadTree.h"
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
 #include "MovementPacketBuilder.h"
@@ -13155,7 +13156,14 @@ void Unit::UpdateObjectVisibility(bool forced)
         WorldObject::UpdateObjectVisibility(true);
         // call MoveInLineOfSight for nearby creatures
         Trinity::AIRelocationNotifier notifier(*this);
-        Cell::VisitAllObjects(this, notifier, GetVisibilityRange());
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+        }
+        else
+        {
+            Cell::VisitAllObjects(this, notifier, GetVisibilityRange());
+        }
     }
 }
 

@@ -155,6 +155,45 @@ void VisibleChangesNotifier::Visit(DynamicObjectMapType &m)
                     player->UpdateVisibilityOf(&i_object);
 }
 
+void VisibleChangesNotifier::operator()(Player* p)
+{
+    if (p == &i_object)
+        return;
+
+    p->UpdateVisibilityOf(&i_object);
+
+    if (p->HasSharedVision())
+    {
+        for (SharedVisionList::const_iterator i = p->GetSharedVisionList().begin();
+             i != p->GetSharedVisionList().end(); ++i)
+        {
+            if ((*i)->m_seer == p)
+                (*i)->UpdateVisibilityOf(&i_object);
+        }
+    }
+}
+
+void VisibleChangesNotifier::operator()(Creature* c)
+{
+    if (c->HasSharedVision())
+    {
+        for (SharedVisionList::const_iterator i = c->GetSharedVisionList().begin();
+             i != c->GetSharedVisionList().end(); ++i)
+        {
+            if ((*i)->m_seer == c)
+                (*i)->UpdateVisibilityOf(&i_object);
+        }
+    }
+}
+
+void VisibleChangesNotifier::operator()(DynamicObject* d)
+{
+    if (Unit* caster = d->GetCaster())
+        if (Player* player = caster->ToPlayer())
+            if (player->m_seer == d)
+                player->UpdateVisibilityOf(&i_object);
+}
+
 inline void CreatureUnitRelocationWorker(Creature* c, Unit* u)
 {
     if (!u->IsAlive() || !c->IsAlive() || c == u || u->IsInFlight())
@@ -287,6 +326,13 @@ void AIRelocationNotifier::Visit(CreatureMapType &m)
         if (isCreature)
             CreatureUnitRelocationWorker((Creature*)&i_unit, c);
     }
+}
+
+void AIRelocationNotifier::operator()(Creature* c)
+{
+    CreatureUnitRelocationWorker(c, &i_unit);
+    if (isCreature)
+        CreatureUnitRelocationWorker((Creature*)&i_unit, c);
 }
 
 void MessageDistDeliverer::Visit(PlayerMapType &m)

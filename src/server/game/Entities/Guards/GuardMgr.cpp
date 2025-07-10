@@ -20,6 +20,7 @@
 #include "CreatureAI.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
+#include "MapQuadTree.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "DBCStores.h"
@@ -228,7 +229,14 @@ void GuardMgr::SummonGuard(Player* attackedPlayer, Unit* enemy, bool ignoreCoold
 
     // call MoveInLineOfSight for nearby contested guards
     Trinity::AIRelocationNotifier notifier(*enemy);
-    Cell::VisitWorldObjects(enemy, notifier, enemy->GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        enemy->GetMap()->GetQuadTree()->QueryCircle(MAPQT_WORLD_CREATURE, enemy->GetPositionX(), enemy->GetPositionY(), enemy->GetVisibilityRange(), notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(enemy, notifier, enemy->GetVisibilityRange());
+    }
 
     if (GameObject* guardPost = attackedPlayer->FindNearestGuardPost(50.0f))
     {
