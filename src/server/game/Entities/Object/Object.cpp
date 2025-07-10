@@ -2053,7 +2053,7 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
     Trinity::AIRelocationNotifier notifier(*summon);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, summon->GetPositionX(), summon->GetPositionY(), GetVisibilityRange(), notifier);
+        GetQuadTree()->QueryCircle(MAPQT_CREATURE, summon->GetPositionX(), summon->GetPositionY(), GetVisibilityRange(), notifier);
     }
     else
     {
