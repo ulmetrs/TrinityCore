@@ -17,7 +17,12 @@
 
 #ifndef TRINITY_QUADTREE_H
 #define TRINITY_QUADTREE_H
- 
+
+#include "Player.h"
+#include "GameObject.h"
+#include "Creature.h"
+#include "DynamicObject.h"
+#include "Corpse.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
