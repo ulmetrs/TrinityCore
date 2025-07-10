@@ -2433,10 +2433,12 @@ void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* 
     {
         if (mask & 1)
         {
+            TC_LOG_DEBUG("quadtrees", "Adding creature {} to grid", guid);
             CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.creatures.insert(guid);
 
+            TC_LOG_DEBUG("quadtrees", "Adding creature {} to tree", guid);
             CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
             tree_guids.creatures.insert(guid);
         }
@@ -2966,10 +2968,12 @@ void ObjectMgr::AddGameobjectToGrid(ObjectGuid::LowType guid, GameObjectData con
     {
         if (mask & 1)
         {
+            TC_LOG_DEBUG("quadtrees", "Adding gameobject {} to grid", guid);
             CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.gameobjects.insert(guid);
 
+            TC_LOG_DEBUG("quadtrees", "Adding gameobject {} to tree", guid);
             CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
             tree_guids.gameobjects.insert(guid);
         }
