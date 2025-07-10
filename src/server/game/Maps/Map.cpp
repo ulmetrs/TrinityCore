@@ -3880,6 +3880,12 @@ Bounds PartitionMap::GetMapBounds() const
         if (y > maxY) maxY = y;
     }
 
+    // Buffer the bounds by 10.0f, clamped to ±MAP_HALFSIZE
+    minX = std::max(-MAP_HALFSIZE, minX - 10.0f);
+    minY = std::max(-MAP_HALFSIZE, minY - 10.0f);
+    maxX = std::min(MAP_HALFSIZE, maxX + 10.0f);
+    maxY = std::min(MAP_HALFSIZE, maxY + 10.0f);
+
     return {minX, minY, maxX, maxY};
 }
 
