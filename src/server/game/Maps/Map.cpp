@@ -965,7 +965,7 @@ void Map::Update(uint32 t_diff)
             }
         }
         if (_updateCount > 0)
-            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via Grid", GetMapId(), _updateCount);
+            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via Grid", GetId(), _updateCount);
     }
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
@@ -1002,7 +1002,7 @@ void Map::Update(uint32 t_diff)
             }
         }
         if (_updateCount > 0)
-            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via QuadTree", GetMapId(), _updateCount);
+            TC_LOG_DEBUG("quadtrees", "Map {} Active Objects Updated {} objects via QuadTree", GetId(), _updateCount);
     }
 
     // TODO make this permanent
