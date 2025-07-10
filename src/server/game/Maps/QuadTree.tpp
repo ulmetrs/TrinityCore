@@ -20,6 +20,7 @@
 #include "Creature.h"
 #include "DynamicObject.h"
 #include "Corpse.h"
+#include "Log.h"
 #include <cassert>
 
 template<typename T>
@@ -87,15 +88,18 @@ void QuadTree<T>::Insert(T* obj)
             if (currentNode)
                 currentNode->Remove(obj);
 
+            TC_LOG_DEBUG("quadtrees", "Inserting object {} into node", obj->GetGUID().ToString());
             node->objects.push_back(obj);
             obj->SetQuadNode(node);
 
             if (node->objects.size() > static_cast<size_t>(node->maxObjects) && node->depth < node->maxDepth)
             {
+                TC_LOG_DEBUG("quadtrees", "Subdividing node");
                 node->Subdivide();
                 // Re-insert objects into children
                 auto objs = std::move(node->objects);
                 node->objects.clear();
+                TC_LOG_DEBUG("quadtrees", "Re-inserting objects into children");
                 for (T* o : objs)
                 {
                     int idx = node->GetChildIndex(o->GetPositionX(), o->GetPositionY());
