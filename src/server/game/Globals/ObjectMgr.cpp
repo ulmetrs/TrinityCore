@@ -2421,7 +2421,7 @@ CellObjectGuidsMap const* ObjectMgr::GetMapObjectGuids(uint16 mapid, uint8 spawn
     return Trinity::Containers::MapGetValuePtr(_mapObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
 }
 
-TreeObjectGuidsMap const* ObjectMgr::GetTreeObjectGuids(uint16 mapid, uint8 spawnMode)
+CellObjectGuids const* ObjectMgr::GetTreeObjectGuids(uint16 mapid, uint8 spawnMode)
 {
     return Trinity::Containers::MapGetValuePtr(_treeObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
 }
