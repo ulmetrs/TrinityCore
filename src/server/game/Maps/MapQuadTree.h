@@ -48,18 +48,80 @@ class MapQuadTree
 {
 public:
     MapQuadTree(Bounds bounds);
-    void Clear();
 
-    // Insert
+    template<class T>
+    struct always_false : std::false_type {};
+
     template<typename T>
-    void Insert(T* object);
-    void Insert(WorldObject* object);
+    void Insert(T* object)
+    {
+        if constexpr (std::is_same_v<T, Player>)
+            playerTree.Insert(object);
+        else if constexpr (std::is_same_v<T, GameObject>)
+            gameObjectTree.Insert(object);
+        else if constexpr (std::is_same_v<T, Creature>)
+            (object->IsStoredInWorldObjectGridContainer() ? worldCreatureTree : gridCreatureTree).Insert(object);
+        else if constexpr (std::is_same_v<T, DynamicObject>)
+            (object->IsStoredInWorldObjectGridContainer() ? worldDynamicObjectTree : gridDynamicObjectTree).Insert(object);
+        else if constexpr (std::is_same_v<T, Corpse>)
+            (object->IsStoredInWorldObjectGridContainer() ? worldCorpseTree : gridCorpseTree).Insert(object);
+        else
+            static_assert(always_false<T>::value, "Unsupported type for MapQuadTree::Insert");
+    }
 
-    // Query (range or circle) using type mask
+    void Clear()
+    {
+        playerTree.Clear();
+        gameObjectTree.Clear();
+        gridCreatureTree.Clear();
+        worldCreatureTree.Clear();
+        gridDynamicObjectTree.Clear();
+        worldDynamicObjectTree.Clear();
+        gridCorpseTree.Clear();
+        worldCorpseTree.Clear();
+    }
+
     template<typename Func>
-    void QueryRange(uint32_t mask, float minX, float minY, float maxX, float maxY, Func&& func) const;
+    void QueryRange(uint32_t mask, float minX, float minY, float maxX, float maxY, Func&& func) const
+    {
+        if (mask & MAPQT_WORLD_PLAYER)
+            playerTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_GRID_GAMEOBJECT)
+            gameObjectTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_GRID_CREATURE)
+            gridCreatureTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_WORLD_CREATURE)
+            worldCreatureTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_GRID_DYNAMICOBJ)
+            gridDynamicObjectTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_WORLD_DYNAMICOBJ)
+            worldDynamicObjectTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_GRID_CORPSE)
+            gridCorpseTree.QueryRange(minX, minY, maxX, maxY, func);
+        if (mask & MAPQT_WORLD_CORPSE)
+            worldCorpseTree.QueryRange(minX, minY, maxX, maxY, func);
+    }
+
     template<typename Func>
-    void QueryCircle(uint32_t mask, float centerX, float centerY, float radius, Func&& func) const;
+    void QueryCircle(uint32_t mask, float centerX, float centerY, float radius, Func&& func) const
+    {
+        if (mask & MAPQT_WORLD_PLAYER)
+            playerTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_GAMEOBJECT)
+            gameObjectTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_CREATURE)
+            gridCreatureTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_WORLD_CREATURE)
+            worldCreatureTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_DYNAMICOBJ)
+            gridDynamicObjectTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_WORLD_DYNAMICOBJ)
+            worldDynamicObjectTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_CORPSE)
+            gridCorpseTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_WORLD_CORPSE)
+            worldCorpseTree.QueryCircle(centerX, centerY, radius, func);
+    }
 
 private:
     QuadTree playerTree;               // always World
