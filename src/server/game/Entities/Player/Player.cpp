@@ -25413,6 +25413,11 @@ void Player::SetTitle(CharTitlesEntry const* title, bool lost)
     SendDirectMessage(&data);
 }
 
+bool Player::HasRunes() const
+{
+    return sObjectMgr->_classHasRunes[GetClass()-1] & (1 << (GetRace() - 1));
+}
+
 uint32 Player::GetRuneBaseCooldown(uint8 index)
 {
     uint8 rune = GetBaseRune(index);
