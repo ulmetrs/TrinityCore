@@ -87,9 +87,9 @@ public:
     template<typename Func>
     void QueryRange(uint32_t mask, float minX, float minY, float maxX, float maxY, Func&& func) const
     {
-        if (mask & MAPQT_WORLD_PLAYER)
+        if (mask & MAPQT_PLAYER)
             playerTree.QueryRange(minX, minY, maxX, maxY, func);
-        if (mask & MAPQT_GRID_GAMEOBJECT)
+        if (mask & MAPQT_GAMEOBJECT)
             gameObjectTree.QueryRange(minX, minY, maxX, maxY, func);
         if (mask & MAPQT_GRID_CREATURE)
             gridCreatureTree.QueryRange(minX, minY, maxX, maxY, func);
@@ -108,9 +108,9 @@ public:
     template<typename Func>
     void QueryCircle(uint32_t mask, float centerX, float centerY, float radius, Func&& func) const
     {
-        if (mask & MAPQT_WORLD_PLAYER)
+        if (mask & MAPQT_PLAYER)
             playerTree.QueryCircle(centerX, centerY, radius, func);
-        if (mask & MAPQT_GRID_GAMEOBJECT)
+        if (mask & MAPQT_GAMEOBJECT)
             gameObjectTree.QueryCircle(centerX, centerY, radius, func);
         if (mask & MAPQT_GRID_CREATURE)
             gridCreatureTree.QueryCircle(centerX, centerY, radius, func);
