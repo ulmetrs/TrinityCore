@@ -398,6 +398,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> bool AddToPartition(T *);
         template<class T> void RemoveFromPartition(T *);
 
+        void VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater);
         void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
         virtual void Update(uint32);
 
