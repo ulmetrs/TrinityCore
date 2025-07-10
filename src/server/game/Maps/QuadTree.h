@@ -19,12 +19,13 @@
 #define TRINITY_QUADTREE_H
 
 #include "GridDefines.h"
-#include "Object.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
 #include <functional>
 #include <cmath>
+
+class WorldObject;
 
 struct Bounds
 {
