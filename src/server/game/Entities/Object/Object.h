@@ -548,8 +548,8 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         void SetIsStoredInWorldObjectGridContainer(bool apply);
         bool IsAlwaysStoredInWorldObjectGridContainer() const { return m_isStoredInWorldObjectGridContainer; }
         bool IsStoredInWorldObjectGridContainer() const;
-        QuadNode* GetQuadNode() const { return m_quadNode; }
-        void SetQuadNode(QuadNode* node) { m_quadNode = node; }
+        void* GetQuadNode() const { return m_quadNode; }
+        void SetQuadNode(void* node) { m_quadNode = node; }
 
         uint32  LastUsedScriptID;
 
@@ -623,7 +623,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         virtual bool IsAlwaysDetectableFor(WorldObject const* /*seer*/) const { return false; }
     private:
         Map* m_currMap;                                   // current object's Map location
-        QuadNode* m_quadNode;
+        void* m_quadNode;
 
         uint32 m_InstanceId;                              // in map copy with instance id
         uint32 m_partitionId;                             // in map copy with partition id

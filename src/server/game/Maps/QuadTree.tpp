@@ -66,6 +66,7 @@ void QuadTree<T>::Clear()
 template<typename T>
 void QuadTree<T>::Insert(T* obj)
 {
+    QuadNode<T>* currentNode = static_cast<QuadNode<T>*>(obj->GetQuadNode());
     QuadNode<T>* node = root.get();
 
     // Traverse to the correct leaf node
@@ -74,11 +75,10 @@ void QuadTree<T>::Insert(T* obj)
         if (node->IsLeaf())
         {
             // If already in this node, do nothing
-            if (obj->GetQuadNode() == node)
+            if (currentNode == node)
                 return;
 
             // Remove from previous node if needed
-            QuadNode<T>* currentNode = obj->GetQuadNode();
             if (currentNode)
                 currentNode->Remove(obj);
 
