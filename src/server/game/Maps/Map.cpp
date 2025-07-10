@@ -383,7 +383,7 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(obj);
+        _quadTree->Insert(obj);
     }
 
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
@@ -433,7 +433,7 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(obj);
+        _quadTree->Insert(obj);
     }
 
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
@@ -543,7 +543,7 @@ bool Map::AddPlayerToMap(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(player);
+        _quadTree->Insert(player);
     }
 
     // Check if we are adding to correct map
@@ -585,7 +585,7 @@ bool Map::AddPlayerToPartition(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(player);
+        _quadTree->Insert(player);
     }
 
     // Check if we are adding to correct map
@@ -640,7 +640,7 @@ bool Map::AddToMap(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(obj);
+        _quadTree->Insert(obj);
     }
 
     //Must already be set before AddToMap. Usually during obj->Create.
@@ -726,7 +726,7 @@ bool Map::AddToPartition(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(obj);
+        _quadTree->Insert(obj);
     }
 
     //Must already be set before AddToMap. Usually during obj->Create.
@@ -996,7 +996,7 @@ void Map::Update(uint32 t_diff)
                     & ~MAPQT_WORLD_PLAYER
                     & ~MAPQT_GRID_CORPSE
                     & ~MAPQT_WORLD_CORPSE;
-                _quadTree.QueryRange(mask, minX, minY, maxX, maxY, updater);
+                _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
             }
         }
         TC_LOG_DEBUG("quadtrees", "Active Objects Updated {} objects via QuadTree", _updateCount);
@@ -1347,7 +1347,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(player);
+        _quadTree->Insert(player);
     }
 
     Cell old_cell = player->GetCell();
@@ -1379,7 +1379,7 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(creature);
+        _quadTree->Insert(creature);
     }
 
     Cell old_cell = creature->GetCell();
@@ -1404,7 +1404,7 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(go);
+        _quadTree->Insert(go);
     }
 
     Cell old_cell = go->GetCell();
@@ -1427,7 +1427,7 @@ void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _quadTree.Insert(dynObj);
+        _quadTree->Insert(dynObj);
     }
 
     Cell old_cell = dynObj->GetCell();
