@@ -1429,7 +1429,7 @@ void Player::Update(uint32 p_time)
             {
                 ZoneScopedN("Player::Update::RelocationNotifierQuadTree")
 
-                GetMap()->GetQuadTree()->QueryCircle(QT_MASK_ALL, viewPoint->GetPositionX(), viewPoint->GetPositionY(), 100, relocate);
+                GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, viewPoint->GetPositionX(), viewPoint->GetPositionY(), 100, relocate);
             }
             else
             {
