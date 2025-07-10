@@ -28,7 +28,6 @@
 #include "ObjectGuid.h"
 #include "Optional.h"
 #include "Position.h"
-#include "QuadTree.h"
 #include "SharedDefines.h"
 #include "SpellDefines.h"
 #include "UniqueTrackablePtr.h"
@@ -54,6 +53,7 @@ class InstanceScript;
 class Item;
 class Map;
 class Player;
+class QuadNode;
 class Spell;
 class SpellCastTargets;
 class SpellEffectInfo;

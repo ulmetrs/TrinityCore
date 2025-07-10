@@ -19,10 +19,6 @@
 #include "Object.h"
 #include <algorithm> // for std::max
 
-// QuadNode Implementation
-
-// QuadNode Implementation
-
 QuadNode::QuadNode(Bounds bounds, int depth_, int maxObjects_, int maxDepth_)
     : _bounds(bounds), depth(depth_), maxObjects(maxObjects_), maxDepth(maxDepth_)
 {}

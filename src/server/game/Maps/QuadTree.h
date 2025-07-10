@@ -26,8 +26,6 @@
 #include <functional>
 #include <cmath>
 
-class WorldObject;
-
 struct Bounds
 {
     float minX, minY, maxX, maxY;
