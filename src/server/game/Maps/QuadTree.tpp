@@ -94,7 +94,7 @@ void QuadTree<T>::Insert(T* obj)
 
             if (node->objects.size() > static_cast<size_t>(node->maxObjects) && node->depth < node->maxDepth)
             {
-                TC_LOG_DEBUG("quadtrees", "Subdividing node");
+                TC_LOG_DEBUG("quadtrees", "Subdividing node at depth {} (max: {})", node->depth, node->maxDepth);
                 node->Subdivide();
                 // Re-insert objects into children
                 auto objs = std::move(node->objects);
@@ -103,6 +103,7 @@ void QuadTree<T>::Insert(T* obj)
                 for (T* o : objs)
                 {
                     int idx = node->GetChildIndex(o->GetPositionX(), o->GetPositionY());
+                    TC_LOG_DEBUG("quadtrees", "Re-inserting object {} into child {}", o->GetGUID().ToString(), idx);
                     node->children[idx]->objects.push_back(o);
                     o->SetQuadNode(node->children[idx].get());
                 }
