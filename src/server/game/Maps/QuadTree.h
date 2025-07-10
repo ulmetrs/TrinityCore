@@ -30,6 +30,9 @@ struct Bounds
 };
 
 template<typename T>
+class QuadTree;
+
+template<typename T>
 class QuadNode
 {
     friend class QuadTree<T>;
