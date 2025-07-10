@@ -640,8 +640,8 @@ bool Map::AddToMap(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "Map::AddToMap Adding object {} to quadtree", obj->GetGUID().ToString());
         _quadTree->Insert(obj);
+        obj->setActive(true);
     }
 
     //Must already be set before AddToMap. Usually during obj->Create.
