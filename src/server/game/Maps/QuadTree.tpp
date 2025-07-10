@@ -72,6 +72,14 @@ void QuadTree<T>::Clear()
 template<typename T>
 void QuadTree<T>::Insert(T* obj)
 {
+    float x = obj->GetPositionX();
+    float y = obj->GetPositionY();
+    if (x < _bounds.minX || x > _bounds.maxX || y < _bounds.minY || y > _bounds.maxY) {
+        TC_LOG_ERROR("quadtrees", "Object {} position ({}, {}) is outside tree bounds", 
+                     obj->GetGUID().ToString(), x, y);
+        return;
+    }
+
     QuadNode<T>* currentNode = static_cast<QuadNode<T>*>(obj->GetQuadNode());
     QuadNode<T>* node = root.get();
 
@@ -94,8 +102,20 @@ void QuadTree<T>::Insert(T* obj)
 
             if (node->objects.size() > static_cast<size_t>(node->maxObjects) && node->depth < node->maxDepth)
             {
+                // Store current object count before subdivision
+                size_t preSubdivideCount = node->objects.size();
+
                 TC_LOG_DEBUG("quadtrees", "Subdividing node at depth {} (max: {})", node->depth, node->maxDepth);
                 node->Subdivide();
+
+                // If node is still a leaf after attempted subdivision, don't try to reinsert objects
+                // This happens when we detect all objects would go into the same child
+                if (node->IsLeaf())
+                {
+                    TC_LOG_DEBUG("quadtrees", "Subdivision skipped - keeping {} objects in node", preSubdivideCount);
+                    break;
+                }
+
                 // Re-insert objects into children
                 auto objs = std::move(node->objects);
                 node->objects.clear();
@@ -132,8 +152,38 @@ void QuadNode<T>::Remove(T* obj)
 template<typename T>
 void QuadNode<T>::Subdivide()
 {
+    if (!IsLeaf())
+        return;
+
     float midX = (_bounds.minX + _bounds.maxX) * 0.5f;
     float midY = (_bounds.minY + _bounds.maxY) * 0.5f;
+    
+    // Check if all objects would go into the same child quadrant
+    bool allSameQuadrant = true;
+    int firstIdx = -1;
+    
+    for (T* obj : objects)
+    {
+        int idx = GetChildIndex(obj->GetPositionX(), obj->GetPositionY());
+        if (firstIdx == -1)
+            firstIdx = idx;
+        else if (firstIdx != idx)
+        {
+            allSameQuadrant = false;
+            break;
+        }
+    }
+    
+    // If all objects would end up in the same child and we're already at some depth,
+    // don't subdivide further to prevent infinite recursion
+    if (allSameQuadrant && depth > 3)
+    {
+        TC_LOG_DEBUG("quadtrees", "Skipping subdivision at depth {} - all {} objects in same quadrant",
+                    depth, objects.size());
+        return;
+    }
+
+    // Create the four child nodes
     // NW
     children[0] = std::make_unique<QuadNode<T>>(Bounds{_bounds.minX, midY, midX, _bounds.maxY}, depth + 1, maxObjects, maxDepth);
     // NE

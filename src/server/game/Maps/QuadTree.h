@@ -18,6 +18,7 @@
 #ifndef TRINITY_QUADTREE_H
 #define TRINITY_QUADTREE_H
 
+#include "GridDefines.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -64,7 +65,7 @@ template<typename T>
 class QuadTree
 {
 public:
-    QuadTree(Bounds bounds, int maxObjects = 8, float cellSize = 533.33333f / 64.0f); // Default cell size, adjust if needed
+    QuadTree(Bounds bounds, int maxObjects = 8, float cellSize = SIZE_OF_GRID_CELL);
     void Clear();
     void Insert(T* obj);
 
