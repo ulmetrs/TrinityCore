@@ -72,6 +72,7 @@ void QuadTree<T>::Clear()
 template<typename T>
 void QuadTree<T>::Insert(T* obj)
 {
+    TC_LOG_DEBUG("quadtrees", "Begin Inser object {}", obj->GetGUID().ToString());
     float x = obj->GetPositionX();
     float y = obj->GetPositionY();
     if (x < _bounds.minX || x > _bounds.maxX || y < _bounds.minY || y > _bounds.maxY) {
@@ -125,6 +126,7 @@ void QuadTree<T>::Insert(T* obj)
             node = node->children[idx].get();
         }
     }
+    TC_LOG_DEBUG("quadtrees", "End Insert object {} into node", obj->GetGUID().ToString());
 }
 
 template<typename T>
