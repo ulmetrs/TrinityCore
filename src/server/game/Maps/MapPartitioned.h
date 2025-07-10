@@ -54,9 +54,9 @@ class TC_GAME_API MapPartitioned : public Map
 
         Partitions &GetPartitions() { return _partitions; }
         PartitionEntries &GetPartitionEntries() { return _partitionEntries; }
-        MapPartition* GetPartitionEntry(uint32 partitionId)
+        const MapPartition* GetPartitionEntry(uint32 partitionId) const;
         {
-            for (auto& entry : _partitionEntries)
+            for (const auto& entry : _partitionEntries)
             {
                 if (entry.partitionId == partitionId)
                     return &entry;
