@@ -1423,9 +1423,20 @@ void Player::Update(uint32 p_time)
         WorldObject const* viewPoint = m_seer;
         if (viewPoint->isNeedNotify(NOTIFY_VISIBILITY_CHANGED) && (this == viewPoint || viewPoint->IsPositionValid()))
         {
-            ZoneScopedN("Player::Update::RelocationNotifier")
+            
             PlayerRelocationNotifier relocate(*this);
-            Cell::VisitAllObjects(viewPoint, relocate, 100, false);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                ZoneScopedN("Player::Update::RelocationNotifierQuadTree")
+
+                GetMap()->GetQuadTree()->QueryCircle(QT_MASK_ALL, viewPoint->GetPositionX(), viewPoint->GetPositionY(), 100, relocate);
+            }
+            else
+            {
+                ZoneScopedN("Player::Update::RelocationNotifier")
+
+                Cell::VisitAllObjects(viewPoint, relocate, 100, false);
+            }
             relocate.SendToSelf();
         }
 

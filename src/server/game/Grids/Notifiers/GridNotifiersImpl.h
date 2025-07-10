@@ -27,16 +27,6 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
-template<class T>
-inline void Trinity::VisibleNotifier::Visit(GridRefManager<T> &m)
-{
-    for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        vis_guids.erase(iter->GetSource()->GetGUID());
-        i_player.UpdateVisibilityOf(iter->GetSource(), i_data, i_visibleNow);
-    }
-}
-
 // SEARCHERS & LIST SEARCHERS & WORKERS
 
 // WorldObject searchers & workers

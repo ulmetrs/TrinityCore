@@ -89,6 +89,32 @@ void VisibleNotifier::SendToSelf()
         i_player.SendInitialVisiblePackets(*it);
 }
 
+void VisibleNotifier::operator()(Player* p)
+{
+    vis_guids.erase(p->GetGUID());
+    i_player.UpdateVisibilityOf(p, i_data, i_visibleNow);
+}
+void VisibleNotifier::operator()(GameObject* g)
+{
+    vis_guids.erase(g->GetGUID());
+    i_player.UpdateVisibilityOf(g, i_data, i_visibleNow);
+}
+void VisibleNotifier::operator()(Creature* c)
+{
+    vis_guids.erase(c->GetGUID());
+    i_player.UpdateVisibilityOf(c, i_data, i_visibleNow);
+}
+void VisibleNotifier::operator()(DynamicObject* d)
+{
+    vis_guids.erase(d->GetGUID());
+    i_player.UpdateVisibilityOf(d, i_data, i_visibleNow);
+}
+void VisibleNotifier::operator()(Corpse* c)
+{
+    vis_guids.erase(c->GetGUID());
+    i_player.UpdateVisibilityOf(c, i_data, i_visibleNow);
+}
+
 void VisibleChangesNotifier::Visit(PlayerMapType &m)
 {
     for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
@@ -181,6 +207,30 @@ void PlayerRelocationNotifier::Visit(CreatureMapType &m)
     }
 }
 
+void PlayerRelocationNotifier::operator()(Player* p)
+{
+    vis_guids.erase(p->GetGUID());
+
+    i_player.UpdateVisibilityOf(p, i_data, i_visibleNow);
+
+    if (p->m_seer->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
+        return;
+
+    p->UpdateVisibilityOf(&i_player);
+}
+
+void PlayerRelocationNotifier::operator()(Creature* c)
+{
+    bool relocated_for_ai = (&i_player == i_player.m_seer);
+
+    vis_guids.erase(c->GetGUID());
+
+    i_player.UpdateVisibilityOf(c, i_data, i_visibleNow);
+
+    if (relocated_for_ai && !c->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
+        CreatureUnitRelocationWorker(c, &i_player);
+}
+
 void CreatureRelocationNotifier::Visit(PlayerMapType &m)
 {
     for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
@@ -207,6 +257,25 @@ void CreatureRelocationNotifier::Visit(CreatureMapType &m)
         if (!c->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
             CreatureUnitRelocationWorker(c, &i_creature);
     }
+}
+
+void CreatureRelocationNotifier::operator()(Player* p)
+{
+    if (!p->m_seer->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
+        p->UpdateVisibilityOf(&i_creature);
+
+    CreatureUnitRelocationWorker(&i_creature, p);
+}
+
+void CreatureRelocationNotifier::operator()(Creature* c)
+{
+    if (!i_creature.IsAlive())
+        return;
+
+    CreatureUnitRelocationWorker(&i_creature, c);
+
+    if (!c->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
+        CreatureUnitRelocationWorker(c, &i_creature);
 }
 
 void AIRelocationNotifier::Visit(CreatureMapType &m)

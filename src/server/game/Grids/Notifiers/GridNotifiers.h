@@ -43,7 +43,23 @@ namespace Trinity
         VisibleNotifier(Player &player) : i_player(player), vis_guids(player.m_clientGUIDs) { }
         template<class T> void Visit(GridRefManager<T> &m);
         void SendToSelf(void);
+
+        void operator()(Player* p);
+        void operator()(GameObject* g);
+        void operator()(Creature* c);
+        void operator()(DynamicObject* d);
+        void operator()(Corpse* c);
     };
+
+    template<class T>
+    inline void VisibleNotifier::Visit(GridRefManager<T> &m)
+    {
+        for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
+        {
+            vis_guids.erase(iter->GetSource()->GetGUID());
+            i_player.UpdateVisibilityOf(iter->GetSource(), i_data, i_visibleNow);
+        }
+    }
 
     struct VisibleChangesNotifier
     {
@@ -63,6 +79,12 @@ namespace Trinity
         template<class T> void Visit(GridRefManager<T> &m) { VisibleNotifier::Visit(m); }
         void Visit(CreatureMapType &);
         void Visit(PlayerMapType &);
+
+        void operator()(Player* p);
+        void operator()(GameObject* g) { VisibleNotifier::operator()(g); }
+        void operator()(Creature* c);
+        void operator()(DynamicObject* d) { VisibleNotifier::operator()(d); }
+        void operator()(Corpse* c) { VisibleNotifier::operator()(c); }
     };
 
     struct TC_GAME_API CreatureRelocationNotifier
@@ -72,6 +94,12 @@ namespace Trinity
         template<class T> void Visit(GridRefManager<T> &) { }
         void Visit(CreatureMapType &);
         void Visit(PlayerMapType &);
+
+        void operator()(Player* p);
+        void operator()(GameObject* g) { }
+        void operator()(Creature* c);
+        void operator()(DynamicObject* d) { }
+        void operator()(Corpse* c) { }
     };
 
     struct TC_GAME_API AIRelocationNotifier

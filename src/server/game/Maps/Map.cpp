@@ -758,6 +758,7 @@ bool Map::IsGridLoaded(GridCoord const& p) const
     return grid && grid->isGridObjectDataLoaded();
 }
 
+// TODO when all is stable technically we could change this to circle search if its faster?
 void Map::VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater)
 {
     // Check for valid position
@@ -901,7 +902,7 @@ void Map::Update(uint32 t_diff)
     // for pets
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
-    uint32_t updaterMask = MAPQT_ALL & ~MAPQT_WORLD_PLAYER & ~MAPQT_GRID_CORPSE & ~MAPQT_WORLD_CORPSE;
+    uint32_t updaterMask = MAPQT_ALL & ~MAPQT_PLAYER & ~MAPQT_CORPSE;
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {

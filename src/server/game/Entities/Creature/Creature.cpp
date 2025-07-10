@@ -37,6 +37,7 @@
 #include "Log.h"
 #include "LootMgr.h"
 #include "MapManager.h"
+#include "MapQuadTree.h"
 #include "MotionMaster.h"
 #include "MoveSpline.h"
 #include "ObjectAccessor.h"
@@ -1123,7 +1124,20 @@ void Creature::Update(uint32 diff)
         if (isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
         {
             CreatureRelocationNotifier relocate(*this);
-            Cell::VisitAllObjects(this, relocate, 100, false);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                ZoneScopedN("Creature::Update::RelocationNotifierQuadTree")
+
+                uint32_t mask = MAPQT_ALL & ~MAPQT_GAMEOBJECT & ~MAPQT_DYNAMICOBJ & ~MAPQT_CORPSE;
+                GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), 100, relocate);
+            }
+            else
+            {
+                ZoneScopedN("Creature::Update::RelocationNotifier")
+
+                Cell::VisitAllObjects(this, relocate, 100, false);
+            }
+            
         }
 
         ResetAllNotifies();
