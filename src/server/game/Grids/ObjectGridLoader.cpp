@@ -54,6 +54,13 @@ class ObjectWorldLoader
 template <class T>
 void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* map, T *obj)
 {
+    // For full cutover to quad trees the loading basically needs to be replaced last, as we don't
+    // want to create duplicate objects
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        map->GetQuadTree()->Insert(obj);
+    }
+
     obj->AddToGrid(m);
     obj->SetCell(Cell(cell));
     obj->AddToWorld();
@@ -62,13 +69,15 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         map->AddToWaypointCreatures(obj->ToCreature());
 
+    
+
     ++count;
 }
 
 template <class T>
-void LoadHelper(CellGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* map)
+void LoadHelper(LowTypeGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* map)
 {
-    for (CellGuidSet::const_iterator i_guid = guid_set.begin(); i_guid != guid_set.end(); ++i_guid)
+    for (LowTypeGuidSet::const_iterator i_guid = guid_set.begin(); i_guid != guid_set.end(); ++i_guid)
     {
         // Don't spawn at all if there's a respawn timer
         ObjectGuid::LowType guid = *i_guid;
@@ -115,6 +124,11 @@ void ObjectWorldLoader::Visit(CorpseMapType& /*m*/)
     {
         for (Corpse* corpse : *corpses)
         {
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                i_map->GetQuadTree()->Insert(corpse);
+            }
+
             corpse->AddToWorld();
             GridType& cell = i_grid.GetGridType(i_cell.CellX(), i_cell.CellY());
             if (corpse->IsStoredInWorldObjectGridContainer())

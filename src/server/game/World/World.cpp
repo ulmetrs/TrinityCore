@@ -807,6 +807,12 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND]    = sConfigMgr->GetBoolDefault("AllowTwoSide.AddFriend", false);
     m_bool_configs[CONFIG_NAME_RESERVATION] = sConfigMgr->GetBoolDefault("NameReservation", false);
     m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = sConfigMgr->GetBoolDefault("AlwaysUpdateWaypointCreatures", false);
+    m_bool_configs[CONFIG_TEST_QUAD_TREES] = sConfigMgr->GetBoolDefault("TestQuadTrees", false);
+    if (!m_bool_configs[CONFIG_BASEMAP_LOAD_GRIDS] || !m_bool_configs[CONFIG_INSTANCEMAP_LOAD_GRIDS])
+    {
+        TC_LOG_ERROR("server.loading", "TestQuadTrees requires CONFIG_BASEMAP_LOAD_GRIDS and CONFIG_INSTANCEMAP_LOAD_GRIDS to be enabled.");
+        m_bool_configs[CONFIG_TEST_QUAD_TREES] = false;
+    }
     /** @epoch-end */
 
     m_int_configs[CONFIG_MIN_PLAYER_NAME]                     = sConfigMgr->GetIntDefault ("MinPlayerName",  2);

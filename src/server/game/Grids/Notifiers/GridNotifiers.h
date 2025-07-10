@@ -74,19 +74,6 @@ namespace Trinity
         void Visit(PlayerMapType &);
     };
 
-    struct TC_GAME_API DelayedUnitRelocation
-    {
-        Map &i_map;
-        Cell &cell;
-        CellCoord &p;
-        const float i_radius;
-        DelayedUnitRelocation(Cell &c, CellCoord &pair, Map &map, float radius) :
-            i_map(map), cell(c), p(pair), i_radius(radius) { }
-        template<class T> void Visit(GridRefManager<T> &) { }
-        void Visit(CreatureMapType &);
-        void Visit(PlayerMapType   &);
-    };
-
     struct TC_GAME_API AIRelocationNotifier
     {
         Unit &i_unit;
@@ -94,25 +81,6 @@ namespace Trinity
         explicit AIRelocationNotifier(Unit &unit) : i_unit(unit), isCreature(unit.GetTypeId() == TYPEID_UNIT)  { }
         template<class T> void Visit(GridRefManager<T> &) { }
         void Visit(CreatureMapType &);
-    };
-
-    struct GridUpdater
-    {
-        GridType &i_grid;
-        uint32 i_timeDiff;
-        GridUpdater(GridType &grid, uint32 diff) : i_grid(grid), i_timeDiff(diff) { }
-
-        template<class T> void updateObjects(GridRefManager<T> &m)
-        {
-            for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-                iter->GetSource()->Update(i_timeDiff);
-        }
-
-        void Visit(PlayerMapType &m) { updateObjects<Player>(m); }
-        void Visit(CreatureMapType &m){ updateObjects<Creature>(m); }
-        void Visit(GameObjectMapType &m) { updateObjects<GameObject>(m); }
-        void Visit(DynamicObjectMapType &m) { updateObjects<DynamicObject>(m); }
-        void Visit(CorpseMapType &m) { updateObjects<Corpse>(m); }
     };
 
     struct TC_GAME_API MessageDistDeliverer
@@ -193,6 +161,12 @@ namespace Trinity
         template<class T> void Visit(GridRefManager<T> &m);
         void Visit(PlayerMapType &) { }
         void Visit(CorpseMapType &) { }
+
+        void operator()(Player* p) { }
+        void operator()(GameObject* g);
+        void operator()(Creature* c);
+        void operator()(DynamicObject* d);
+        void operator()(Corpse* c) { }
     };
 
     // SEARCHERS & LIST SEARCHERS & WORKERS

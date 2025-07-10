@@ -381,6 +381,11 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
         TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
     }
 
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(obj);
+    }
+
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
     ASSERT(ngrid != nullptr);
 
@@ -424,6 +429,11 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
         uint32 const grid_y = cell.data.Part.grid_y;
 
         TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
+    }
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(obj);
     }
 
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
@@ -531,6 +541,11 @@ bool Map::AddPlayerToMap(Player* player)
     EnsureGridLoaded(cell);
     AddToGrid(player, cell);
 
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(player);
+    }
+
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
     // Like object, shouldnt this already be set based on the ASSERT?
@@ -567,6 +582,11 @@ bool Map::AddPlayerToPartition(Player* player)
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(player, cell);
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(player);
+    }
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -617,6 +637,11 @@ bool Map::AddToMap(T* obj)
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(obj, cell);
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(obj);
+    }
 
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
@@ -698,6 +723,11 @@ bool Map::AddToPartition(T* obj)
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(obj, cell);
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(obj);
+    }
 
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
@@ -918,6 +948,7 @@ void Map::Update(uint32 t_diff)
 
         // non-player active objects, increasing iterator in the loop in case of object removal
         // TODO should objects be removed during update? I thought they get put in move list
+        _updateCount = 0;
         for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
         {
             WorldObject* obj = *m_activeNonPlayersIter;
@@ -932,6 +963,43 @@ void Map::Update(uint32 t_diff)
                 VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
             }
         }
+        TC_LOG_DEBUG("quadtrees", "Active Objects Updated {} objects via Grid", _updateCount);
+    }
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        ZoneScopedN("Map::Update::ActiveObjectsQuadTree")
+
+        // non-player active objects, increasing iterator in the loop in case of object removal
+        // TODO should objects be removed during update? I thought they get put in move list
+        _updateCount = 0;
+        for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
+        {
+            WorldObject* obj = *m_activeNonPlayersIter;
+            ++m_activeNonPlayersIter;
+
+            if (!obj || !obj->IsInWorld())
+                continue;
+
+            {
+                ZoneScopedN("Map::Update::ActiveObjects::ActiveNonPlayer")
+
+                // Check for valid position
+                if (!obj->IsPositionValid())
+                    continue;
+
+                float minX = obj->GetPositionX() - obj->GetGridActivationRange();
+                float minY = obj->GetPositionY() - obj->GetGridActivationRange();
+                float maxX = obj->GetPositionX() + obj->GetGridActivationRange();
+                float maxY = obj->GetPositionY() + obj->GetGridActivationRange();
+                uint32_t mask = MAPQT_ALL
+                    & ~MAPQT_WORLD_PLAYER
+                    & ~MAPQT_GRID_CORPSE
+                    & ~MAPQT_WORLD_CORPSE;
+                _quadTree.QueryRange(mask, minX, minY, maxX, maxY, updater);
+            }
+        }
+        TC_LOG_DEBUG("quadtrees", "Active Objects Updated {} objects via QuadTree", _updateCount);
     }
 
     // TODO make this permanent
@@ -1277,6 +1345,11 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
     if (player->IsVehicle())
         player->GetVehicleKit()->RelocatePassengers();
 
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(player);
+    }
+
     Cell old_cell = player->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffGrid(new_cell) || old_cell.DiffCell(new_cell))
@@ -1304,6 +1377,11 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
 
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(creature);
+    }
+
     Cell old_cell = creature->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1324,6 +1402,11 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 {
     go->Relocate(x, y, z, orientation);
 
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(go);
+    }
+
     Cell old_cell = go->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1341,6 +1424,11 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float z, float orientation)
 {
     dynObj->Relocate(x, y, z, orientation);
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _quadTree.Insert(dynObj);
+    }
 
     Cell old_cell = dynObj->GetCell();
     Cell new_cell(x, y);

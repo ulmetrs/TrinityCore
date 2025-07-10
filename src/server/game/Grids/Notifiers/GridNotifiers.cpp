@@ -209,43 +209,6 @@ void CreatureRelocationNotifier::Visit(CreatureMapType &m)
     }
 }
 
-void DelayedUnitRelocation::Visit(CreatureMapType &m)
-{
-    for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Creature* unit = iter->GetSource();
-        if (!unit->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            continue;
-
-        CreatureRelocationNotifier relocate(*unit);
-
-        TypeContainerVisitor<CreatureRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocate);
-        TypeContainerVisitor<CreatureRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocate);
-
-        cell.Visit(p, c2world_relocation, i_map, *unit, i_radius);
-        cell.Visit(p, c2grid_relocation, i_map, *unit, i_radius);
-    }
-}
-
-void DelayedUnitRelocation::Visit(PlayerMapType &m)
-{
-    for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Player* player = iter->GetSource();
-        WorldObject const* viewPoint = player->m_seer;
-
-        if (!viewPoint->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            continue;
-
-        if (player != viewPoint && !viewPoint->IsPositionValid())
-            continue;
-
-        PlayerRelocationNotifier relocate(*player);
-        Cell::VisitAllObjects(viewPoint, relocate, i_radius, false);
-        relocate.SendToSelf();
-    }
-}
-
 void AIRelocationNotifier::Visit(CreatureMapType &m)
 {
     for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
@@ -429,17 +392,6 @@ void MessageDistDelivererToHostile::Visit(DynamicObjectMapType &m)
     }
 }
 
-/*
-void
-MessageDistDeliverer::VisitObject(Player* player)
-{
-    if (!i_ownTeamOnly || (i_source.GetTypeId() == TYPEID_PLAYER && player->GetTeam() == ((Player&)i_source).GetTeam()))
-    {
-        SendPacket(player);
-    }
-}
-*/
-
 template<class T>
 void ObjectUpdater::Visit(GridRefManager<T> &m)
 {
@@ -447,6 +399,14 @@ void ObjectUpdater::Visit(GridRefManager<T> &m)
         if (iter->GetSource()->IsInWorld())
             iter->GetSource()->Update(i_timeDiff);
 }
+
+template void ObjectUpdater::Visit<Creature>(CreatureMapType&);
+template void ObjectUpdater::Visit<GameObject>(GameObjectMapType&);
+template void ObjectUpdater::Visit<DynamicObject>(DynamicObjectMapType&);
+
+void ObjectUpdater::operator()(GameObject* g)     { if (g->IsInWorld()) g->Update(i_timeDiff); }
+void ObjectUpdater::operator()(Creature* c)       { if (c->IsInWorld()) c->Update(i_timeDiff); }
+void ObjectUpdater::operator()(DynamicObject* d)  { if (d->IsInWorld()) d->Update(i_timeDiff); }
 
 bool AnyDeadUnitObjectInRangeCheck::operator()(Player* u)
 {
@@ -477,7 +437,3 @@ bool AnyDeadUnitSpellTargetInRangeCheck::operator()(Creature* u)
 {
     return AnyDeadUnitObjectInRangeCheck::operator()(u) && WorldObjectSpellTargetCheck::operator()(u);
 }
-
-template void ObjectUpdater::Visit<Creature>(CreatureMapType&);
-template void ObjectUpdater::Visit<GameObject>(GameObjectMapType&);
-template void ObjectUpdater::Visit<DynamicObject>(DynamicObjectMapType&);

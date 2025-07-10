@@ -2421,6 +2421,11 @@ CellObjectGuidsMap const* ObjectMgr::GetMapObjectGuids(uint16 mapid, uint8 spawn
     return Trinity::Containers::MapGetValuePtr(_mapObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
 }
 
+TreeObjectGuidsMap const* ObjectMgr::GetTreeObjectGuids(uint16 mapid, uint8 spawnMode)
+{
+    return Trinity::Containers::MapGetValuePtr(_treeObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
+}
+
 void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* data)
 {
     uint8 mask = data->spawnMask;
@@ -2431,6 +2436,9 @@ void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* 
             CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.creatures.insert(guid);
+
+            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            tree_guids.creatures.insert(guid);
         }
     }
 }
@@ -2445,6 +2453,9 @@ void ObjectMgr::RemoveCreatureFromGrid(ObjectGuid::LowType guid, CreatureData co
             CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.creatures.erase(guid);
+
+            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            tree_guids.creatures.erase(guid);
         }
     }
 }
@@ -2958,6 +2969,9 @@ void ObjectMgr::AddGameobjectToGrid(ObjectGuid::LowType guid, GameObjectData con
             CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.gameobjects.insert(guid);
+
+            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            tree_guids.gameobjects.insert(guid);
         }
     }
 }
@@ -2972,6 +2986,9 @@ void ObjectMgr::RemoveGameobjectFromGrid(ObjectGuid::LowType guid, GameObjectDat
             CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
             CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
             cell_guids.gameobjects.erase(guid);
+
+            TreeObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            tree_guids.gameobjects.erase(guid);
         }
     }
 }

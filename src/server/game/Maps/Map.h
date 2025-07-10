@@ -25,6 +25,7 @@
 #include "GridDefines.h"
 #include "GridRefManager.h"
 #include "MapDefines.h"
+#include "MapQuadTree.h"
 #include "MapRefManager.h"
 #include "MPSCQueue.h"
 #include "ObjectGuid.h"
@@ -380,6 +381,10 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             m_unloadTimer -= diff;
             return false;
         }
+
+        // For debugging/profiling
+        uint64 _updateCount = 0;
+        MapQuadTree* GetQuadTree() const { return &_quadTree; }
 
         virtual bool AddPlayerToMap(Player*);
         virtual void RemovePlayerFromMap(Player*, bool);
@@ -800,6 +805,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
+        MapQuadTree _quadTree;
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
