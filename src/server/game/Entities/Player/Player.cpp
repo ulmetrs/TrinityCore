@@ -23332,7 +23332,19 @@ void Player::UpdateVisibilityForPlayer()
 {
     // updates visibility of all objects around point of view for current player
     Trinity::VisibleNotifier notifier(*this);
-    Cell::VisitAllObjects(m_seer, notifier, GetSightRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        ZoneScopedN("Player::UpdateVisibilityForPlayerQuadTree")
+
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, m_seer->GetPositionX(), m_seer->GetPositionY(), GetSightRange(), notifier);
+    }
+    else
+    {
+        ZoneScopedN("Player::UpdateVisibilityForPlayer")
+
+        Cell::VisitAllObjects(m_seer, notifier, GetSightRange());
+    }
+
     notifier.SendToSelf();   // send gathered data
 }
 
