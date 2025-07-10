@@ -21,8 +21,10 @@
 
 // QuadNode Implementation
 
-QuadNode::QuadNode(float minX_, float minY_, float maxX_, float maxY_, int depth_, int maxObjects_, int maxDepth_)
-    : minX(minX_), minY(minY_), maxX(maxX_), maxY(maxY_), depth(depth_), maxObjects(maxObjects_), maxDepth(maxDepth_)
+// QuadNode Implementation
+
+QuadNode::QuadNode(Bounds bounds, int depth_, int maxObjects_, int maxDepth_)
+    : _bounds(bounds), depth(depth_), maxObjects(maxObjects_), maxDepth(maxDepth_)
 {}
 
 bool QuadNode::IsLeaf() const
@@ -39,12 +41,12 @@ void QuadNode::Remove(WorldObject* obj)
 
 void QuadNode::Subdivide()
 {
-    float midX = (minX + maxX) * 0.5f;
-    float midY = (minY + maxY) * 0.5f;
-    children[0] = std::make_unique<QuadNode>(minX, minY, midX, midY, depth + 1, maxObjects, maxDepth); // SW
-    children[1] = std::make_unique<QuadNode>(midX, minY, maxX, midY, depth + 1, maxObjects, maxDepth); // SE
-    children[2] = std::make_unique<QuadNode>(minX, midY, midX, maxY, depth + 1, maxObjects, maxDepth); // NW
-    children[3] = std::make_unique<QuadNode>(midX, midY, maxX, maxY, depth + 1, maxObjects, maxDepth); // NE
+    float midX = (_bounds.minX + _bounds.maxX) * 0.5f;
+    float midY = (_bounds.minY + _bounds.maxY) * 0.5f;
+    children[0] = std::make_unique<QuadNode>(Bounds{ _bounds.minX, _bounds.minY, midX, midY }, depth + 1, maxObjects, maxDepth); // SW
+    children[1] = std::make_unique<QuadNode>(Bounds{ midX, _bounds.minY, _bounds.maxX, midY }, depth + 1, maxObjects, maxDepth); // SE
+    children[2] = std::make_unique<QuadNode>(Bounds{ _bounds.minX, midY, midX, _bounds.maxY }, depth + 1, maxObjects, maxDepth); // NW
+    children[3] = std::make_unique<QuadNode>(Bounds{ midX, midY, _bounds.maxX, _bounds.maxY }, depth + 1, maxObjects, maxDepth); // NE
     for (WorldObject* obj : objects)
     {
         int idx = GetChildIndex(obj->GetPositionX(), obj->GetPositionY());
@@ -56,8 +58,8 @@ void QuadNode::Subdivide()
 
 int QuadNode::GetChildIndex(float x, float y) const
 {
-    float midX = (minX + maxX) * 0.5f;
-    float midY = (minY + maxY) * 0.5f;
+    float midX = (_bounds.minX + _bounds.maxX) * 0.5f;
+    float midY = (_bounds.minY + _bounds.maxY) * 0.5f;
     if (x < midX)
         return (y < midY) ? 0 : 2;
     else
@@ -66,31 +68,31 @@ int QuadNode::GetChildIndex(float x, float y) const
 
 // QuadTree Implementation
 
-QuadTree::QuadTree(float minX, float minY, float maxX, float maxY, int maxObjects, float cellSize)
-    : _maxObjects(maxObjects)
+QuadTree::QuadTree(Bounds bounds, int maxObjects, float cellSize)
+    : _bounds(bounds), _maxObjects(maxObjects)
 {
-    float width = maxX - minX;
-    float height = maxY - minY;
+    float width = _bounds.maxX - _bounds.minX;
+    float height = _bounds.maxY - _bounds.minY;
 
     // 1. Find center
-    float centerX = (minX + maxX) * 0.5f;
-    float centerY = (minY + maxY) * 0.5f;
+    float centerX = (_bounds.minX + _bounds.maxX) * 0.5f;
+    float centerY = (_bounds.minY + _bounds.maxY) * 0.5f;
 
     // 2. Find the maximum side length
     float side = std::max(width, height);
 
     // 3. Expand both min/max to make square
     float halfSide = side * 0.5f;
-    _minX = centerX - halfSide;
-    _maxX = centerX + halfSide;
-    _minY = centerY - halfSide;
-    _maxY = centerY + halfSide;
+    _bounds.minX = centerX - halfSide;
+    _bounds.maxX = centerX + halfSide;
+    _bounds.minY = centerY - halfSide;
+    _bounds.maxY = centerY + halfSide;
 
     // 4. Compute depth so that smallest quadrant is <= cellSize
     _maxDepth = static_cast<int>(std::ceil(std::log2(side / cellSize)));
 
     // 5. Create the root node using the new square bounds and computed depth
-    root = std::make_unique<QuadNode>(_minX, _minY, _maxX, _maxY, 0, _maxObjects, _maxDepth);
+    root = std::make_unique<QuadNode>(_bounds, 0, _maxObjects, _maxDepth);
 }
 
 QuadTree::~QuadTree() = default;
@@ -129,5 +131,5 @@ void QuadTree::Clear()
                 clearNode(child.get());
     };
     clearNode(root.get());
-    root = std::make_unique<QuadNode>(_minX, _minY, _maxX, _maxY, 0, _maxObjects, _maxDepth);
+    root = std::make_unique<QuadNode>(_bounds, 0, _maxObjects, _maxDepth);
 }

@@ -47,7 +47,7 @@ enum MapQuadTreeMask : uint32_t
 class MapQuadTree
 {
 public:
-    MapQuadTree(float minX, float minY, float maxX, float maxY);
+    MapQuadTree(Bounds bounds);
     void Clear();
 
     // Insert

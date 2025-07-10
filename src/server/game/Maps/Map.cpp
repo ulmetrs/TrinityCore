@@ -3744,6 +3744,36 @@ PartitionMap::~PartitionMap()
 {
 }
 
+Bounds PartitionMap::GetMapBounds() const
+{
+    // Get parent partitioned map
+    const MapPartitioned* parent = dynamic_cast<const MapPartitioned*>(GetParent());
+    if (!parent)
+        return Map::GetMapBounds();
+
+    // Get partition entry for this map's partition id
+    const MapPartition* entry = parent->GetPartitionEntry(_partitionId);
+    if (!entry || entry->polygon.empty())
+        return Map::GetMapBounds();
+
+    float minX = MAP_HALFSIZE;
+    float minY = MAP_HALFSIZE;
+    float maxX = -MAP_HALFSIZE;
+    float maxY = -MAP_HALFSIZE;
+
+    for (const Position& pos : entry->polygon)
+    {
+        float x = pos.GetPositionX();
+        float y = pos.GetPositionY();
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+
+    return {minX, minY, maxX, maxY};
+}
+
 // TODO anything we need to override from map or additional functions
 
 /* ******* Dungeon Instance Maps ******* */

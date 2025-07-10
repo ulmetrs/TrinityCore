@@ -141,12 +141,14 @@ Map* MapManager::CreateBaseMap(uint32 id)
             mapPartitioned->CreatePartition(id, partitionEntry.partitionId);
         }
 
+        map->CreateQuadTree();
         map->LoadRespawnTimes();
         map->LoadCorpseData();
         sScriptMgr->OnCreateMap(map);
 
         for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
         {
+            partitionPtr.get()->CreateQuadTree();
             partitionPtr.get()->LoadRespawnTimes();
             partitionPtr.get()->LoadCorpseData();
             // Call on create after loading respawns and corpses for consistency

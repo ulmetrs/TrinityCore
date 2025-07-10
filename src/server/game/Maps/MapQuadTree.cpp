@@ -23,15 +23,15 @@
 #include "Corpse.h"
 #include "Entities/Object/Object.h"
 
-MapQuadTree::MapQuadTree(float minX, float minY, float maxX, float maxY)
-    : playerTree(minX, minY, maxX, maxY),
-    gameObjectTree(minX, minY, maxX, maxY),
-    gridCreatureTree(minX, minY, maxX, maxY),
-    worldCreatureTree(minX, minY, maxX, maxY),
-    gridDynamicObjectTree(minX, minY, maxX, maxY),
-    worldDynamicObjectTree(minX, minY, maxX, maxY),
-    gridCorpseTree(minX, minY, maxX, maxY),
-    worldCorpseTree(minX, minY, maxX, maxY)
+MapQuadTree::MapQuadTree(Bounds bounds)
+    : playerTree(bounds),
+    gameObjectTree(bounds),
+    gridCreatureTree(bounds),
+    worldCreatureTree(bounds),
+    gridDynamicObjectTree(bounds),
+    worldDynamicObjectTree(bounds),
+    gridCorpseTree(bounds),
+    worldCorpseTree(bounds)
 {}
 
 template<class T>

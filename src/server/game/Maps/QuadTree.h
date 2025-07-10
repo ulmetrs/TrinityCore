@@ -24,12 +24,18 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <cmath>
+
+struct Bounds
+{
+    float minX, minY, maxX, maxY;
+};
 
 class QuadNode
 {
     friend class QuadTree;
 public:
-    QuadNode(float minX, float minY, float maxX, float maxY, int depth, int maxObjects, int maxDepth);
+    QuadNode(Bounds bounds, int depth, int maxObjects, int maxDepth);
 
     bool IsLeaf() const;
     void Remove(WorldObject* obj);
@@ -37,7 +43,7 @@ public:
     int GetChildIndex(float x, float y) const;
 
 private:
-    float minX, minY, maxX, maxY;
+    Bounds _bounds;
     std::vector<WorldObject*> objects;
     std::unique_ptr<QuadNode> children[4];
     int depth;
@@ -47,28 +53,34 @@ private:
 class QuadTree
 {
 public:
-    QuadTree(float minX, float minY, float maxX, float maxY, int maxObjects = 8, float cellSize = SIZE_OF_GRID_CELL);
+    QuadTree(Bounds bounds, int maxObjects = 8, float cellSize = SIZE_OF_GRID_CELL);
     ~QuadTree();
 
     void Insert(WorldObject* object);
     void Clear();
 
+    // Template methods must be defined in the header!
     template <typename Func>
-    void QueryRange(float qMinX, float qMinY, float qMaxX, float qMaxY, Func&& visitor) const
+    void QueryRange(float minX, float minY, float maxX, float maxY, Func&& visitor) const
     {
         std::function<void(const QuadNode*)> query = [&](const QuadNode* node)
         {
-            if (node->maxX < qMinX || node->minX > qMaxX || node->maxY < qMinY || node->minY > qMaxY)
+            if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
+                node->_bounds.maxY < minY || node->_bounds.minY > maxY)
                 return;
             for (WorldObject* obj : node->objects)
             {
-                if (obj->GetPositionX() >= qMinX && obj->GetPositionX() <= qMaxX &&
-                    obj->GetPositionY() >= qMinY && obj->GetPositionY() <= qMaxY)
+                float x = obj->GetPositionX();
+                float y = obj->GetPositionY();
+                if (x >= minX && x <= maxX && y >= minY && y <= maxY)
                     visitor(obj);
             }
             if (!node->IsLeaf())
+            {
                 for (const auto& child : node->children)
-                    query(child.get());
+                    if (child)
+                        query(child.get());
+            }
         };
         query(root.get());
     }
@@ -84,27 +96,33 @@ public:
 
         std::function<void(const QuadNode*)> query = [&](const QuadNode* node)
         {
-            if (node->maxX < minX || node->minX > maxX || node->maxY < minY || node->minY > maxY)
+            if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
+                node->_bounds.maxY < minY || node->_bounds.minY > maxY)
                 return;
             for (WorldObject* obj : node->objects)
             {
-                float dx = obj->GetPositionX() - centerX;
-                float dy = obj->GetPositionY() - centerY;
+                float x = obj->GetPositionX();
+                float y = obj->GetPositionY();
+                float dx = x - centerX;
+                float dy = y - centerY;
                 if (dx * dx + dy * dy <= radiusSq)
                     visitor(obj);
             }
             if (!node->IsLeaf())
+            {
                 for (const auto& child : node->children)
-                    query(child.get());
+                    if (child)
+                        query(child.get());
+            }
         };
         query(root.get());
     }
 
 private:
     std::unique_ptr<QuadNode> root;
-    float _minX, _minY, _maxX, _maxY;
-    int _maxDepth;
+    Bounds _bounds;
     int _maxObjects;
+    int _maxDepth;
 };
 
 #endif // TRINITY_QUADTREE_H

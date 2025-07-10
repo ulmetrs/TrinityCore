@@ -196,6 +196,7 @@ InstanceMap* MapInstanced::CreateInstance(uint32 InstanceId, InstanceSave* save,
     InstanceMap* map = new InstanceMap(GetId(), InstanceId, difficulty, this, InstanceTeam);
     ASSERT(map->IsDungeon());
 
+    map->CreateQuadTree();
     map->LoadRespawnTimes();
     map->LoadCorpseData();
 

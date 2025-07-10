@@ -384,7 +384,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         // For debugging/profiling
         uint64 _updateCount = 0;
-        MapQuadTree* GetQuadTree() const { return &_quadTree; }
+        void CreateQuadTree()
+        {
+            _quadTree = new MapQuadTree(GetMapBounds());
+        }
+        MapQuadTree* GetQuadTree() const { return _quadTree; }
 
         virtual bool AddPlayerToMap(Player*);
         virtual void RemovePlayerFromMap(Player*, bool);
@@ -429,6 +433,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         virtual uint8 GetSpawnMode() const { return REGULAR_DIFFICULTY; }
         virtual const Map* GetParent() const { return this; }
         virtual Map* GetParent() { return this; }
+        virtual Bounds GetMapBounds() const { return { -MAP_HALFSIZE, -MAP_HALFSIZE, MAP_HALFSIZE, MAP_HALFSIZE }; }
         virtual void UpdateWeather(uint32 t_diff);
 
         static bool ExistMap(uint32 mapId, int gx, int gy);
@@ -805,7 +810,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
-        MapQuadTree _quadTree;
+        MapQuadTree* _quadTree;
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
@@ -956,6 +961,7 @@ class TC_GAME_API PartitionMap : public Map
         uint32 GetPartitionId() const override { return _partitionId; }
         const Map* GetParent() const override { return _parent; }
         Map* GetParent() override { return _parent; }
+        Bounds GetMapBounds() const override;
         void UpdateWeather(uint32 t_diff) override { /* do nothing, parent updates weather */ }
 
         void SendZoneDynamicInfo(uint32 zoneId, Player* player) const override
