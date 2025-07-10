@@ -1379,7 +1379,7 @@ class TC_GAME_API ObjectMgr
 
         CellObjectGuidsMap const* GetMapObjectGuids(uint16 mapid, uint8 spawnMode);
 
-        TreeObjectGuidsMap const* GetTreeObjectGuids(uint16 mapid, uint8 spawnMode);
+        CellObjectGuids const* GetTreeObjectGuids(uint16 mapid, uint8 spawnMode);
 
         /**
          * Gets temp summon data for all creatures of specified group.
