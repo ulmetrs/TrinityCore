@@ -59,6 +59,7 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         map->GetQuadTree()->Insert(obj);
+        obj->setActive(true);
     }
 
     obj->AddToGrid(m);
