@@ -124,14 +124,14 @@ public:
     }
 
 private:
-    QuadTree playerTree;               // always World
-    QuadTree gameObjectTree;           // always Grid
-    QuadTree gridCreatureTree;
-    QuadTree worldCreatureTree;
-    QuadTree gridDynamicObjectTree;
-    QuadTree worldDynamicObjectTree;
-    QuadTree gridCorpseTree;
-    QuadTree worldCorpseTree;
+    QuadTree<Player> playerTree;               // always World
+    QuadTree<GameObject> gameObjectTree;           // always Grid
+    QuadTree<Creature> gridCreatureTree;
+    QuadTree<Creature> worldCreatureTree;
+    QuadTree<DynamicObject> gridDynamicObjectTree;
+    QuadTree<DynamicObject> worldDynamicObjectTree;
+    QuadTree<Corpse> gridCorpseTree;
+    QuadTree<Corpse> worldCorpseTree;
 };
 
 #endif // TRINITY_MAP_QUADTREE_H
