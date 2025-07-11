@@ -3891,11 +3891,11 @@ Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) co
     Trinity::UnitLastSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, unit, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
+        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
     }
     else
     {
-        Cell::VisitGridObjects(me, searcher, range);
+        Cell::VisitAllObjects(me, searcher, range);
     }
     return unit;
 }
