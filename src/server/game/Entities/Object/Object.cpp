@@ -3701,7 +3701,7 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
     Trinity::VisibleChangesNotifier notifier(*this);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        uint32 mask = MAPQT_WORLD & ~MAPQT_GAMEOBJECT & ~MAPQT_CORPSE;
+        uint32 mask = MAPQT_WORLD & ~MAPQT_CORPSE;
         QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
