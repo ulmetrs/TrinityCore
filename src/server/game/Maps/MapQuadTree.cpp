@@ -29,5 +29,6 @@ MapQuadTree::MapQuadTree(Bounds bounds)
 {}
 
 // Explicit template instantiation for common function pointer and lambda types
-template void MapQuadTree::QueryRange<float(*)(WorldObject*)>(uint32_t, float, float, float, float, float(*&&)(WorldObject*)) const;
 template void MapQuadTree::QueryCircle<float(*)(WorldObject*)>(uint32_t, float, float, float, float(*&&)(WorldObject*)) const;
+template void MapQuadTree::QueryRange<float(*)(WorldObject*)>(uint32_t, float, float, float, float, float(*&&)(WorldObject*)) const;
+template void MapQuadTree::QueryAll<float(*)(WorldObject*)>(uint32_t, float(*&&)(WorldObject*)) const;

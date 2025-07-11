@@ -1119,20 +1119,6 @@ void Creature::Update(uint32 diff)
     vis_Update.TUpdate(diff);
     if (vis_Update.TPassed())
     {
-        if (m_spawnId == 21404)
-        {
-            float x = GetPositionX();
-            float y = GetPositionY();
-            auto* node = static_cast<QuadNode<Creature>*>(GetQuadNode());
-            Bounds b = node->GetBounds();
-            float minX = b.minX;
-            float minY = b.minY;
-            float maxX = b.maxX;
-            float maxY = b.maxY;
-            int depth = node->GetDepth();
-            TC_LOG_DEBUG("quadtrees", "Creature {} exists at position {},{} and in quad node: {},{},{},{} and depth: {}", GetSpawnId(), x, y, minX, minY, maxX, maxY, depth);
-        }
-
         vis_Update.TReset(diff, GetMap()->GetVisibilityNotifyPeriod());
 
         if (isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
@@ -3878,6 +3864,29 @@ std::string Creature::GetDebugInfo() const
     sstr << Unit::GetDebugInfo() << "\n"
         << "AIName: " << GetAIName() << " ScriptName: " << GetScriptName()
         << " WaypointPath: " << GetWaypointPath() << " SpawnId: " << GetSpawnId();
+    return sstr.str();
+}
+
+std::string Creature::GetQuadNodeInfo() const
+{
+    std::stringstream sstr;
+    sstr << "SpawnID: " << GetSpawnId() << "\n";
+    sstr << "Position: " << GetPositionX() << "," << GetPositionY() << "\n";
+
+    // Try to get quad node info if available
+    void* qnode = GetQuadNode();
+    if (qnode)
+    {
+
+        auto* node = static_cast<QuadNode<Creature>*>(qnode);
+        if (node)
+        {
+            Bounds b = node->GetBounds();
+            int depth = node->GetDepth();
+            sstr << "  Node Bounds: [" << b.minX << "," << b.minY << " - " << b.maxX << "," << b.maxY << "]\n";
+            sstr << "  Node Depth: " << depth << "\n";
+        }
+    }
     return sstr.str();
 }
 

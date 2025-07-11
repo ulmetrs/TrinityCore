@@ -818,6 +818,25 @@ void Map::Update(uint32 t_diff)
 {
     ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
 
+    {
+        m_creatureQuadTreeLogTimer += diff;
+        if (m_creatureQuadTreeLogTimer >= 3000)
+        {
+            m_creatureQuadTreeLogTimer = 0;
+
+            // Visitor lambda or functor
+            auto logger = [](Creature* c)
+            {
+                // Example: log only for certain spawn IDs or entries
+                if (c->GetSpawnId() == 21404 /* || other conditions */)
+                {
+                    TC_LOG_DEBUG("quadtrees", "LOG: {}", c->GetQuadNodeInfo());
+                }
+            };
+            _quadTree->QueryAll(MAPQT_CREATURE, logger);
+        }
+    }
+
     // @tswow-begin tswow-events
     {
         ZoneScopedNC("TSMap::Tick", MAP_UPDATE_COLOR)

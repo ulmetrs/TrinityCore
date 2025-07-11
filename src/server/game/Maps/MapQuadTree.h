@@ -85,6 +85,27 @@ public:
     }
 
     template<typename Func>
+    void QueryCircle(uint32_t mask, float centerX, float centerY, float radius, Func&& func) const
+    {
+        if (mask & MAPQT_PLAYER)
+            playerTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GAMEOBJECT)
+            gameObjectTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_CREATURE)
+            gridCreatureTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_WORLD_CREATURE)
+            worldCreatureTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_DYNAMICOBJ)
+            gridDynamicObjectTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_WORLD_DYNAMICOBJ)
+            worldDynamicObjectTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_GRID_CORPSE)
+            gridCorpseTree.QueryCircle(centerX, centerY, radius, func);
+        if (mask & MAPQT_WORLD_CORPSE)
+            worldCorpseTree.QueryCircle(centerX, centerY, radius, func);
+    }
+
+    template<typename Func>
     void QueryRange(uint32_t mask, float minX, float minY, float maxX, float maxY, Func&& func) const
     {
         if (mask & MAPQT_PLAYER)
@@ -106,24 +127,24 @@ public:
     }
 
     template<typename Func>
-    void QueryCircle(uint32_t mask, float centerX, float centerY, float radius, Func&& func) const
+    void QueryAll(uint32_t mask, Func&& func) const
     {
         if (mask & MAPQT_PLAYER)
-            playerTree.QueryCircle(centerX, centerY, radius, func);
+            playerTree.QueryAll(func);
         if (mask & MAPQT_GAMEOBJECT)
-            gameObjectTree.QueryCircle(centerX, centerY, radius, func);
+            gameObjectTree.QueryAll(func);
         if (mask & MAPQT_GRID_CREATURE)
-            gridCreatureTree.QueryCircle(centerX, centerY, radius, func);
+            gridCreatureTree.QueryAll(func);
         if (mask & MAPQT_WORLD_CREATURE)
-            worldCreatureTree.QueryCircle(centerX, centerY, radius, func);
+            worldCreatureTree.QueryAll(func);
         if (mask & MAPQT_GRID_DYNAMICOBJ)
-            gridDynamicObjectTree.QueryCircle(centerX, centerY, radius, func);
+            gridDynamicObjectTree.QueryAll(func);
         if (mask & MAPQT_WORLD_DYNAMICOBJ)
-            worldDynamicObjectTree.QueryCircle(centerX, centerY, radius, func);
+            worldDynamicObjectTree.QueryAll(func);
         if (mask & MAPQT_GRID_CORPSE)
-            gridCorpseTree.QueryCircle(centerX, centerY, radius, func);
+            gridCorpseTree.QueryAll(func);
         if (mask & MAPQT_WORLD_CORPSE)
-            worldCorpseTree.QueryCircle(centerX, centerY, radius, func);
+            worldCorpseTree.QueryAll(func);
     }
 
 private:

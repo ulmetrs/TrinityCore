@@ -72,10 +72,13 @@ public:
     void Insert(T* obj);
 
     template<typename Func>
+    void QueryCircle(float centerX, float centerY, float radius, Func&& visitor) const;
+
+    template<typename Func>
     void QueryRange(float minX, float minY, float maxX, float maxY, Func&& visitor) const;
 
     template<typename Func>
-    void QueryCircle(float centerX, float centerY, float radius, Func&& visitor) const;
+    void QueryAll(Func&& visitor) const;
 
 private:
     std::unique_ptr<QuadNode<T>> root;

@@ -162,6 +162,42 @@ int QuadNode<T>::GetChildIndex(float x, float y) const
         return (y < midY) ? 3 : 1; // SE : NE
 }
 
+
+
+template<typename T>
+template<typename Func>
+void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&& visitor) const
+{
+    float radiusSq = radius * radius;
+    float minX = centerX - radius;
+    float maxX = centerX + radius;
+    float minY = centerY - radius;
+    float maxY = centerY + radius;
+
+    std::function<void(const QuadNode<T>*)> query = [&](const QuadNode<T>* node)
+    {
+        if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
+            node->_bounds.maxY < minY || node->_bounds.minY > maxY)
+            return;
+        for (T* obj : node->objects)
+        {
+            float x = obj->GetPositionX();
+            float y = obj->GetPositionY();
+            float dx = x - centerX;
+            float dy = y - centerY;
+            if (dx * dx + dy * dy <= radiusSq)
+                visitor(obj);
+        }
+        if (!node->IsLeaf())
+        {
+            for (const auto& child : node->children)
+                if (child)
+                    query(child.get());
+        }
+    };
+    query(root.get());
+}
+
 template<typename T>
 template<typename Func>
 void QuadTree<T>::QueryRange(float minX, float minY, float maxX, float maxY, Func&& visitor) const
@@ -190,27 +226,14 @@ void QuadTree<T>::QueryRange(float minX, float minY, float maxX, float maxY, Fun
 
 template<typename T>
 template<typename Func>
-void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&& visitor) const
+void QuadTree<T>::QueryAll(Func&& visitor) const
 {
-    float radiusSq = radius * radius;
-    float minX = centerX - radius;
-    float maxX = centerX + radius;
-    float minY = centerY - radius;
-    float maxY = centerY + radius;
-
     std::function<void(const QuadNode<T>*)> query = [&](const QuadNode<T>* node)
     {
-        if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
-            node->_bounds.maxY < minY || node->_bounds.minY > maxY)
-            return;
+
         for (T* obj : node->objects)
         {
-            float x = obj->GetPositionX();
-            float y = obj->GetPositionY();
-            float dx = x - centerX;
-            float dy = y - centerY;
-            if (dx * dx + dy * dy <= radiusSq)
-                visitor(obj);
+            visitor(obj);
         }
         if (!node->IsLeaf())
         {

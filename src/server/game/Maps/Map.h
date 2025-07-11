@@ -809,6 +809,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
+        uint32 m_creatureQuadTreeLogTimer = 0;
         MapQuadTree* _quadTree;
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];

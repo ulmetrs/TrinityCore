@@ -411,6 +411,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>
         bool CallNearestGuard(Unit* enemy) const;
 
         std::string GetDebugInfo() const override;
+        std::string GetQuadNodeInfo() const override;
 
         // @tswow-begin
         bool m_isTempCreature = false;
