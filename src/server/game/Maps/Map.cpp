@@ -825,15 +825,18 @@ void Map::Update(uint32 t_diff)
             m_creatureQuadTreeLogTimer = 0;
 
             // Visitor lambda or functor
-            auto logger = [](Creature* c)
+            auto logger = [](WorldObject* o)
             {
+                Creature* c = static_cast<Creature*>(o);
                 // Example: log only for certain spawn IDs or entries
                 if (c->GetSpawnId() == 21404 /* || other conditions */)
                 {
                     TC_LOG_DEBUG("quadtrees", "LOG: {}", c->GetQuadNodeInfo());
                 }
             };
-            _quadTree->QueryAll(MAPQT_CREATURE, logger);
+            uint32 mask = MAPQT_CREATURE;
+            TC_LOG_DEBUG("quadtrees", "MASK: {}", mask);
+            _quadTree->QueryAll(mask, logger);
         }
     }
 
