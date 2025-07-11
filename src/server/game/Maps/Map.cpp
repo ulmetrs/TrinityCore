@@ -1175,7 +1175,15 @@ void Map::Update(uint32 t_diff)
         {
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
+                if (creature->GetSpawnId() == 21404 /* || other conditions */)
+                {
+                    TC_LOG_DEBUG("quadtrees", "Before Insert: {}", creature->GetQuadNodeInfo());
+                }
                 _quadTree->Insert(creature);
+                if (creature->GetSpawnId() == 21404 /* || other conditions */)
+                {
+                    TC_LOG_DEBUG("quadtrees", "After Insert: {}", creature->GetQuadNodeInfo());
+                }
             }
 
             Cell old_cell = creature->GetCell();
@@ -1515,6 +1523,11 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
+    if (creature->GetSpawnId() == 21404 /* || other conditions */)
+    {
+        TC_LOG_DEBUG("quadtrees", "Creature Relocation: {}", creature->GetQuadNodeInfo());
+    }
+
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
@@ -1529,10 +1542,14 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     {
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
+            if (creature->GetSpawnId() == 21404 /* || other conditions */)
+            {
+                TC_LOG_DEBUG("quadtrees", "Before Insert: {}", creature->GetQuadNodeInfo());
+            }
             _quadTree->Insert(creature);
             if (creature->GetSpawnId() == 21404 /* || other conditions */)
             {
-                TC_LOG_DEBUG("quadtrees", "Creature Relocation: {}", creature->GetQuadNodeInfo());
+                TC_LOG_DEBUG("quadtrees", "After Insert: {}", creature->GetQuadNodeInfo());
             }
         }
 
