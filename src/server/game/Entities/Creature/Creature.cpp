@@ -1123,12 +1123,13 @@ void Creature::Update(uint32 diff)
         {
             float x = GetPositionX();
             float y = GetPositionY();
-            Bounds b = GetQuadNode()->GetBounds();
+            auto* node = static_cast<QuadNode<Creature>*>(GetQuadNode());
+            Bounds b = node->GetBounds();
             float minX = b.minX;
             float minY = b.minY;
             float maxX = b.maxX;
             float maxY = b.maxY;
-            int depth = GetQuadNode()->GetDepth();
+            int depth = node->GetDepth();
             TC_LOG_DEBUG("quadtrees", "Creature {} exists at position {},{} and in quad node: {},{},{},{} and depth: {}", GetSpawnId(), x, y, minX, minY, maxX, maxY, depth);
         }
 
