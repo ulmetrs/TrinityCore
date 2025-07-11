@@ -3854,7 +3854,14 @@ void SmartScript::DoFindFriendlyCC(std::vector<Creature*>& creatures, float rang
 
     Trinity::FriendlyCCedInRange u_check(me, range);
     Trinity::CreatureListSearcher<Trinity::FriendlyCCedInRange> searcher(me, creatures, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(me, searcher, range);
+    }
 }
 
 void SmartScript::DoFindFriendlyMissingBuff(std::vector<Creature*>& creatures, float range, uint32 spellid) const
@@ -3864,7 +3871,14 @@ void SmartScript::DoFindFriendlyMissingBuff(std::vector<Creature*>& creatures, f
 
     Trinity::FriendlyMissingBuffInRange u_check(me, range, spellid);
     Trinity::CreatureListSearcher<Trinity::FriendlyMissingBuffInRange> searcher(me, creatures, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(me, searcher, range);
+    }
 }
 
 Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) const

@@ -661,7 +661,14 @@ struct npc_crok_scourgebane : public EscortAI
                 std::list<Creature*> temp;
                 FrostwingVrykulSearcher check(me, 80.0f);
                 Trinity::CreatureListSearcher<FrostwingVrykulSearcher> searcher(me, temp, check);
-                Cell::VisitGridObjects(me, searcher, 80.0f);
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    me->QueryMap(MAPQT_GRID_CREATURE, 80.0f, searcher);
+                }
+                else
+                {
+                    Cell::VisitGridObjects(me, searcher, 80.0f);
+                }
 
                 _aliveTrash.clear();
                 for (auto itr = temp.begin(); itr != temp.end(); ++itr)
@@ -697,7 +704,14 @@ struct npc_crok_scourgebane : public EscortAI
                 {
                     FrostwingGauntletRespawner respawner;
                     Trinity::CreatureWorker<FrostwingGauntletRespawner> worker(me, respawner);
-                    Cell::VisitGridObjects(me, worker, 333.0f);
+                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                    {
+                        me->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
+                    }
+                    else
+                    {
+                        Cell::VisitGridObjects(me, worker, 333.0f);
+                    }
                     Talk(SAY_CROK_DEATH);
                 }
                 return;

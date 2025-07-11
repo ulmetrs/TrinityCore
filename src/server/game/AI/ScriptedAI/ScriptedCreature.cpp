@@ -478,7 +478,14 @@ std::list<Creature*> ScriptedAI::DoFindFriendlyMissingBuff(float range, uint32 u
     std::list<Creature*> list;
     Trinity::FriendlyMissingBuffInRange u_check(me, range, uiSpellid);
     Trinity::CreatureListSearcher<Trinity::FriendlyMissingBuffInRange> searcher(me, list, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_CREATURE, range, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(me, searcher, range);
+    }
 
     return list;
 }

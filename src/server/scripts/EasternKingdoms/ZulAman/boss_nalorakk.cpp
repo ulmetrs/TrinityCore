@@ -28,6 +28,7 @@ EndScriptData */
 #include "MotionMaster.h"
 #include "ScriptedCreature.h"
 #include "zulaman.h"
+#include "World.h"
 
 enum Yells
 {
@@ -152,7 +153,14 @@ class boss_nalorakk : public CreatureScript
 
                 Trinity::AllFriendlyCreaturesInGrid check(me);
                 Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> searcher(me, tempList, check);
-                Cell::VisitGridObjects(me, searcher, 25.0f);
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    me->QueryMap(MAPQT_GRID_CREATURE, 25.0f, searcher);
+                }
+                else
+                {
+                    Cell::VisitGridObjects(me, searcher, 25.0f);
+                }
 
                 if (tempList.empty())
                     return;

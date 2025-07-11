@@ -913,7 +913,14 @@ void hyjalAI::HideNearPos(float x, float y)
     std::list<Creature*> creatures;
     Trinity::AllFriendlyCreaturesInGrid creature_check(me);
     Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
-    Cell::VisitGridObjects(x, y, me->GetMap(), creature_searcher, me->GetGridActivationRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_GRID_CREATURE, x, y, me->GetGridActivationRange(), creature_searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(x, y, me->GetMap(), creature_searcher, me->GetGridActivationRange());
+    }
 
     if (!creatures.empty())
     {
@@ -964,7 +971,14 @@ void hyjalAI::WaypointReached(uint32 waypointId, uint32 /*pathId*/)
         std::list<Creature*> creatures;
         Trinity::AllFriendlyCreaturesInGrid creature_check(me);
         Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
-        Cell::VisitGridObjects(me, creature_searcher, me->GetGridActivationRange());
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            me->QueryMap(MAPQT_GRID_CREATURE, me->GetGridActivationRange(), creature_searcher);
+        }
+        else
+        {
+            Cell::VisitGridObjects(me, creature_searcher, me->GetGridActivationRange());
+        }
 
         if (!creatures.empty())
         {
@@ -996,7 +1010,14 @@ void hyjalAI::DoOverrun(uint32 faction, const uint32 diff)
             std::list<Creature*> creatures;
             Trinity::AllFriendlyCreaturesInGrid creature_check(me);
             Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
-            Cell::VisitGridObjects(me, creature_searcher, me->GetGridActivationRange());
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                me->QueryMap(MAPQT_GRID_CREATURE, me->GetGridActivationRange(), creature_searcher);
+            }
+            else
+            {
+                Cell::VisitGridObjects(me, creature_searcher, me->GetGridActivationRange());
+            }
 
             if (!creatures.empty())
             {

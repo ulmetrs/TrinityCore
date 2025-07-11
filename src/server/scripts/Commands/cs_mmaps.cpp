@@ -36,6 +36,7 @@
 #include "RBAC.h"
 #include "Nav/DetourFilters.h"
 #include "Transport.h"
+#include "World.h"
 
 #if TRINITY_COMPILER == TRINITY_COMPILER_GNU
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -289,7 +290,14 @@ public:
         std::list<Creature*> creatureList;
         Trinity::AnyUnitInObjectRangeCheck go_check(object, radius);
         Trinity::CreatureListSearcher<Trinity::AnyUnitInObjectRangeCheck> go_search(object, creatureList, go_check);
-        Cell::VisitGridObjects(object, go_search, radius);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            object->QueryMap(MAPQT_GRID_CREATURE, radius, go_search);
+        }
+        else
+        {
+            Cell::VisitGridObjects(object, go_search, radius);
+        }
 
         if (!creatureList.empty())
         {

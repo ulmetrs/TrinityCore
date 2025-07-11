@@ -31,6 +31,7 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "trial_of_the_crusader.h"
+#include "World.h"
 
 enum Texts
 {
@@ -142,7 +143,15 @@ class OrbsDespawner : public BasicEvent
         bool Execute(uint64 /*currTime*/, uint32 /*diff*/) override
         {
             Trinity::CreatureWorker<OrbsDespawner> worker(_creature, *this);
-            Cell::VisitGridObjects(_creature, worker, SIZE_OF_GRIDS);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                _creature->QueryMap(MAPQT_GRID_CREATURE, SIZE_OF_GRIDS, worker);
+            }
+            else
+            {
+                Cell::VisitGridObjects(_creature, worker, SIZE_OF_GRIDS);
+            }
+            
             return true;
         }
 

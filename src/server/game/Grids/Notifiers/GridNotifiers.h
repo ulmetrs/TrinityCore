@@ -754,7 +754,13 @@ namespace Trinity
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
-        void operator()(Creature* c);
+        void operator()(Creature* c)
+        {
+            // @tswow-begin
+            if (c->InSamePhase(i_phaseMask, i_phase_id))
+            // @tswow-end
+                i_do(c);
+        }
     };
 
     // Player searchers

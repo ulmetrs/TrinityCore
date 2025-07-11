@@ -444,6 +444,8 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         Map* GetMap() const { ASSERT(m_currMap); return m_currMap; }
         Map* FindMap() const { return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
+
+        // Convenience methods for Querying the map quad tree for nearby objects
         template<typename Func>
         void QueryMap(uint32 mask, float radius, Func&& visitor) const
         {
@@ -453,6 +455,16 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         void QueryMap(uint32 mask, float radius, Func&& visitor)
         {
             GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), radius, visitor);
+        }
+        template<typename Func>
+        void QueryMap(uint32 mask, float centerX, float centerY, float radius, Func&& visitor) const
+        {
+            GetMap()->GetQuadTree()->QueryCircle(mask, centerX, centerY, radius, visitor);
+        }
+        template<typename Func>
+        void QueryMap(uint32 mask, float centerX, float centerY, float radius, Func&& visitor)
+        {
+            GetMap()->GetQuadTree()->QueryCircle(mask, centerX, centerY, radius, visitor);
         }
 
         void SetZoneScript();

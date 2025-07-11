@@ -3343,7 +3343,14 @@ void WorldObject::GetCreatureListWithEntryInGrid(Container& creatureContainer, u
 {
     Trinity::AllCreaturesOfEntryInRange check(this, entry, maxSearchRange);
     Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(this, creatureContainer, check);
-    Cell::VisitGridObjects(this, searcher, maxSearchRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        QueryMap(MAPQT_GRID_CREATURE, maxSearchRange, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, maxSearchRange);
+    }
 }
 
 template <typename Container>

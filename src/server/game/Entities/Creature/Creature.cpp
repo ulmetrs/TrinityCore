@@ -2709,7 +2709,14 @@ void Creature::CallAssistance()
             std::list<Creature*> assistList;
             Trinity::AnyAssistCreatureInRangeCheck u_check(this, GetVictim(), radius);
             Trinity::CreatureListSearcher<Trinity::AnyAssistCreatureInRangeCheck> searcher(this, assistList, u_check);
-            Cell::VisitGridObjects(this, searcher, radius);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                QueryMap(MAPQT_GRID_CREATURE, radius, searcher);
+            }
+            else
+            {
+                Cell::VisitGridObjects(this, searcher, radius);
+            }
 
             if (!assistList.empty())
             {
@@ -2745,7 +2752,14 @@ void Creature::CallForHelp(float radius)
 
     Trinity::CallOfHelpCreatureInRangeDo u_do(this, target, radius);
     Trinity::CreatureWorker<Trinity::CallOfHelpCreatureInRangeDo> worker(this, u_do);
-    Cell::VisitGridObjects(this, worker, radius);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_GRID_CREATURE, radius, worker);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, worker, radius);
+    }
 }
 
 bool Creature::CanAssistTo(Unit const* u, Unit const* enemy, bool checkfaction /*= true*/) const

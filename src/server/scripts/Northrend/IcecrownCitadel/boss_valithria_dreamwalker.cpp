@@ -26,6 +26,7 @@
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
+#include "World.h"
 
 enum Texts
 {
@@ -222,7 +223,14 @@ class ValithriaDespawner : public BasicEvent
         bool Execute(uint64 /*currTime*/, uint32 /*diff*/) override
         {
             Trinity::CreatureWorker<ValithriaDespawner> worker(_creature, *this);
-            Cell::VisitGridObjects(_creature, worker, 333.0f);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                _creature->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
+            }
+            else
+            {
+                Cell::VisitGridObjects(_creature, worker, 333.0f);
+            }
             return true;
         }
 

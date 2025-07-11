@@ -28,6 +28,7 @@
 #include "SpellScript.h"
 #include "TemporarySummon.h"
 #include "WorldSession.h"
+#include "World.h"
 
 enum ExorcismSpells
 {
@@ -680,7 +681,14 @@ struct npc_watch_commander_leonus : public ScriptedAI
                     {
                         Trinity::AllCreaturesOfEntryInRange pred(me, entry);
                         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, dummies, pred);
-                        Cell::VisitAllObjects(me, searcher, 500.0f);
+                        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                        {
+                            me->QueryMap(MAPQT_CREATURE, 500.0f, searcher);
+                        }
+                        else
+                        {
+                            Cell::VisitAllObjects(me, searcher, 500.0f);
+                        }
                     }
 
                     for (Creature* dummy : dummies)
@@ -722,7 +730,14 @@ struct npc_infernal_rain_hellfire : public ScriptedAI
         std::vector<Creature*> others;
         Trinity::AllCreaturesOfEntryInRange pred(me, NPC_INFERNAL_RAIN);
         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, others, pred);
-        Cell::VisitAllObjects(me, searcher, 500.0f);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            me->QueryMap(MAPQT_CREATURE, 500.0f, searcher);
+        }
+        else
+        {
+            Cell::VisitAllObjects(me, searcher, 500.0f);
+        }
         for (Creature* other : others)
             if (other->GetCreatureData()->movementType == 2)
                 _targets.push_back(other->GetGUID());

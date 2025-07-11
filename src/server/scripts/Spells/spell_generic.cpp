@@ -4399,7 +4399,14 @@ class spell_corrupting_plague_aura : public AuraScript
         std::list<Creature*> targets;
         CorruptingPlagueSearcher creature_check(owner, 15.0f);
         Trinity::CreatureListSearcher<CorruptingPlagueSearcher> creature_searcher(owner, targets, creature_check);
-        Cell::VisitGridObjects(owner, creature_searcher, 15.0f);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            owner->QueryMap(MAPQT_GRID_CREATURE, 15.0f, creature_searcher);
+        }
+        else
+        {
+            Cell::VisitGridObjects(owner, creature_searcher, 15.0f);
+        }
 
         if (!targets.empty())
             return;
@@ -4457,7 +4464,14 @@ class spell_stasis_field_aura : public AuraScript
         std::list<Creature*> targets;
         StasisFieldSearcher creature_check(owner, 15.0f);
         Trinity::CreatureListSearcher<StasisFieldSearcher> creature_searcher(owner, targets, creature_check);
-        Cell::VisitGridObjects(owner, creature_searcher, 15.0f);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            owner->QueryMap(MAPQT_GRID_CREATURE, 15.0f, creature_searcher);
+        }
+        else
+        {
+            Cell::VisitGridObjects(owner, creature_searcher, 15.0f);
+        }
 
         if (!targets.empty())
             return;

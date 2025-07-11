@@ -669,7 +669,14 @@ struct npc_icc_orb_controller : public ScriptedAI
             std::vector<Creature*> creatures;
             ICCOrbControllerMinionSearch check(me, false);
             Trinity::CreatureListSearcher<ICCOrbControllerMinionSearch> searcher(me, creatures, check);
-            Cell::VisitGridObjects(me, searcher, 10.0f);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                me->QueryMap(MAPQT_GRID_CREATURE, 10.0f, searcher);
+            }
+            else
+            {
+                Cell::VisitGridObjects(me, searcher, 10.0f);
+            }
 
             if (creatures.empty())
                 return;
@@ -796,7 +803,15 @@ struct DarkFallenAI : public ScriptedAI
                 std::vector<Creature*> creatures;
                 ICCOrbControllerMinionSearch check(me, true);
                 Trinity::CreatureListSearcher<ICCOrbControllerMinionSearch> searcher(me, creatures, check);
-                Cell::VisitGridObjects(me, searcher, 10.0f);
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    me->QueryMap(MAPQT_GRID_CREATURE, 10.0f, searcher);
+                }
+                else
+                {
+                    Cell::VisitGridObjects(me, searcher, 10.0f);
+                }
+
                 if (!creatures.empty())
                 {
                     Creature* friendly = Trinity::Containers::SelectRandomContainerElement(creatures);

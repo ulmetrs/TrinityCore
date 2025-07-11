@@ -2107,7 +2107,14 @@ class spell_thorim_activate_lightning_orb_periodic : public SpellScriptLoader
 
                 UpperOrbCheck check;
                 Trinity::CreatureListSearcher<UpperOrbCheck> searcher(caster, triggers, check);
-                Cell::VisitGridObjects(caster, searcher, 100.f);
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    caster->QueryMap(MAPQT_GRID_CREATURE, 100.0f, searcher);
+                }
+                else
+                {
+                    Cell::VisitGridObjects(caster, searcher, 100.f);
+                }
 
                 if (!triggers.empty())
                 {
