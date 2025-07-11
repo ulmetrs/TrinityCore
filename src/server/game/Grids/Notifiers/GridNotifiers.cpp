@@ -89,32 +89,6 @@ void VisibleNotifier::SendToSelf()
         i_player.SendInitialVisiblePackets(*it);
 }
 
-void VisibleNotifier::operator()(Player* p)
-{
-    vis_guids.erase(p->GetGUID());
-    i_player.UpdateVisibilityOf(p, i_data, i_visibleNow);
-}
-void VisibleNotifier::operator()(GameObject* g)
-{
-    vis_guids.erase(g->GetGUID());
-    i_player.UpdateVisibilityOf(g, i_data, i_visibleNow);
-}
-void VisibleNotifier::operator()(Creature* c)
-{
-    vis_guids.erase(c->GetGUID());
-    i_player.UpdateVisibilityOf(c, i_data, i_visibleNow);
-}
-void VisibleNotifier::operator()(DynamicObject* d)
-{
-    vis_guids.erase(d->GetGUID());
-    i_player.UpdateVisibilityOf(d, i_data, i_visibleNow);
-}
-void VisibleNotifier::operator()(Corpse* c)
-{
-    vis_guids.erase(c->GetGUID());
-    i_player.UpdateVisibilityOf(c, i_data, i_visibleNow);
-}
-
 void VisibleChangesNotifier::Visit(PlayerMapType &m)
 {
     for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)

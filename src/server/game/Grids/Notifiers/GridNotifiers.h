@@ -41,25 +41,25 @@ namespace Trinity
         GuidUnorderedSet vis_guids;
 
         VisibleNotifier(Player &player) : i_player(player), vis_guids(player.m_clientGUIDs) { }
-        template<class T> void Visit(GridRefManager<T> &m);
         void SendToSelf(void);
 
-        void operator()(Player* p);
-        void operator()(GameObject* g);
-        void operator()(Creature* c);
-        void operator()(DynamicObject* d);
-        void operator()(Corpse* c);
-    };
-
-    template<class T>
-    inline void VisibleNotifier::Visit(GridRefManager<T> &m)
-    {
-        for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
+        template<class T>
+        void Visit(GridRefManager<T> &m)
         {
-            vis_guids.erase(iter->GetSource()->GetGUID());
-            i_player.UpdateVisibilityOf(iter->GetSource(), i_data, i_visibleNow);
+            for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
+            {
+                vis_guids.erase(iter->GetSource()->GetGUID());
+                i_player.UpdateVisibilityOf(iter->GetSource(), i_data, i_visibleNow);
+            }
         }
-    }
+
+        template<class T>
+        void operator()(T* obj)
+        {
+            vis_guids.erase(obj->GetGUID());
+            i_player.UpdateVisibilityOf(obj, i_data, i_visibleNow);
+        }
+    };
 
     struct VisibleChangesNotifier
     {

@@ -45,6 +45,7 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "Vehicle.h"
+#include "World.h"
 // @tswow-begin (Using Rochet2/Transmog)
 #include "Transmogrification.h"
 // @tswow-end
@@ -731,9 +732,9 @@ class spell_gen_cannibalize : public SpellScript
         Trinity::WorldObjectSearcher<Trinity::AnyDeadUnitSpellTargetInRangeCheck> searcher(caster, result, check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            GetMap()->GetQuadTree()->QueryCircle(MAPQT_WORLD, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
+            caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_WORLD, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
             if (!result)
-                GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
+                caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
         }
         else
         {
