@@ -739,7 +739,7 @@ bool Map::AddToPartition(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        //TC_LOG_DEBUG("quadtrees", "AddToPartition QuadTree Insert");
+        TC_LOG_DEBUG("quadtrees", "AddToPartition QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -831,7 +831,7 @@ void Map::Update(uint32 t_diff)
         if (m_creatureQuadTreeLogTimer >= 1)
         {
             m_creatureQuadTreeLogTimer = 0;
-
+            TC_LOG_DEBUG("quadtrees", "Start Search");
             // Visitor lambda or functor
             auto logger = [](WorldObject* o)
             {
@@ -844,6 +844,7 @@ void Map::Update(uint32 t_diff)
             };
             uint32 mask = MAPQT_CREATURE;
             _quadTree->QueryAll(mask, logger);
+            TC_LOG_DEBUG("quadtrees", "Finish Search");
         }
     }
 
@@ -1479,7 +1480,7 @@ void Map::RemoveFromPartition(T *obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        //TC_LOG_DEBUG("quadtrees", "RemoveFromPartition QuadNode Remove");
+        TC_LOG_DEBUG("quadtrees", "RemoveFromPartition QuadNode Remove");
         static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
     }
 
