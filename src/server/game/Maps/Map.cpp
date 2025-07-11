@@ -765,7 +765,7 @@ void Map::VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpd
     if (!obj->IsPositionValid())
         return;
 
-    _quadTree->QueryCircle(mask, obj->GetPositionX(), obj->GetPositionY(), obj->GetGridActivationRange(), updater);
+    obj->QueryMap(mask, obj->GetGridActivationRange(), updater);
 }
 
 void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)
