@@ -828,7 +828,7 @@ void Map::Update(uint32 t_diff)
 
     {
         m_creatureQuadTreeLogTimer += t_diff;
-        if (m_creatureQuadTreeLogTimer >= 3000)
+        if (m_creatureQuadTreeLogTimer >= 1)
         {
             m_creatureQuadTreeLogTimer = 0;
 
