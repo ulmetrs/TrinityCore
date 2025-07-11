@@ -164,7 +164,14 @@ void CreatureTextMgr::SendChatPacket(WorldObject* source, Builder const& builder
 
     float dist = GetRangeForChatType(msgType);
     Trinity::PlayerDistWorker<CreatureTextLocalizer<Builder>> worker(source, dist, localizer);
-    Cell::VisitWorldObjects(source, worker, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        source->QueryMap(MAPQT_PLAYER, dist, worker);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(source, worker, dist);
+    }
 }
 
 #endif // CreatureTextMgrImpl_h__

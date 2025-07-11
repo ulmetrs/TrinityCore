@@ -14841,7 +14841,14 @@ void Unit::Talk(std::string_view text, ChatMsg msgType, Language language, float
     Trinity::CustomChatTextBuilder builder(this, msgType, text, language, target);
     Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> localizer(builder);
     Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> > worker(this, textRange, localizer);
-    Cell::VisitWorldObjects(this, worker, textRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        QueryMap(MAPQT_PLAYER, textRange, worker);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, worker, textRange);
+    }
 }
 
 void Unit::Say(std::string_view text, Language language, WorldObject const* target /*= nullptr*/)
@@ -14897,7 +14904,14 @@ void Unit::Talk(uint32 textId, ChatMsg msgType, float textRange, WorldObject con
     Trinity::BroadcastTextBuilder builder(this, msgType, textId, GetGender(), target);
     Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> localizer(builder);
     Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> > worker(this, textRange, localizer);
-    Cell::VisitWorldObjects(this, worker, textRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        QueryMap(MAPQT_PLAYER, textRange, worker);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, worker, textRange);
+    }
 }
 
 void Unit::Say(uint32 textId, WorldObject const* target /*= nullptr*/)

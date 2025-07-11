@@ -706,7 +706,14 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement) 
         Trinity::BroadcastTextBuilder _builder(GetPlayer(), CHAT_MSG_ACHIEVEMENT, BROADCAST_TEXT_ACHIEVEMENT_EARNED, GetPlayer()->GetNativeGender(), GetPlayer(), achievement->ID);
         Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> _localizer(_builder);
         Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder>> _worker(GetPlayer(), sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), _localizer);
-        Cell::VisitWorldObjects(GetPlayer(), _worker, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY));
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            GetPlayer()->QueryMap(MAPQT_PLAYER, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), _worker);
+        }
+        else
+        {
+            Cell::VisitWorldObjects(GetPlayer(), _worker, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY));
+        }
     }
 
     auto achievementEarnedBuilder = [&](Player const* receiver)
@@ -724,7 +731,14 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement) 
 
     float dist = sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY);
     Trinity::PlayerDistWorker notifier(GetPlayer(), dist, achievementEarnedBuilder);
-    Cell::VisitWorldObjects(GetPlayer(), notifier, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetPlayer()->QueryMap(MAPQT_PLAYER, dist, notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(GetPlayer(), notifier, dist);
+    }
 }
 
 void AchievementMgr::SendCriteriaUpdate(AchievementCriteriaEntry const* entry, CriteriaProgress const* progress, uint32 timeElapsed, bool timedCompleted) const

@@ -974,7 +974,15 @@ struct npc_dream_cloud : public ScriptedAI
                     Player* player = nullptr;
                     Trinity::AnyPlayerInObjectRangeCheck check(me, 5.0f);
                     Trinity::PlayerSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, player, check);
-                    Cell::VisitWorldObjects(me, searcher, 7.5f);
+                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                    {
+                        me->QueryMap(MAPQT_PLAYER, 7.5f, searcher);
+                    }
+                    else
+                    {
+                        Cell::VisitWorldObjects(me, searcher, 7.5f);
+                    }
+
                     _events.ScheduleEvent(player ? EVENT_EXPLODE : EVENT_CHECK_PLAYER, 1s);
                     break;
                 }

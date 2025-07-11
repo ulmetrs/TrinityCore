@@ -2296,7 +2296,14 @@ Player* WorldObject::SelectNearestPlayer(float distance) const
 
     Trinity::NearestPlayerInObjectRangeCheck checker(this, distance);
     Trinity::PlayerLastSearcher<Trinity::NearestPlayerInObjectRangeCheck> searcher(this, target, checker);
-    Cell::VisitWorldObjects(this, searcher, distance);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        QueryMap(MAPQT_PLAYER, distance, searcher);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, searcher, distance);
+    }
 
     return target;
 }
@@ -3358,7 +3365,14 @@ void WorldObject::GetPlayerListInGrid(Container& playerContainer, float maxSearc
 {
     Trinity::AnyPlayerInObjectRangeCheck checker(this, maxSearchRange, alive);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, playerContainer, checker);
-    Cell::VisitWorldObjects(this, searcher, maxSearchRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        QueryMap(MAPQT_PLAYER, maxSearchRange, searcher);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, searcher, maxSearchRange);
+    }
 }
 
 void WorldObject::GetNearPoint2D(WorldObject const* searcher, float& x, float& y, float distance2d, float absAngle) const
@@ -3651,7 +3665,14 @@ void WorldObject::DestroyForNearbyPlayers()
     std::list<Player*> targets;
     Trinity::AnyPlayerInObjectRangeCheck check(this, GetVisibilityRange(), false);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, targets, check);
-    Cell::VisitWorldObjects(this, searcher, GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        QueryMap(MAPQT_PLAYER, GetVisibilityRange(), searcher);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, searcher, GetVisibilityRange());
+    }
     for (std::list<Player*>::const_iterator iter = targets.begin(); iter != targets.end(); ++iter)
     {
         Player* player = (*iter);
@@ -3763,7 +3784,15 @@ void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
 {
     WorldObjectChangeAccumulator notifier(*this, data_map);
     //we must build packets for all visible players
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32 mask = MAPQT_PLAYER | MAPQT_WORLD_CREATURE | MAPQT_WORLD_DYNAMICOBJECT;
+        QueryMap(mask, GetVisibilityRange(), notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    }
 
     ClearUpdateMask(false);
 }

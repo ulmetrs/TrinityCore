@@ -496,7 +496,14 @@ Player* ScriptedAI::GetPlayerAtMinimumRange(float minimumRange)
 
     Trinity::PlayerAtMinimumRangeAway check(me, minimumRange);
     Trinity::PlayerSearcher<Trinity::PlayerAtMinimumRangeAway> searcher(me, player, check);
-    Cell::VisitWorldObjects(me, searcher, minimumRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_PLAYER, minimumRange, searcher);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(me, searcher, minimumRange);
+    }
 
     return player;
 }
