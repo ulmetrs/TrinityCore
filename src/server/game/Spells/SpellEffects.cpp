@@ -4416,13 +4416,29 @@ void Spell::EffectForceDeselect()
     WorldPacket data(SMSG_BREAK_TARGET, unitCaster->GetPackGUID().size());
     data << unitCaster->GetPackGUID();
     Trinity::MessageDistDelivererToHostile notifierBreak(unitCaster, &data, dist);
-    Cell::VisitWorldObjects(unitCaster, notifierBreak, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        unitCaster->GetMap()->GetQuadTree()->QueryCircle(mask, unitCaster->GetPositionX(), unitCaster->GetPositionY(), dist, notifierBreak);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(unitCaster, notifierBreak, dist);
+    }
 
     // and selection
     data.Initialize(SMSG_CLEAR_TARGET, 8);
     data << uint64(unitCaster->GetGUID());
     Trinity::MessageDistDelivererToHostile notifierClear(unitCaster, &data, dist);
-    Cell::VisitWorldObjects(unitCaster, notifierClear, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        unitCaster->GetMap()->GetQuadTree()->QueryCircle(mask, unitCaster->GetPositionX(), unitCaster->GetPositionY(), dist, notifierClear);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(unitCaster, notifierClear, dist);
+    }
 
     // we should also force pets to remove us from current target
     Unit::AttackerSet attackerSet;

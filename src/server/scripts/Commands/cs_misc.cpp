@@ -1979,7 +1979,14 @@ public:
         // First handle any creatures that still have a corpse around
         Trinity::RespawnDo u_do;
         Trinity::WorldObjectWorker<Trinity::RespawnDo> worker(player, u_do);
-        Cell::VisitGridObjects(player, worker, player->GetGridActivationRange());
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            player->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, player->GetPositionX(), player->GetPositionY(), player->GetGridActivationRange(), worker);
+        }
+        else
+        {
+            Cell::VisitGridObjects(player, worker, player->GetGridActivationRange());
+        }
 
         // Now handle any that had despawned, but had respawn time logged.
         std::vector<RespawnInfo const*> data;

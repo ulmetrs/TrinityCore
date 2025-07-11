@@ -21,6 +21,7 @@
 #include "CharacterCache.h"
 #include "GridNotifiersImpl.h"
 #include "Language.h"
+#include "MapQuadTree.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Optional.h"
@@ -477,7 +478,15 @@ GameObject* ChatHandler::GetNearbyGameObject()
     GameObject* obj = nullptr;
     Trinity::NearestGameObjectCheck check(*pl);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectCheck> searcher(pl, obj, check);
-    Cell::VisitGridObjects(pl, searcher, SIZE_OF_GRIDS);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        pl->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, pl->GetPositionX(), pl->GetPositionY(), SIZE_OF_GRIDS, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(pl, searcher, SIZE_OF_GRIDS);
+    }
+    
     return obj;
 }
 

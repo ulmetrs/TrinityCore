@@ -32,6 +32,7 @@ EndContentData */
 #include "CreatureAIImpl.h"
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
@@ -538,8 +539,14 @@ class npc_simon_bunny : public CreatureScript
                 std::list<WorldObject*> ClusterList;
                 Trinity::AllWorldObjectsInRange objects(me, searchDistance);
                 Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
-                Cell::VisitAllObjects(me, searcher, searchDistance);
-
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, me->GetPositionX(), me->GetPositionY(), searchDistance, searcher);
+                }
+                else
+                {
+                    Cell::VisitAllObjects(me, searcher, searchDistance);
+                }
                 for (std::list<WorldObject*>::const_iterator i = ClusterList.begin(); i != ClusterList.end(); ++i)
                 {
                     if (GameObject* go = (*i)->ToGameObject())

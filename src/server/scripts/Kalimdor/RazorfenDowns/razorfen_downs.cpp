@@ -31,6 +31,7 @@ EndContentData */
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "Player.h"
 #include "razorfen_downs.h"
@@ -207,7 +208,15 @@ public:
                         std::list<WorldObject*> ClusterList;
                         Trinity::AllWorldObjectsInRange objects(me, 50.0f);
                         Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
-                        Cell::VisitAllObjects(me, searcher, 50.0f);
+                        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                        {
+                            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, me->GetPositionX(), me->GetPositionY(), 50.0f, searcher);
+                        }
+                        else
+                        {
+                            Cell::VisitAllObjects(me, searcher, 50.0f);
+                        }
+                        
                         for (std::list<WorldObject*>::const_iterator itr = ClusterList.begin(); itr != ClusterList.end(); ++itr)
                         {
                             if (Player* player = (*itr)->ToPlayer())

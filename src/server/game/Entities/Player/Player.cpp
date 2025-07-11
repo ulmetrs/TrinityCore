@@ -6726,7 +6726,15 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    Cell::VisitWorldObjects(this, notifier, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), dist, notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, dist);
+    }
 }
 
 void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool self, bool own_team_only, bool required3dDist /*= false*/) const
@@ -6735,7 +6743,15 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist, own_team_only, nullptr, required3dDist);
-    Cell::VisitWorldObjects(this, notifier, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), dist, notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, dist);
+    }
 }
 
 void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
@@ -6746,7 +6762,15 @@ void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcv
     // we use World::GetMaxVisibleDistance() because i cannot see why not use a distance
     // update: replaced by GetMap()->GetVisibilityDistance()
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    }
 }
 
 void Player::SendDirectMessage(WorldPacket const* data) const

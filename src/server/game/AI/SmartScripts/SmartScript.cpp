@@ -16,6 +16,7 @@
  */
 
 // @tswow-begin
+#include "MapQuadTree.h"
 #include "TSSmartScript.h"
 #include "TSEvents.h"
 // @tswow-end
@@ -2812,7 +2813,14 @@ void SmartScript::GetWorldObjectsInDist(ObjectVector& targets, float dist) const
 
     Trinity::AllWorldObjectsInRange u_check(obj, dist);
     Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(obj, targets, u_check);
-    Cell::VisitAllObjects(obj, searcher, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        obj->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, obj->GetPositionX(), obj->GetPositionY(), dist, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(obj, searcher, dist);
+    }
 }
 
 void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, uint32 var1, bool bvar, SpellInfo const* spell, GameObject* gob)

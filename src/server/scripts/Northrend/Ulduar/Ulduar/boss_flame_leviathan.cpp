@@ -29,6 +29,7 @@
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "PassiveAI.h"
@@ -1810,7 +1811,14 @@ class spell_vehicle_throw_passenger : public SpellScriptLoader
                             std::list<WorldObject*> targetList;
                             Trinity::WorldObjectSpellAreaTargetCheck check(99, GetExplTargetDest(), GetCaster(), GetCaster(), GetSpellInfo(), TARGET_CHECK_DEFAULT, nullptr);
                             Trinity::WorldObjectListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetCaster(), targetList, check);
-                            Cell::VisitAllObjects(GetCaster(), searcher, 99.0f);
+                            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                            {
+                                GetCaster()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, GetCaster()->GetPositionX(), GetCaster()->GetPositionY(), 99.0f, searcher);
+                            }
+                            else
+                            {
+                                Cell::VisitAllObjects(GetCaster(), searcher, 99.0f);
+                            }
                             float minDist = 99 * 99;
                             Unit* target = nullptr;
                             for (std::list<WorldObject*>::iterator itr = targetList.begin(); itr != targetList.end(); ++itr)

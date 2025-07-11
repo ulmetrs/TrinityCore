@@ -14995,7 +14995,14 @@ GameObject* Unit::FindNearestGuardPost(float range) const
     Trinity::NearestGuardPostInRangeCheck u_check(this, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestGuardPostInRangeCheck> searcher(this, guardPost, u_check);
 
-    Cell::VisitGridObjects(this, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, range);
+    }
 
     return guardPost;
 }

@@ -22,6 +22,7 @@
 #include "DBCStores.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
@@ -537,7 +538,15 @@ struct boss_the_lich_king : public BossAI
         // Reset The Frozen Throne gameobjects
         FrozenThroneResetWorker reset;
         Trinity::GameObjectWorker<FrozenThroneResetWorker> worker(me, reset);
-        Cell::VisitGridObjects(me, worker, 333.0f);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, me->GetPositionX(), me->GetPositionY(), 333.0f, worker);
+        }
+        else
+        {
+            Cell::VisitGridObjects(me, worker, 333.0f);
+        }
+        
 
         // Reset any light override
         me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, 0, 5s);

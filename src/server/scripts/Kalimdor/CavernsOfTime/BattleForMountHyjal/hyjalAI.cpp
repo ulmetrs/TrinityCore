@@ -928,7 +928,14 @@ void hyjalAI::RespawnNearPos(float x, float y)
 {
     Trinity::RespawnDo u_do;
     Trinity::WorldObjectWorker<Trinity::RespawnDo> worker(me, u_do);
-    Cell::VisitGridObjects(x, y, me->GetMap(), worker, me->GetGridActivationRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, x, y, me->GetGridActivationRange(), worker);
+    }
+    else
+    {
+        Cell::VisitGridObjects(x, y, me->GetMap(), worker, me->GetGridActivationRange());
+    }
 }
 
 void hyjalAI::WaypointReached(uint32 waypointId, uint32 /*pathId*/)

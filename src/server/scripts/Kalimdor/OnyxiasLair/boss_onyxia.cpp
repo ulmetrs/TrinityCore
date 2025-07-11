@@ -351,7 +351,14 @@ struct boss_onyxia : public BossAI
                         GameObject* Floor = nullptr;
                         Trinity::GameObjectInRangeCheck check(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), 15);
                         Trinity::GameObjectLastSearcher<Trinity::GameObjectInRangeCheck> searcher(me, Floor, check);
-                        Cell::VisitGridObjects(me, searcher, 30.0f);
+                        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                        {
+                            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, me->GetPositionX(), me->GetPositionY(), 30.0f, searcher);
+                        }
+                        else
+                        {
+                            Cell::VisitGridObjects(me, searcher, 30.0f);
+                        }
                         if (Floor)
                             instance->SetGuidData(DATA_FLOOR_ERUPTION_GUID, Floor->GetGUID());
                         events.ScheduleEvent(EVENT_BELLOWING_ROAR, 30s);

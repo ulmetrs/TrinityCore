@@ -27,6 +27,7 @@ EndScriptData */
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
+#include "Map.h"
 #include "onyxias_lair.h"
 #include "TemporarySummon.h"
 
@@ -119,7 +120,14 @@ public:
                 std::list<GameObject*> nearFloorList;
                 Trinity::GameObjectInRangeCheck check(floorEruption->GetPositionX(), floorEruption->GetPositionY(), floorEruption->GetPositionZ(), 15);
                 Trinity::GameObjectListSearcher<Trinity::GameObjectInRangeCheck> searcher(floorEruption, nearFloorList, check);
-                Cell::VisitGridObjects(floorEruption, searcher, SIZE_OF_GRIDS);
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    floorEruption->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, floorEruption->GetPositionX(), floorEruption->GetPositionY(), SIZE_OF_GRIDS, searcher);
+                }
+                else
+                {
+                    Cell::VisitGridObjects(floorEruption, searcher, SIZE_OF_GRIDS);
+                }
                 //remove all that are not present on FloorEruptionGUID[1] and update treeLen on each GUID
                 for (std::list<GameObject*>::const_iterator itr = nearFloorList.begin(); itr != nearFloorList.end(); ++itr)
                 {

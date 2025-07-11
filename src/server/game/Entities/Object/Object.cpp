@@ -1885,13 +1885,29 @@ void WorldObject::SendMessageToSet(WorldPacket const* data, bool self) const
 void WorldObject::SendMessageToSetInRange(WorldPacket const* data, float dist, bool /*self*/) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    Cell::VisitWorldObjects(this, notifier, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), dist, notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, dist);
+    }
 }
 
 void WorldObject::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+    }
+    else
+    {
+        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    }
 }
 
 void WorldObject::SendObjectDeSpawnAnim(ObjectGuid guid)
@@ -2224,7 +2240,14 @@ GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range, bool s
     GameObject* go = nullptr;
     Trinity::NearestGameObjectEntryInObjectRangeCheck checker(*this, entry, range, spawnedOnly);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
-    Cell::VisitGridObjects(this, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, range);
+    }
     return go;
 }
 
@@ -2233,7 +2256,14 @@ GameObject* WorldObject::FindNearestUnspawnedGameObject(uint32 entry, float rang
     GameObject* go = nullptr;
     Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck checker(*this, entry, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
-    Cell::VisitGridObjects(this, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, range);
+    }
     return go;
 }
 
@@ -2242,7 +2272,14 @@ GameObject* WorldObject::FindNearestGameObjectOfType(GameobjectTypes type, float
     GameObject* go = nullptr;
     Trinity::NearestGameObjectTypeInObjectRangeCheck checker(*this, type, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectTypeInObjectRangeCheck> searcher(this, go, checker);
-    Cell::VisitGridObjects(this, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, range);
+    }
     return go;
 }
 
@@ -3284,7 +3321,14 @@ void WorldObject::GetGameObjectListWithEntryInGrid(Container& gameObjectContaine
 {
     Trinity::AllGameObjectsWithEntryInRange check(this, entry, maxSearchRange);
     Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(this, gameObjectContainer, check);
-    Cell::VisitGridObjects(this, searcher, maxSearchRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), maxSearchRange, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, maxSearchRange);
+    }
 }
 
 template <typename Container>

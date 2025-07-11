@@ -820,9 +820,18 @@ class spell_hun_pet_carrion_feeder : public SpellScript
         // search for nearby enemy corpse in range
         Trinity::AnyDeadUnitSpellTargetInRangeCheck check(caster, max_range, GetSpellInfo(), TARGET_CHECK_ENEMY);
         Trinity::WorldObjectSearcher<Trinity::AnyDeadUnitSpellTargetInRangeCheck> searcher(caster, result, check);
-        Cell::VisitWorldObjects(caster, searcher, max_range);
-        if (!result)
-            Cell::VisitGridObjects(caster, searcher, max_range);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_WORLD, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
+            if (!result)
+                caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
+        }
+        else
+        {
+            Cell::VisitWorldObjects(caster, searcher, max_range);
+            if (!result)
+                Cell::VisitGridObjects(caster, searcher, max_range);
+        }
         if (!result)
             return SPELL_FAILED_NO_EDIBLE_CORPSES;
         return SPELL_CAST_OK;

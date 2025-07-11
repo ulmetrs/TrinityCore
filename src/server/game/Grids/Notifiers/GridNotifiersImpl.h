@@ -157,6 +157,96 @@ void Trinity::WorldObjectSearcher<Check>::Visit(DynamicObjectMapType &m)
 }
 
 template<class Check>
+void Trinity::WorldObjectSearcher<Check>::operator()(Player* p)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_PLAYER))
+        return;
+
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(p))
+        i_object = p;
+}
+
+template<class Check>
+void Trinity::WorldObjectSearcher<Check>::operator()(GameObject* g)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_GAMEOBJECT))
+        return;
+
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!g->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(g))
+        i_object = g;
+}
+
+template<class Check>
+void Trinity::WorldObjectSearcher<Check>::operator()(Creature* c)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CREATURE))
+        return;
+
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
+}
+
+template<class Check>
+void Trinity::WorldObjectSearcher<Check>::operator()(DynamicObject* d)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_DYNAMICOBJECT))
+        return;
+
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!d->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(d))
+        i_object = d;
+}
+
+template<class Check>
+void Trinity::WorldObjectSearcher<Check>::operator()(Corpse* c)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CORPSE))
+        return;
+
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
+}
+
+template<class Check>
 void Trinity::WorldObjectLastSearcher<Check>::Visit(GameObjectMapType &m)
 {
     if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_GAMEOBJECT))
@@ -247,6 +337,81 @@ void Trinity::WorldObjectLastSearcher<Check>::Visit(DynamicObjectMapType &m)
 }
 
 template<class Check>
+void Trinity::WorldObjectLastSearcher<Check>::operator()(Player* p)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_PLAYER))
+        return;
+
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(p))
+        i_object = p;
+}
+
+template<class Check>
+void Trinity::WorldObjectLastSearcher<Check>::operator()(GameObject* g)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_GAMEOBJECT))
+        return;
+
+    // @tswow-begin
+    if (!g->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(g))
+        i_object = g;
+}
+
+template<class Check>
+void Trinity::WorldObjectLastSearcher<Check>::operator()(Creature* c)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CREATURE))
+        return;
+
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
+}
+
+template<class Check>
+void Trinity::WorldObjectLastSearcher<Check>::operator()(DynamicObject* d)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_DYNAMICOBJECT))
+        return;
+
+    // @tswow-begin
+    if (!d->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(d))
+        i_object = d;
+}
+
+template<class Check>
+void Trinity::WorldObjectLastSearcher<Check>::operator()(Corpse* c)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CORPSE))
+        return;
+
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
+}
+
+template<class Check>
 void Trinity::WorldObjectListSearcher<Check>::Visit(PlayerMapType &m)
 {
     if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_PLAYER))
@@ -301,6 +466,56 @@ void Trinity::WorldObjectListSearcher<Check>::Visit(DynamicObjectMapType &m)
             Insert(itr->GetSource());
 }
 
+template<class Check>
+void Trinity::WorldObjectListSearcher<Check>::operator()(Player* p)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_PLAYER))
+        return;
+
+    if (i_check(p))
+        Insert(p);
+}
+
+template<class Check>
+void Trinity::WorldObjectListSearcher<Check>::operator()(Creature* c)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CREATURE))
+        return;
+
+    if (i_check(c))
+        Insert(c);
+}
+
+template<class Check>
+void Trinity::WorldObjectListSearcher<Check>::operator()(Corpse* c)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CORPSE))
+        return;
+
+    if (i_check(c))
+        Insert(c);
+}
+
+template<class Check>
+void Trinity::WorldObjectListSearcher<Check>::operator()(GameObject* g)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_GAMEOBJECT))
+        return;
+
+    if (i_check(g))
+        Insert(g);
+}
+
+template<class Check>
+void Trinity::WorldObjectListSearcher<Check>::operator()(DynamicObject* d)
+{
+    if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_DYNAMICOBJECT))
+        return;
+
+    if (i_check(d))
+        Insert(d);
+}
+
 // Gameobject searchers
 
 template<class Check>
@@ -326,6 +541,22 @@ void Trinity::GameObjectSearcher<Check>::Visit(GameObjectMapType &m)
 }
 
 template<class Check>
+void Trinity::GameObjectSearcher<Check>::operator()(GameObject* g)
+{
+    // already found
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!g->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(g))
+        i_object = g;
+}
+
+template<class Check>
 void Trinity::GameObjectLastSearcher<Check>::Visit(GameObjectMapType &m)
 {
     for (GameObjectMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -341,6 +572,18 @@ void Trinity::GameObjectLastSearcher<Check>::Visit(GameObjectMapType &m)
 }
 
 template<class Check>
+void Trinity::GameObjectLastSearcher<Check>::operator()(GameObject* g)
+{
+    // @tswow-begin
+    if (!g->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(g))
+        i_object = g;
+}
+
+template<class Check>
 void Trinity::GameObjectListSearcher<Check>::Visit(GameObjectMapType &m)
 {
     for (GameObjectMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -349,6 +592,18 @@ void Trinity::GameObjectListSearcher<Check>::Visit(GameObjectMapType &m)
         // @tswow-end
             if (i_check(itr->GetSource()))
                 Insert(itr->GetSource());
+}
+
+template<class Check>
+void Trinity::GameObjectListSearcher<Check>::operator()(GameObject* g)
+{
+    // @tswow-begin
+    if (!g->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(g))
+        Insert(g);
 }
 
 // Unit searchers

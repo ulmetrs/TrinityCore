@@ -1499,7 +1499,15 @@ GameObject* GameObject::LookupFishingHoleAround(float range)
     GameObject* ok = nullptr;
     Trinity::NearestGameObjectFishingHole u_check(*this, range);
     Trinity::GameObjectSearcher<Trinity::NearestGameObjectFishingHole> checker(this, ok, u_check);
-    Cell::VisitGridObjects(this, checker, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, checker);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, checker, range);
+    }
+    
     return ok;
 }
 
