@@ -1394,9 +1394,13 @@ void Map::RemoveFromMap(T *obj, bool remove)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        if (obj->GetSpawnId() == 21404 /* || other conditions */)
+        if (obj->IsCreature())
         {
-            TC_LOG_DEBUG("quadtrees", "Remove From Map: {}", obj->GetQuadNodeInfo());
+            Creature* creature = obj->ToCreature();
+            if (creature->GetSpawnId() == 21404 /* || other conditions */)
+            {
+                TC_LOG_DEBUG("quadtrees", "Remove From Map: {}", creature->GetQuadNodeInfo());
+            }
         }
         //TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
         static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
