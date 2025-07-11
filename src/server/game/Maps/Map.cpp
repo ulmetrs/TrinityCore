@@ -832,20 +832,11 @@ void Map::Update(uint32 t_diff)
         {
             m_creatureQuadTreeLogTimer = 0;
             TC_LOG_DEBUG("quadtrees", "Start Search on map {}", GetId());
-            // Visitor lambda or functor
-            Creature* found = nullptr;
-            auto logger = [](WorldObject* o)
-            {
-                Creature* c = static_cast<Creature*>(o);
-                // Example: log only for certain spawn IDs or entries
-                if (c->GetSpawnId() == 21404 /* || other conditions */)
-                {
-                    found = c;
-                }
-            };
-            uint32 mask = MAPQT_CREATURE;
-            _quadTree->QueryAll(mask, logger);
-            TC_LOG_DEBUG("quadtrees", "Finish Search on map {} - {}", GetId(), found ? found->GetQuadNodeInfo() : "Not Found");
+            std::list<Creature*> creatures;
+            Trinity::AllCreaturesOfEntryInRange check(me, 21404, 0);
+            Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, creatures, check);
+            _quadTree->QueryAll(MAPQT_CREATURE, searcher);
+            TC_LOG_DEBUG("quadtrees", "Finish Search on map {} - found {}", GetId(), creatures.size());
         }
     }
 
