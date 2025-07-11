@@ -646,6 +646,10 @@ bool Map::AddToMap(T* obj)
     {
         //TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
         _quadTree->Insert(obj);
+        if (obj->GetSpawnId() == 21404 /* || other conditions */)
+        {
+            TC_LOG_DEBUG("quadtrees", "Add To Map: {}", obj->GetQuadNodeInfo());
+        }
     }
 
     //Must already be set before AddToMap. Usually during obj->Create.
@@ -835,7 +839,6 @@ void Map::Update(uint32 t_diff)
                 }
             };
             uint32 mask = MAPQT_CREATURE;
-            TC_LOG_DEBUG("quadtrees", "MASK: {}", mask);
             _quadTree->QueryAll(mask, logger);
         }
     }
@@ -1387,6 +1390,10 @@ void Map::RemoveFromMap(T *obj, bool remove)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        if (obj->GetSpawnId() == 21404 /* || other conditions */)
+        {
+            TC_LOG_DEBUG("quadtrees", "Remove From Map: {}", obj->GetQuadNodeInfo());
+        }
         //TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
         static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
     }
@@ -1515,6 +1522,10 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
             _quadTree->Insert(creature);
+            if (creature->GetSpawnId() == 21404 /* || other conditions */)
+            {
+                TC_LOG_DEBUG("quadtrees", "Creature Relocation: {}", creature->GetQuadNodeInfo());
+            }
         }
 
         creature->UpdatePositionData();
