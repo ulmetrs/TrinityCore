@@ -42,6 +42,7 @@ EndContentData */
 #include "SpellInfo.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
+#include "World.h"
 
 /*######
 ## npc_nether_drake
