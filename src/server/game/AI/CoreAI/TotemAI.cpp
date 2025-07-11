@@ -66,7 +66,14 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
         float extraSearchRadius = max_range > 0.0f ? EXTRA_CELL_SEARCH_RADIUS : 0.0f;
         Trinity::NearestAttackableUnitInObjectRangeCheck u_check(me, me->GetCharmerOrOwnerOrSelf(), max_range);
         Trinity::UnitLastSearcher<Trinity::NearestAttackableUnitInObjectRangeCheck> checker(me, victim, u_check);
-        Cell::VisitAllObjects(me, checker, max_range + extraSearchRadius);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), max_range + extraSearchRadius, checker);
+        }
+        else
+        {
+            Cell::VisitAllObjects(me, checker, max_range + extraSearchRadius);
+        }
     }
 
     // If have target

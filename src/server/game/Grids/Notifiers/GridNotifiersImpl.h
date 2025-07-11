@@ -631,6 +631,22 @@ void Trinity::UnitSearcher<Check>::Visit(CreatureMapType &m)
 }
 
 template<class Check>
+void Trinity::UnitSearcher<Check>::operator()(Creature* c)
+{
+    // already found
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
+}
+
+template<class Check>
 void Trinity::UnitSearcher<Check>::Visit(PlayerMapType &m)
 {
     // already found
@@ -653,6 +669,22 @@ void Trinity::UnitSearcher<Check>::Visit(PlayerMapType &m)
 }
 
 template<class Check>
+void Trinity::UnitSearcher<Check>::operator()(Player* p)
+{
+    // already found
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(p))
+        i_object = p;
+}
+
+template<class Check>
 void Trinity::UnitLastSearcher<Check>::Visit(CreatureMapType &m)
 {
     for (CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -665,6 +697,18 @@ void Trinity::UnitLastSearcher<Check>::Visit(CreatureMapType &m)
         if (i_check(itr->GetSource()))
             i_object = itr->GetSource();
     }
+}
+
+template<class Check>
+void Trinity::UnitLastSearcher<Check>::operator()(Creature* c)
+{
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
 }
 
 template<class Check>
@@ -683,6 +727,18 @@ void Trinity::UnitLastSearcher<Check>::Visit(PlayerMapType &m)
 }
 
 template<class Check>
+void Trinity::UnitLastSearcher<Check>::operator()(Player* p)
+{
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(p))
+        i_object = p;
+}
+
+template<class Check>
 void Trinity::UnitListSearcher<Check>::Visit(PlayerMapType &m)
 {
     for (PlayerMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -694,6 +750,18 @@ void Trinity::UnitListSearcher<Check>::Visit(PlayerMapType &m)
 }
 
 template<class Check>
+void Trinity::UnitListSearcher<Check>::operator()(Player* p)
+{
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(p))
+        Insert(p);
+}
+
+template<class Check>
 void Trinity::UnitListSearcher<Check>::Visit(CreatureMapType &m)
 {
     for (CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -702,6 +770,18 @@ void Trinity::UnitListSearcher<Check>::Visit(CreatureMapType &m)
         // @tswow-end
             if (i_check(itr->GetSource()))
                 Insert(itr->GetSource());
+}
+
+template<class Check>
+void Trinity::UnitListSearcher<Check>::operator()(Creature* c)
+{
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        Insert(c);
 }
 
 // Creature searchers

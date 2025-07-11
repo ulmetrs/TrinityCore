@@ -28,6 +28,7 @@
 #include "CellImpl.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
+#include "MapQuadTree.h"
 #include "MoveSpline.h"
 #include "MoveSplineInit.h"
 #include "PathGenerator.h"
@@ -703,8 +704,14 @@ void MotionMaster::MoveEncircle(Unit* target)
         return _owner != unit && unit->GetVictim() && unit->GetVictim() == target && !unit->isMoving() && !unit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNINTERACTIBLE);
     }, (fanningRadius / radiusReduction) * (fanningRadius / radiusReduction));
     Trinity::UnitSearcher<Trinity::AnyUnitFulfillingConditionInRangeCheck> checker(_owner, collider, collisionCheck);
-    Cell::VisitAllObjects(_owner, checker, (fanningRadius / radiusReduction));
-
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        _owner->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, _owner->GetPositionX(), _owner->GetPositionY(), (fanningRadius / radiusReduction), checker);
+    }
+    else
+    {
+        Cell::VisitAllObjects(_owner, checker, (fanningRadius / radiusReduction));
+    }
     if (! collider) {
         return;
     }

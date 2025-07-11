@@ -23,6 +23,7 @@
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "ScriptMgr.h"
+#include "World.h"
 
 enum Says
 {
@@ -453,7 +454,14 @@ struct npc_zealot_lorkhan : public ScriptedAI
                     Unit* target = nullptr;
                     LorKhanSelectTargetToHeal check(me, 100.0f);
                     Trinity::UnitLastSearcher<LorKhanSelectTargetToHeal> searcher(me, target, check);
-                    Cell::VisitAllObjects(me, searcher, 100.0f);
+                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                    {
+                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 100.0f, searcher);
+                    }
+                    else
+                    {
+                        Cell::VisitAllObjects(me, searcher, 100.0f);
+                    }
 
                     if (target)
                         DoCast(target, SPELL_GREATERHEAL);

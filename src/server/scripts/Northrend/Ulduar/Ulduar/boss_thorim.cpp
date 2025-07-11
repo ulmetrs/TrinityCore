@@ -31,6 +31,7 @@
 #include "SpellScript.h"
 #include "TypeContainerVisitor.h"
 #include "ulduar.h"
+#include "World.h"
 #include <G3D/Vector3.h>
 
 enum Spells
@@ -1045,7 +1046,14 @@ struct npc_thorim_trashAI : public ScriptedAI
             Unit* target = nullptr;
             MostHPMissingInRange checker(caster, range, heal);
             Trinity::UnitLastSearcher<MostHPMissingInRange> searcher(caster, target, checker);
-            Cell::VisitGridObjects(caster, searcher, range);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, caster->GetPositionX(), caster->GetPositionY(), range, searcher);
+            }
+            else
+            {
+                Cell::VisitGridObjects(caster, searcher, range);
+            }
 
             return target;
         }

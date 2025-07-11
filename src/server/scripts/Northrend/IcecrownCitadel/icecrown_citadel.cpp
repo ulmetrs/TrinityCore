@@ -30,6 +30,7 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
+#include "World.h"
 
 enum ICCTexts
 {
@@ -1084,7 +1085,14 @@ struct npc_icc_nerubar_broodkeeper : public ScriptedAI
                     Unit* target = nullptr;
                     Trinity::MostHPPercentMissingInRange u_check(me, 40.0f, 1, 75);
                     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, target, u_check);
-                    Cell::VisitGridObjects(me, searcher, 40.0f);
+                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                    {
+                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), 40.0f, searcher);
+                    }
+                    else
+                    {
+                        Cell::VisitGridObjects(me, searcher, 40.0f);
+                    }
 
                     if (target)
                         DoCast(target, SPELL_DARK_MENDING);

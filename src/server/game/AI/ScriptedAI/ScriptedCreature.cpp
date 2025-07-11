@@ -420,7 +420,14 @@ Unit* ScriptedAI::DoSelectLowestHpFriendly(float range, uint32 minHPDiff)
     Unit* unit = nullptr;
     Trinity::MostHPMissingInRange u_check(me, range, minHPDiff);
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(me, searcher, range);
+    }
 
     return unit;
 }
@@ -430,7 +437,14 @@ Unit* ScriptedAI::DoSelectBelowHpPctFriendlyWithEntry(uint32 entry, float range,
     Unit* unit = nullptr;
     Trinity::FriendlyBelowHpPctEntryInRange u_check(me, entry, range, minHPDiff, excludeSelf);
     Trinity::UnitLastSearcher<Trinity::FriendlyBelowHpPctEntryInRange> searcher(me, unit, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(me, searcher, range);
+    }
 
     return unit;
 }

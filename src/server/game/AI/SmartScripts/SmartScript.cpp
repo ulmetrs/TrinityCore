@@ -3817,7 +3817,14 @@ Unit* SmartScript::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff) const
     Unit* unit = nullptr;
     Trinity::MostHPMissingInRange u_check(me, range, MinHPDiff);
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(me, searcher, range);
+    }
     return unit;
 }
 
@@ -3829,7 +3836,14 @@ Unit* SmartScript::DoSelectLowestHpPercentFriendly(float range, uint32 minHpPct,
     Unit* unit = nullptr;
     Trinity::MostHPPercentMissingInRange u_check(me, range, minHpPct, maxHpPct);
     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, unit, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(me, searcher, range);
+    }
     return unit;
 }
 
@@ -3861,7 +3875,14 @@ Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) co
     Unit* unit = nullptr;
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(me, me, range, playerOnly);
     Trinity::UnitLastSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, unit, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(me, searcher, range);
+    }
     return unit;
 }
 

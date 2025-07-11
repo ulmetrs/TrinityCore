@@ -98,11 +98,9 @@ namespace Trinity
         void Visit(CreatureMapType &);
         void Visit(PlayerMapType &);
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     struct TC_GAME_API AIRelocationNotifier
@@ -113,11 +111,8 @@ namespace Trinity
         template<class T> void Visit(GridRefManager<T> &) { }
         void Visit(CreatureMapType &);
 
-        void operator()(Player* p) { }
-        void operator()(GameObject* g) { }
+        template<class T> void operator()(T*) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     struct TC_GAME_API MessageDistDeliverer
@@ -148,11 +143,10 @@ namespace Trinity
         void Visit(DynamicObjectMapType &m);
         template<class SKIP> void Visit(GridRefManager<SKIP> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
         void operator()(DynamicObject* d);
-        void operator()(Corpse* c) { }
 
         void SendPacket(Player* player)
         {
@@ -187,11 +181,10 @@ namespace Trinity
         void Visit(DynamicObjectMapType &m);
         template<class SKIP> void Visit(GridRefManager<SKIP> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
         void operator()(DynamicObject* d);
-        void operator()(Corpse* c) { }
 
         void SendPacket(Player* player)
         {
@@ -211,11 +204,10 @@ namespace Trinity
         void Visit(PlayerMapType &) { }
         void Visit(CorpseMapType &) { }
 
-        void operator()(Player* p) { }
+        template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
         void operator()(Creature* c);
         void operator()(DynamicObject* d);
-        void operator()(Corpse* c) { }
     };
 
     // SEARCHERS & LIST SEARCHERS & WORKERS
@@ -493,11 +485,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
+        template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // Last accepted by Check GO if any (Check can change requirements at each call)
@@ -520,11 +509,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
+        template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Check>
@@ -547,11 +533,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
+        template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Functor>
@@ -573,7 +556,7 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
+        template<class T> void operator()(T*) { }
         void operator()(GameObject* g)
         {
             // @tswow-begin
@@ -582,9 +565,6 @@ namespace Trinity
             // @tswow-end
             _func(g);
         }
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
 
     private:
         Functor& _func;
@@ -617,11 +597,9 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // Last accepted by Check Unit if any (Check can change requirements at each call)
@@ -645,11 +623,9 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // All accepted by Check units if any
@@ -674,11 +650,9 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // Creature searchers
@@ -702,11 +676,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
-        void operator()(GameObject* g) { }
+        template<class T> void operator()(T*) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // Last accepted by Check Creature if any (Check can change requirements at each call)
@@ -729,11 +700,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
-        void operator()(GameObject* g) { }
+        template<class T> void operator()(T*) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Check>
@@ -756,11 +724,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
-        void operator()(GameObject* g) { }
+        template<class T> void operator()(T*) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Do>
@@ -788,11 +753,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
-        void operator()(Player* p) { }
-        void operator()(GameObject* g) { }
+        template<class T> void operator()(T*) { }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // Player searchers
@@ -816,11 +778,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Check>
@@ -848,11 +807,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Check>
@@ -875,11 +831,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Do>
@@ -907,11 +860,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     template<class Do>
@@ -933,11 +883,8 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
-        void operator()(Creature* c) { }
-        void operator()(DynamicObject* d) { }
-        void operator()(Corpse* c) { }
     };
 
     // CHECKS && DO classes

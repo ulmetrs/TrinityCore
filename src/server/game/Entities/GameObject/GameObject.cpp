@@ -727,14 +727,28 @@ void GameObject::Update(uint32 diff)
                             WorldObject* worldObjectTarget = nullptr;
                             Trinity::WorldObjectSpellNearbyTargetCheck checker(radius, this, trapSpell, m_goValue.Trap.TargetSearcherCheckType, nullptr);
                             Trinity::WorldObjectLastSearcher searcher(this, worldObjectTarget, checker, GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER);
-                            Cell::VisitAllObjects(this, searcher, radius);
+                            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                            {
+                                GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, GetPositionX(), GetPositionY(), radius, searcher);
+                            }
+                            else
+                            {
+                                Cell::VisitAllObjects(this, searcher, radius);
+                            }
                             target = Object::ToUnit(worldObjectTarget);
                         }
                         else
                         {
                             Trinity::NearestAttackableNoTotemUnitInObjectRangeCheck checker(this, radius);
                             Trinity::UnitLastSearcher<Trinity::NearestAttackableNoTotemUnitInObjectRangeCheck> searcher(this, target, checker);
-                            Cell::VisitAllObjects(this, searcher, radius);
+                            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                            {
+                                GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), radius, searcher);
+                            }
+                            else
+                            {
+                                Cell::VisitAllObjects(this, searcher, radius);
+                            }
                         }
                     }
                     else

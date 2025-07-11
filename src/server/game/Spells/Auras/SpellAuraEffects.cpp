@@ -42,6 +42,7 @@
 #include "Unit.h"
 #include "Util.h"
 #include "Vehicle.h"
+#include "World.h"
 #include "WorldPacket.h"
 #include <numeric>
 // @tswow-begin
@@ -5883,7 +5884,14 @@ void AuraEffect::HandleRaidProcFromChargeWithValueAuraProc(AuraApplication* aurA
             Unit* triggerTarget = nullptr;
             Trinity::MostHPMissingGroupInRange u_check(target, radius, 0, false);
             Trinity::UnitLastSearcher<Trinity::MostHPMissingGroupInRange> searcher(target, triggerTarget, u_check);
-            Cell::VisitAllObjects(target, searcher, radius);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                target->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, target->GetPositionX(), target->GetPositionY(), radius, searcher);
+            }
+            else
+            {
+                Cell::VisitAllObjects(target, searcher, radius);
+            }
 
             if (triggerTarget)
             {

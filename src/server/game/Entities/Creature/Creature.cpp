@@ -2643,7 +2643,14 @@ Unit* Creature::SelectNearestTarget(float dist, bool playerOnly /* = false */) c
     Unit* target = nullptr;
     Trinity::NearestHostileUnitCheck u_check(this, dist, playerOnly);
     Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck> searcher(this, target, u_check);
-    Cell::VisitAllObjects(this, searcher, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), dist, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(this, searcher, dist);
+    }
     return target;
 }
 
@@ -2659,7 +2666,14 @@ Unit* Creature::SelectNearestTargetInAttackDistance(float dist) const
     Unit* target = nullptr;
     Trinity::NearestHostileUnitInAttackDistanceCheck u_check(this, dist);
     Trinity::UnitLastSearcher<Trinity::NearestHostileUnitInAttackDistanceCheck> searcher(this, target, u_check);
-    Cell::VisitAllObjects(this, searcher, std::max(dist, ATTACK_DISTANCE));
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), std::max(dist, ATTACK_DISTANCE), searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(this, searcher, std::max(dist, ATTACK_DISTANCE));
+    }
     return target;
 }
 
@@ -3471,9 +3485,14 @@ Unit* Creature::SelectNearestHostileUnitInAggroRange(bool useLOS, bool ignoreCiv
 
     Trinity::NearestHostileUnitInAggroRangeCheck u_check(this, useLOS, ignoreCivilians);
     Trinity::UnitSearcher<Trinity::NearestHostileUnitInAggroRangeCheck> searcher(this, target, u_check);
-
-    Cell::VisitGridObjects(this, searcher, MAX_AGGRO_RADIUS);
-
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, GetPositionX(), GetPositionY(), MAX_AGGRO_RADIUS, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, MAX_AGGRO_RADIUS);
+    }
     return target;
 }
 
