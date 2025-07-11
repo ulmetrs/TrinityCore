@@ -867,7 +867,13 @@ namespace Trinity
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
-        void operator()(Player* p);
+        void operator()(Player* p)
+        {
+            // @tswow-begin
+            if (p->InSamePhase(i_phaseMask, i_phase_id))
+            // @tswow-end
+                i_do(p);
+        }
     };
 
     template<class Do>
@@ -890,7 +896,11 @@ namespace Trinity
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
-        void operator()(Player* p);
+        void operator()(Player* p)
+        {
+            if (p->InSamePhase(i_searcher) && p->IsWithinDist(i_searcher, i_dist))
+                i_do(p);
+        }
     };
 
     // CHECKS && DO classes

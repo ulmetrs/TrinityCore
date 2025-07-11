@@ -889,6 +889,16 @@ void Trinity::PlayerListSearcher<Check>::Visit(PlayerMapType &m)
 }
 
 template<class Check>
+void Trinity::PlayerListSearcher<Check>::operator()(Player* p)
+{
+    // @tswow-begin
+    if (p->InSamePhase(i_phaseMask, i_phase_id))
+    // @tswow-end
+        if (i_check(p))
+            Insert(p);
+}
+
+template<class Check>
 void Trinity::PlayerSearcher<Check>::Visit(PlayerMapType &m)
 {
     // already found
@@ -911,6 +921,21 @@ void Trinity::PlayerSearcher<Check>::Visit(PlayerMapType &m)
 }
 
 template<class Check>
+void Trinity::PlayerSearcher<Check>::operator()(Player* p)
+{
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+    // @tswow-end
+        return;
+
+    if (i_check(p))
+        i_object = p;
+}
+
+template<class Check>
 void Trinity::PlayerLastSearcher<Check>::Visit(PlayerMapType& m)
 {
     for (PlayerMapType::iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -923,6 +948,18 @@ void Trinity::PlayerLastSearcher<Check>::Visit(PlayerMapType& m)
         if (i_check(itr->GetSource()))
             i_object = itr->GetSource();
     }
+}
+
+template<class Check>
+void Trinity::PlayerLastSearcher<Check>::operator()(Player* p)
+{
+    // @tswow-begin
+    if (!p->InSamePhase(i_phaseMask, i_phase_id))
+    // @tswow-end
+        return;
+
+    if (i_check(p))
+        i_object = p;
 }
 
 template<class Builder>

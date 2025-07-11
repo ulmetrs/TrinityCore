@@ -2754,7 +2754,7 @@ void Creature::CallForHelp(float radius)
     Trinity::CreatureWorker<Trinity::CallOfHelpCreatureInRangeDo> worker(this, u_do);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->QueryMap(MAPQT_GRID_CREATURE, radius, worker);
+        QueryMap(MAPQT_GRID_CREATURE, radius, worker);
     }
     else
     {
