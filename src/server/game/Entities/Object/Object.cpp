@@ -3786,7 +3786,7 @@ void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
     //we must build packets for all visible players
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        uint32 mask = MAPQT_PLAYER | MAPQT_WORLD_CREATURE | MAPQT_WORLD_DYNAMICOBJECT;
+        uint32 mask = MAPQT_PLAYER | MAPQT_WORLD_CREATURE | MAPQT_WORLD_DYNAMICOBJ;
         QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
