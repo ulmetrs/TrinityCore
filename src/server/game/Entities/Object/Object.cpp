@@ -3701,7 +3701,7 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
     Trinity::VisibleChangesNotifier notifier(*this);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        uint32 mask = MAPQT_WORLD & ~MAPQT_CORPSE;
+        uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
         QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
@@ -3818,7 +3818,7 @@ void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
     //we must build packets for all visible players
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        uint32 mask = MAPQT_PLAYER | MAPQT_WORLD_CREATURE | MAPQT_WORLD_DYNAMICOBJ;
+        uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
         QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
