@@ -819,7 +819,7 @@ void Map::Update(uint32 t_diff)
     ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
 
     {
-        m_creatureQuadTreeLogTimer += diff;
+        m_creatureQuadTreeLogTimer += t_diff;
         if (m_creatureQuadTreeLogTimer >= 3000)
         {
             m_creatureQuadTreeLogTimer = 0;
