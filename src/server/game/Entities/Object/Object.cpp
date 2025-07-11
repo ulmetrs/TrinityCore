@@ -3778,6 +3778,38 @@ struct WorldObjectChangeAccumulator
     }
 
     template<class SKIP> void Visit(GridRefManager<SKIP> &) { }
+
+    template<class T> void operator()(T*) { }
+    void operator()(Player* p)
+    {
+        BuildPacket(p);
+
+        if (!p->GetSharedVisionList().empty())
+        {
+            for (SharedVisionList::const_iterator it = p->GetSharedVisionList().begin(); it != p->GetSharedVisionList().end(); ++it)
+                BuildPacket(*it);
+        }
+    }
+    void operator()(Creature* c)
+    {
+        if (!c->GetSharedVisionList().empty())
+        {
+            for (SharedVisionList::const_iterator it = c->GetSharedVisionList().begin(); it != c->GetSharedVisionList().end(); ++it)
+                BuildPacket(*it);
+        }
+    }
+    void operator()(DynamicObject* d)
+    {
+        ObjectGuid guid = d->GetCasterGUID();
+
+        if (guid.IsPlayer())
+        {
+            // Caster may be nullptr if DynObj is in removelist
+            if (Player* caster = ObjectAccessor::FindPlayer(guid))
+                if (caster->GetGuidValue(PLAYER_FARSIGHT) == d->GetGUID())
+                    BuildPacket(caster);
+        }
+    }
 };
 
 void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
