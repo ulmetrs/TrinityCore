@@ -447,7 +447,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         template<typename Func>
         void QueryMap(uint32 mask, float radius, Func&& visitor)
         {
-            GetMap()->QueryMap(mask, GetPositionX(), GetPositionY(), radius, std::forward<Func>(visitor));
+            GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), radius, visitor);
         }
 
         void SetZoneScript();
