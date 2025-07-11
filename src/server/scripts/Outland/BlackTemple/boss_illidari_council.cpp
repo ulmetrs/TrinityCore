@@ -25,6 +25,7 @@
 #include "ScriptedCreature.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
+#include "World.h"
 
 enum Says
 {
@@ -324,7 +325,14 @@ struct boss_gathios_the_shatterer : public IllidariCouncilBossAI
                 std::list<Unit*> TargetList;
                 Trinity::AnyFriendlyUnitInObjectRangeCheck checker(me, me, 100.0f);
                 Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, TargetList, checker);
-                Cell::VisitAllObjects(me, searcher, 100.0f);
+                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                {
+                    me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 100.0f, searcher);
+                }
+                else
+                {
+                    Cell::VisitAllObjects(me, searcher, 100.0f);
+                }
 
                 if (!TargetList.empty())
                 {

@@ -6048,7 +6048,14 @@ void Unit::InterruptSpellsCastedOnMe(bool killDelayed, bool interruptPositiveSpe
     // Maximum spell range=100m ?
     Trinity::AnyUnitInObjectRangeCheck u_check(this, 100.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(this, targets, u_check);
-    Cell::VisitAllObjects(this, searcher, GetMap()->GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), GetMap()->GetVisibilityRange(), searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(this, searcher, GetMap()->GetVisibilityRange());
+    }
 
     for (const auto& iter : targets)
     {
@@ -6086,7 +6093,14 @@ void Unit::InterruptAttacksOnMe(float dist, bool guard_check)
     UnitList targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, this, GetMap()->GetVisibilityRange());
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
-    Cell::VisitAllObjects(this, searcher, GetMap()->GetVisibilityRange());
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), GetMap()->GetVisibilityRange(), searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(this, searcher, GetMap()->GetVisibilityRange());
+    }
 
     for (const auto& iter : targets)
     {
@@ -11413,7 +11427,14 @@ Unit* Unit::SelectNearbyTarget(Unit* exclude, float dist) const
     std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, this, dist);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
-    Cell::VisitAllObjects(this, searcher, dist);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), dist, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(this, searcher, dist);
+    }
 
     // remove current target
     if (GetVictim())

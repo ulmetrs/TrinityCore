@@ -34,6 +34,7 @@ EndScriptData */
 #include "TemporarySummon.h"
 #include "Weather.h"
 #include "zulaman.h"
+#include "World.h"
 
 enum Spells
 {
@@ -160,7 +161,14 @@ class boss_akilzon : public CreatureScript
                     std::list<Unit*> tempUnitMap;
                     Trinity::AnyAoETargetUnitInObjectRangeCheck u_check(me, me, SIZE_OF_GRIDS);
                     Trinity::UnitListSearcher<Trinity::AnyAoETargetUnitInObjectRangeCheck> searcher(me, tempUnitMap, u_check);
-                    Cell::VisitAllObjects(me, searcher, SIZE_OF_GRIDS);
+                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+                    {
+                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), SIZE_OF_GRIDS, searcher);
+                    }
+                    else
+                    {
+                        Cell::VisitAllObjects(me, searcher, SIZE_OF_GRIDS);
+                    }
 
                     // deal damage
                     for (std::list<Unit*>::const_iterator i = tempUnitMap.begin(); i != tempUnitMap.end(); ++i)

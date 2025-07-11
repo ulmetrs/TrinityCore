@@ -1271,7 +1271,14 @@ void Creature::DoFleeToGetAssistance()
         Creature* creature = nullptr;
         Trinity::NearestAssistCreatureInCreatureRangeCheck u_check(this, GetVictim(), radius);
         Trinity::CreatureLastSearcher<Trinity::NearestAssistCreatureInCreatureRangeCheck> searcher(this, creature, u_check);
-        Cell::VisitGridObjects(this, searcher, radius);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, GetPositionX(), GetPositionY(), radius, searcher);
+        }
+        else
+        {
+            Cell::VisitGridObjects(this, searcher, radius);
+        }
 
         SetNoSearchAssistance(true);
 
@@ -3881,8 +3888,14 @@ Creature* Creature::FindNearestFriendlyGuard(float range) const
 
     Trinity::NearestFriendlyGuardInRangeCheck u_check(this, range);
     Trinity::CreatureLastSearcher<Trinity::NearestFriendlyGuardInRangeCheck> searcher(this, guard, u_check);
-
-    Cell::VisitGridObjects(this, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, GetPositionX(), GetPositionY(), range, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(this, searcher, range);
+    }
 
     return guard;
 }

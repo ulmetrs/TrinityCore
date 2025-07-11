@@ -27,6 +27,7 @@
 #include "SpellScript.h"
 #include "TemporarySummon.h"
 #include "VehicleDefines.h"
+#include "World.h"
 
 enum ICCSisterSvalnaTexts
 {
@@ -992,7 +993,14 @@ private:
         Creature* target = nullptr;
         Trinity::MostHPMissingInRange u_check(me, 60.0f, 0);
         Trinity::CreatureLastSearcher<Trinity::MostHPMissingInRange> searcher(me, target, u_check);
-        Cell::VisitGridObjects(me, searcher, 60.0f);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), 60.0f, searcher);
+        }
+        else
+        {
+            Cell::VisitGridObjects(me, searcher, 60.0f);
+        }
         return target;
     }
 };

@@ -24,6 +24,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Totem.h"
+#include "World.h"
 
 int32 TotemAI::Permissible(Creature const* creature)
 {

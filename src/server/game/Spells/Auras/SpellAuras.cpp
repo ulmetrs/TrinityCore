@@ -2962,7 +2962,14 @@ void UnitAura::FillTargetMap(std::unordered_map<Unit*, uint8>& targets, Unit* ca
         {
             Trinity::WorldObjectSpellAreaTargetCheck check(radius, GetUnitOwner(), ref, GetUnitOwner(), m_spellInfo, selectionType, condList);
             Trinity::UnitListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetUnitOwner(), units, check);
-            Cell::VisitAllObjects(GetUnitOwner(), searcher, radius + extraSearchRadius);
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                GetUnitOwner()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetUnitOwner()->GetPositionX(), GetUnitOwner()->GetPositionY(), radius + extraSearchRadius, searcher);
+            }
+            else
+            {
+                Cell::VisitAllObjects(GetUnitOwner(), searcher, radius + extraSearchRadius);
+            }
         }
 
         for (Unit* unit : units)
@@ -3024,7 +3031,14 @@ void DynObjAura::FillTargetMap(std::unordered_map<Unit*, uint8>& targets, Unit* 
 
         Trinity::WorldObjectSpellAreaTargetCheck check(radius, GetDynobjOwner(), dynObjOwnerCaster, dynObjOwnerCaster, m_spellInfo, selectionType, condList);
         Trinity::UnitListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetDynobjOwner(), units, check);
-        Cell::VisitAllObjects(GetDynobjOwner(), searcher, radius);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            GetDynobjOwner()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetDynobjOwner()->GetPositionX(), GetDynobjOwner()->GetPositionY(), radius, searcher);
+        }
+        else
+        {
+            Cell::VisitAllObjects(GetDynobjOwner(), searcher, radius);
+        }
 
         for (Unit* unit : units)
             targets[unit] |= 1 << spellEffectInfo.EffectIndex;

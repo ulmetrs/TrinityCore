@@ -2255,7 +2255,15 @@ void AuraEffect::HandleFeignDeath(AuraApplication const* aurApp, uint8 mode, boo
             UnitList targets;
             Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(target, target, target->GetMap()->GetVisibilityRange());
             Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(target, targets, u_check);
-            Cell::VisitAllObjects(target, searcher, target->GetMap()->GetVisibilityRange());
+            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+            {
+                target->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, target->GetPositionX(), target->GetPositionY(), target->GetMap()->GetVisibilityRange(), searcher);
+            }
+            else
+            {
+                Cell::VisitAllObjects(target, searcher, target->GetMap()->GetVisibilityRange());
+            }
+            
             for (UnitList::iterator iter = targets.begin(); iter != targets.end(); ++iter)
             {
                 if (!(*iter)->HasUnitState(UNIT_STATE_CASTING))

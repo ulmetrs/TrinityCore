@@ -444,6 +444,11 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         Map* GetMap() const { ASSERT(m_currMap); return m_currMap; }
         Map* FindMap() const { return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
+        template<typename Func>
+        void QueryMap(uint32 mask, float radius, Func&& visitor)
+        {
+            GetMap()->QueryMap(mask, GetPositionX(), GetPositionY(), radius, std::forward<Func>(visitor));
+        }
 
         void SetZoneScript();
         void ClearZoneScript();

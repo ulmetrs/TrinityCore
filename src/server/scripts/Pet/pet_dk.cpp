@@ -28,6 +28,7 @@
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
+#include "World.h"
 
 enum DeathKnightSpells
 {
@@ -63,7 +64,15 @@ struct npc_pet_dk_ebon_gargoyle : CasterAI
         std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(me, me, 30.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, targets, u_check);
-        Cell::VisitAllObjects(me, searcher, 30.0f);
+        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+        {
+            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 30.0f, searcher);
+        }
+        else
+        {
+            Cell::VisitAllObjects(me, searcher, 30.0f);
+        }
+
         for (Unit* target : targets)
         {
             if (target->HasAura(SPELL_DK_SUMMON_GARGOYLE_1, ownerGuid))

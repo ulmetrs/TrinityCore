@@ -809,6 +809,25 @@ void Trinity::CreatureSearcher<Check>::Visit(CreatureMapType &m)
 }
 
 template<class Check>
+void Trinity::CreatureSearcher<Check>::operator()(Creature* c)
+{
+    // already found
+    if (i_object)
+        return;
+
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+    {
+        i_object = c;
+        return;
+    }
+}
+
+template<class Check>
 void Trinity::CreatureLastSearcher<Check>::Visit(CreatureMapType &m)
 {
     for (CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -824,6 +843,18 @@ void Trinity::CreatureLastSearcher<Check>::Visit(CreatureMapType &m)
 }
 
 template<class Check>
+void Trinity::CreatureLastSearcher<Check>::operator()(Creature* c)
+{
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        i_object = c;
+}
+
+template<class Check>
 void Trinity::CreatureListSearcher<Check>::Visit(CreatureMapType &m)
 {
     for (CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
@@ -832,6 +863,18 @@ void Trinity::CreatureListSearcher<Check>::Visit(CreatureMapType &m)
         // @tswow-end
             if (i_check(itr->GetSource()))
                 Insert(itr->GetSource());
+}
+
+template<class Check>
+void Trinity::CreatureListSearcher<Check>::operator()(Creature* c)
+{
+    // @tswow-begin
+    if (!c->InSamePhase(i_phaseMask, i_phase_id))
+        return;
+    // @tswow-end
+
+    if (i_check(c))
+        Insert(c);
 }
 
 template<class Check>
