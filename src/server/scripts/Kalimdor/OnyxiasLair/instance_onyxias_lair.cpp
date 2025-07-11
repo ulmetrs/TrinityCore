@@ -30,6 +30,7 @@ EndScriptData */
 #include "Map.h"
 #include "onyxias_lair.h"
 #include "TemporarySummon.h"
+#include "World.h"
 
 BossBoundaryData const boundaries =
 {

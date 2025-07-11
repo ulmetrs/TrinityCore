@@ -41,6 +41,7 @@
 #include "SpellScript.h"
 #include "ulduar.h"
 #include "Vehicle.h"
+#include "World.h"
 
 enum Spells
 {

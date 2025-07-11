@@ -38,6 +38,7 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "TemporarySummon.h"
+#include "World.h"
 
 /*###
 ## npc_belnistrasz for Quest 3525 "Extinguishing the Idol"

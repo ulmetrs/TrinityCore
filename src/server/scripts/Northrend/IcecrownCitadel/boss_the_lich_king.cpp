@@ -32,6 +32,7 @@
 #include "TemporarySummon.h"
 #include "Vehicle.h"
 #include "Weather.h"
+#include "World.h"
 
 enum Texts
 {

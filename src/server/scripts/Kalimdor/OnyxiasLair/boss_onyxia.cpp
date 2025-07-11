@@ -34,6 +34,7 @@ EndScriptData */
 #include "onyxias_lair.h"
 #include "ScriptedCreature.h"
 #include "TemporarySummon.h"
+#include "World.h"
 
 enum Yells
 {

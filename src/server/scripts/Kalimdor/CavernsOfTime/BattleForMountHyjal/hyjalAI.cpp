@@ -32,6 +32,7 @@ EndScriptData */
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "TemporarySummon.h"
+#include "World.h"
 
 enum Spawns
 {
