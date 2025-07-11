@@ -1128,8 +1128,7 @@ void Creature::Update(uint32 diff)
             {
                 ZoneScopedN("Creature::Update::RelocationNotifierQuadTree")
 
-                uint32_t mask = MAPQT_ALL & ~MAPQT_GAMEOBJECT & ~MAPQT_DYNAMICOBJ & ~MAPQT_CORPSE;
-                QueryMap(mask, 100, relocate);
+                QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 100, relocate);
             }
             else
             {
