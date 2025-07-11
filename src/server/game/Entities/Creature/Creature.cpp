@@ -1119,6 +1119,19 @@ void Creature::Update(uint32 diff)
     vis_Update.TUpdate(diff);
     if (vis_Update.TPassed())
     {
+        if (m_spawnId == 21404)
+        {
+            float x = GetPositionX();
+            float y = GetPositionY();
+            Bounds b = GetQuadNode()->GetBounds();
+            float minX = b.minX;
+            float minY = b.minY;
+            float maxX = b.maxX;
+            float maxY = b.maxY;
+            int depth = GetQuadNode()->GetDepth();
+            TC_LOG_DEBUG("quadtrees", "Creature {} exists at position {},{} and in quad node: {},{},{},{} and depth: {}", GetSpawnId(), x, y, minX, minY, maxX, maxY, depth);
+        }
+
         vis_Update.TReset(diff, GetMap()->GetVisibilityNotifyPeriod());
 
         if (isNeedNotify(NOTIFY_VISIBILITY_CHANGED))

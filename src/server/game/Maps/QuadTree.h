@@ -51,6 +51,8 @@ public:
     void Remove(T* obj);
     void Subdivide();
     int GetChildIndex(float x, float y) const;
+    Bounds GetBounds() const { return _bounds; }
+    int GetDepth() const { return depth; }
 
 private:
     Bounds _bounds;
