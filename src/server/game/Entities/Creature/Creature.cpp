@@ -3870,8 +3870,8 @@ std::string Creature::GetDebugInfo() const
 std::string Creature::GetQuadNodeInfo() const
 {
     std::stringstream sstr;
-    sstr << "SpawnID: " << GetSpawnId() << "\n";
-    sstr << "Position: " << GetPositionX() << "," << GetPositionY() << "\n";
+    sstr << GetSpawnId() << ", ";
+    sstr << "(" <<GetPositionX() << "," << GetPositionY() << "," << "), ";
 
     // Try to get quad node info if available
     void* qnode = GetQuadNode();
@@ -3883,8 +3883,8 @@ std::string Creature::GetQuadNodeInfo() const
         {
             Bounds b = node->GetBounds();
             int depth = node->GetDepth();
-            sstr << "  Node Bounds: [" << b.minX << "," << b.minY << " - " << b.maxX << "," << b.maxY << "]\n";
-            sstr << "  Node Depth: " << depth << "\n";
+            sstr << "[" << b.minX << "," << b.minY << " - " << b.maxX << "," << b.maxY << "], ";
+            sstr << depth;
         }
     }
     return sstr.str();
