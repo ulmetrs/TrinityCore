@@ -275,7 +275,14 @@ void ScriptedAI::ForceCombatStopForCreatureEntry(uint32 entry, float maxSearchRa
     if (!samePhase)
         searcher.i_phaseMask = PHASEMASK_ANYWHERE;
 
-    Cell::VisitGridObjects(me, searcher, maxSearchRange);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_GRID_CREATURE, maxSearchRange, searcher);
+    }
+    else
+    {
+        Cell::VisitGridObjects(me, searcher, maxSearchRange);
+    }
 
     for (Creature* creature : creatures)
         ForceCombatStop(creature, reset);
@@ -454,7 +461,14 @@ std::list<Creature*> ScriptedAI::DoFindFriendlyCC(float range)
     std::list<Creature*> list;
     Trinity::FriendlyCCedInRange u_check(me, range);
     Trinity::CreatureListSearcher<Trinity::FriendlyCCedInRange> searcher(me, list, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        me->QueryMap(MAPQT_CREATURE, range, searcher);
+    }
+    else
+    {
+        Cell::VisitAllObjects(me, searcher, range);
+    }
 
     return list;
 }
