@@ -542,7 +542,7 @@ class npc_simon_bunny : public CreatureScript
                 Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
                 if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                 {
-                    me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, me->GetPositionX(), me->GetPositionY(), searchDistance, searcher);
+                    me->QueryMap(MAPQT_ALL, searchDistance, searcher);
                 }
                 else
                 {

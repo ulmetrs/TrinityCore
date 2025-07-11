@@ -66,7 +66,7 @@ struct npc_pet_dk_ebon_gargoyle : CasterAI
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, targets, u_check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 30.0f, searcher);
+            me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 30.0f, searcher);
         }
         else
         {

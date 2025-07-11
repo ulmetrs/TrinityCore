@@ -1129,7 +1129,7 @@ void Creature::Update(uint32 diff)
                 ZoneScopedN("Creature::Update::RelocationNotifierQuadTree")
 
                 uint32_t mask = MAPQT_ALL & ~MAPQT_GAMEOBJECT & ~MAPQT_DYNAMICOBJ & ~MAPQT_CORPSE;
-                GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), 100, relocate);
+                QueryMap(mask, 100, relocate);
             }
             else
             {
@@ -1273,7 +1273,7 @@ void Creature::DoFleeToGetAssistance()
         Trinity::CreatureLastSearcher<Trinity::NearestAssistCreatureInCreatureRangeCheck> searcher(this, creature, u_check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, GetPositionX(), GetPositionY(), radius, searcher);
+            QueryMap(MAPQT_GRID_CREATURE, radius, searcher);
         }
         else
         {
@@ -2652,7 +2652,7 @@ Unit* Creature::SelectNearestTarget(float dist, bool playerOnly /* = false */) c
     Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck> searcher(this, target, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), dist, searcher);
+        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, dist, searcher);
     }
     else
     {
@@ -2675,7 +2675,7 @@ Unit* Creature::SelectNearestTargetInAttackDistance(float dist) const
     Trinity::UnitLastSearcher<Trinity::NearestHostileUnitInAttackDistanceCheck> searcher(this, target, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), std::max(dist, ATTACK_DISTANCE), searcher);
+        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, std::max(dist, ATTACK_DISTANCE), searcher);
     }
     else
     {
@@ -3494,7 +3494,7 @@ Unit* Creature::SelectNearestHostileUnitInAggroRange(bool useLOS, bool ignoreCiv
     Trinity::UnitSearcher<Trinity::NearestHostileUnitInAggroRangeCheck> searcher(this, target, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, GetPositionX(), GetPositionY(), MAX_AGGRO_RADIUS, searcher);
+        QueryMap(MAPQT_GRID_CREATURE, MAX_AGGRO_RADIUS, searcher);
     }
     else
     {
@@ -3890,7 +3890,7 @@ Creature* Creature::FindNearestFriendlyGuard(float range) const
     Trinity::CreatureLastSearcher<Trinity::NearestFriendlyGuardInRangeCheck> searcher(this, guard, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, GetPositionX(), GetPositionY(), range, searcher);
+        QueryMap(MAPQT_GRID_CREATURE, range, searcher);
     }
     else
     {

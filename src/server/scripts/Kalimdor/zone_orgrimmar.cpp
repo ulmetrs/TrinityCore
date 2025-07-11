@@ -460,7 +460,7 @@ public:
                 Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, citizenList, checker);
                 if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                 {
-                    me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), 20.0f, searcher);
+                    me->QueryMap(MAPQT_GRID_CREATURE, 20.0f, searcher);
                 }
                 else
                 {

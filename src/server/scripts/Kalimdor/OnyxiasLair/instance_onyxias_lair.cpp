@@ -123,7 +123,7 @@ public:
                 Trinity::GameObjectListSearcher<Trinity::GameObjectInRangeCheck> searcher(floorEruption, nearFloorList, check);
                 if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                 {
-                    floorEruption->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, floorEruption->GetPositionX(), floorEruption->GetPositionY(), SIZE_OF_GRIDS, searcher);
+                    floorEruption->QueryMap(MAPQT_GAMEOBJECT, SIZE_OF_GRIDS, searcher);
                 }
                 else
                 {

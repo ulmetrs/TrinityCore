@@ -541,7 +541,7 @@ struct boss_the_lich_king : public BossAI
         Trinity::GameObjectWorker<FrozenThroneResetWorker> worker(me, reset);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, me->GetPositionX(), me->GetPositionY(), 333.0f, worker);
+            me->QueryMap(MAPQT_GAMEOBJECT, 333.0f, worker);
         }
         else
         {

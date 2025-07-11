@@ -1814,7 +1814,7 @@ class spell_vehicle_throw_passenger : public SpellScriptLoader
                             Trinity::WorldObjectListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetCaster(), targetList, check);
                             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                             {
-                                GetCaster()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, GetCaster()->GetPositionX(), GetCaster()->GetPositionY(), 99.0f, searcher);
+                                GetCaster()->QueryMap(MAPQT_ALL, 99.0f, searcher);
                             }
                             else
                             {

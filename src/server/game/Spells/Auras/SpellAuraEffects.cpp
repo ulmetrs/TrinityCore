@@ -2257,7 +2257,7 @@ void AuraEffect::HandleFeignDeath(AuraApplication const* aurApp, uint8 mode, boo
             Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(target, targets, u_check);
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                target->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, target->GetPositionX(), target->GetPositionY(), target->GetMap()->GetVisibilityRange(), searcher);
+                target->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, target->GetMap()->GetVisibilityRange(), searcher);
             }
             else
             {
@@ -5894,7 +5894,7 @@ void AuraEffect::HandleRaidProcFromChargeWithValueAuraProc(AuraApplication* aurA
             Trinity::UnitLastSearcher<Trinity::MostHPMissingGroupInRange> searcher(target, triggerTarget, u_check);
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                target->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, target->GetPositionX(), target->GetPositionY(), radius, searcher);
+                target->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius, searcher);
             }
             else
             {

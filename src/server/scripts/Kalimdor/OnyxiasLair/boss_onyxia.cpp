@@ -354,7 +354,7 @@ struct boss_onyxia : public BossAI
                         Trinity::GameObjectLastSearcher<Trinity::GameObjectInRangeCheck> searcher(me, Floor, check);
                         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                         {
-                            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, me->GetPositionX(), me->GetPositionY(), 30.0f, searcher);
+                            me->QueryMap(MAPQT_GAMEOBJECT, 30.0f, searcher);
                         }
                         else
                         {

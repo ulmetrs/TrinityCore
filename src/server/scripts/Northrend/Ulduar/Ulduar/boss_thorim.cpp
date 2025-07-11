@@ -1048,7 +1048,7 @@ struct npc_thorim_trashAI : public ScriptedAI
             Trinity::UnitLastSearcher<MostHPMissingInRange> searcher(caster, target, checker);
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, caster->GetPositionX(), caster->GetPositionY(), range, searcher);
+                caster->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
             }
             else
             {

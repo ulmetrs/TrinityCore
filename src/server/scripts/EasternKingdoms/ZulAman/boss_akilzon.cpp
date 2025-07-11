@@ -163,7 +163,7 @@ class boss_akilzon : public CreatureScript
                     Trinity::UnitListSearcher<Trinity::AnyAoETargetUnitInObjectRangeCheck> searcher(me, tempUnitMap, u_check);
                     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                     {
-                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), SIZE_OF_GRIDS, searcher);
+                        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
                     }
                     else
                     {

@@ -4419,7 +4419,7 @@ void Spell::EffectForceDeselect()
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        unitCaster->GetMap()->GetQuadTree()->QueryCircle(mask, unitCaster->GetPositionX(), unitCaster->GetPositionY(), dist, notifierBreak);
+        unitCaster->QueryMap(mask, dist, notifierBreak);
     }
     else
     {
@@ -4433,7 +4433,7 @@ void Spell::EffectForceDeselect()
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        unitCaster->GetMap()->GetQuadTree()->QueryCircle(mask, unitCaster->GetPositionX(), unitCaster->GetPositionY(), dist, notifierClear);
+        unitCaster->QueryMap(mask, dist, notifierClear);
     }
     else
     {

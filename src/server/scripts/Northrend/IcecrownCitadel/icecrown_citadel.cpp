@@ -1087,7 +1087,7 @@ struct npc_icc_nerubar_broodkeeper : public ScriptedAI
                     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, target, u_check);
                     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                     {
-                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), 40.0f, searcher);
+                        me->QueryMap(MAPQT_GRID_CREATURE, 40.0f, searcher);
                     }
                     else
                     {

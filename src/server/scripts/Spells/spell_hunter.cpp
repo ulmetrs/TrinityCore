@@ -823,9 +823,9 @@ class spell_hun_pet_carrion_feeder : public SpellScript
         Trinity::WorldObjectSearcher<Trinity::AnyDeadUnitSpellTargetInRangeCheck> searcher(caster, result, check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_WORLD, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
+            caster->QueryMap(MAPQT_WORLD, max_range, searcher);
             if (!result)
-                caster->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, caster->GetPositionX(), caster->GetPositionY(), max_range, searcher);
+                caster->QueryMap(MAPQT_GRID, max_range, searcher);
         }
         else
         {

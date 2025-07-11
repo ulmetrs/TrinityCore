@@ -1429,7 +1429,7 @@ void Player::Update(uint32 p_time)
             {
                 ZoneScopedN("Player::Update::RelocationNotifierQuadTree")
 
-                GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, viewPoint->GetPositionX(), viewPoint->GetPositionY(), 100, relocate);
+                QueryMap(MAPQT_ALL, 100, relocate);
             }
             else
             {
@@ -6729,7 +6729,7 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), dist, notifier);
+        QueryMap(mask, dist, notifier);
     }
     else
     {
@@ -6746,7 +6746,7 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), dist, notifier);
+        QueryMap(mask, dist, notifier);
     }
     else
     {
@@ -6765,7 +6765,7 @@ void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcv
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+        QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
     {
@@ -23360,7 +23360,7 @@ void Player::UpdateVisibilityForPlayer()
     {
         ZoneScopedN("Player::UpdateVisibilityForPlayerQuadTree")
 
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, m_seer->GetPositionX(), m_seer->GetPositionY(), GetSightRange(), notifier);
+        m_seer->QueryMap(MAPQT_ALL, GetSightRange(), notifier);
     }
     else
     {

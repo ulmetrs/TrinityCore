@@ -995,7 +995,7 @@ private:
         Trinity::CreatureLastSearcher<Trinity::MostHPMissingInRange> searcher(me, target, u_check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), 60.0f, searcher);
+            me->QueryMap(MAPQT_GRID_CREATURE, 60.0f, searcher);
         }
         else
         {

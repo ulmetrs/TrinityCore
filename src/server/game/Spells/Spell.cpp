@@ -1897,7 +1897,7 @@ void Spell::SearchTargets(SEARCHER& searcher, uint32 containerMask, WorldObject*
             // This would be more efficient to make the Query call with actual mask rather than checking the mask in each operator function.
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                map->GetQuadTree()->QueryCircle(MAPQT_WORLD, x, y, radius, searcher);
+                map->QueryMap(MAPQT_WORLD, radius, searcher);
             }
             else
             {
@@ -1909,7 +1909,7 @@ void Spell::SearchTargets(SEARCHER& searcher, uint32 containerMask, WorldObject*
         {
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                map->GetQuadTree()->QueryCircle(MAPQT_GRID, x, y, radius, searcher);
+                map->QueryMap(MAPQT_GRID, radius, searcher);
             }
             else
             {

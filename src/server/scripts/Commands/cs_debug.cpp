@@ -998,7 +998,7 @@ public:
             Trinity::CreatureSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(handler->GetPlayer(), passenger, check);
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                handler->GetPlayer()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, handler->GetPlayer()->GetPositionX(), handler->GetPlayer()->GetPositionY(), 30.0f, searcher);
+                handler->GetPlayer()->QueryMap(MAPQT_CREATURE, 30.0f, searcher);
             }
             else
             {

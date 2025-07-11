@@ -211,7 +211,7 @@ public:
                         Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
                         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                         {
-                            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, me->GetPositionX(), me->GetPositionY(), 50.0f, searcher);
+                            me->QueryMap(MAPQT_ALL, 50.0f, searcher);
                         }
                         else
                         {

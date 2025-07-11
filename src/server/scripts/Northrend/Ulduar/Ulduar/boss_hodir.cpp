@@ -531,7 +531,7 @@ class boss_hodir : public CreatureScript
                 Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, TargetList, checker);
                 if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                 {
-                    me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 100.0f, searcher);
+                    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 100.0f, searcher);
                 }
                 else
                 {
@@ -709,7 +709,7 @@ class npc_hodir_priest : public CreatureScript
                             Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, TargetList, checker);
                             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                             {
-                                me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 30.0f, searcher);
+                                me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 30.0f, searcher);
                             }
                             else
                             {

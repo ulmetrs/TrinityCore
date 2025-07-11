@@ -456,7 +456,7 @@ struct npc_zealot_lorkhan : public ScriptedAI
                     Trinity::UnitLastSearcher<LorKhanSelectTargetToHeal> searcher(me, target, check);
                     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                     {
-                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 100.0f, searcher);
+                        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 100.0f, searcher);
                     }
                     else
                     {

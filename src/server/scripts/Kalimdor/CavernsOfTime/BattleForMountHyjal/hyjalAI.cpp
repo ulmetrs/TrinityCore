@@ -931,7 +931,7 @@ void hyjalAI::RespawnNearPos(float x, float y)
     Trinity::WorldObjectWorker<Trinity::RespawnDo> worker(me, u_do);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, x, y, me->GetGridActivationRange(), worker);
+        me->QueryMap(MAPQT_GRID, me->GetGridActivationRange(), worker);
     }
     else
     {

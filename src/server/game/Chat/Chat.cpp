@@ -480,7 +480,7 @@ GameObject* ChatHandler::GetNearbyGameObject()
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectCheck> searcher(pl, obj, check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        pl->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, pl->GetPositionX(), pl->GetPositionY(), SIZE_OF_GRIDS, searcher);
+        pl->QueryMap(MAPQT_GAMEOBJECT, SIZE_OF_GRIDS, searcher);
     }
     else
     {

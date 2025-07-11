@@ -729,7 +729,7 @@ void GameObject::Update(uint32 diff)
                             Trinity::WorldObjectLastSearcher searcher(this, worldObjectTarget, checker, GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER);
                             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                             {
-                                GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, GetPositionX(), GetPositionY(), radius, searcher);
+                                QueryMap(MAPQT_ALL, radius, searcher);
                             }
                             else
                             {
@@ -743,7 +743,7 @@ void GameObject::Update(uint32 diff)
                             Trinity::UnitLastSearcher<Trinity::NearestAttackableNoTotemUnitInObjectRangeCheck> searcher(this, target, checker);
                             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                             {
-                                GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), radius, searcher);
+                                QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius, searcher);
                             }
                             else
                             {
@@ -1515,7 +1515,7 @@ GameObject* GameObject::LookupFishingHoleAround(float range)
     Trinity::GameObjectSearcher<Trinity::NearestGameObjectFishingHole> checker(this, ok, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, checker);
+        QueryMap(MAPQT_GAMEOBJECT, range, checker);
     }
     else
     {

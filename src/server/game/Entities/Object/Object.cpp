@@ -1888,7 +1888,7 @@ void WorldObject::SendMessageToSetInRange(WorldPacket const* data, float dist, b
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), dist, notifier);
+        QueryMap(mask, dist, notifier);
     }
     else
     {
@@ -1902,7 +1902,7 @@ void WorldObject::SendMessageToSet(WorldPacket const* data, Player const* skippe
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+        QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
     {
@@ -2069,7 +2069,7 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
     Trinity::AIRelocationNotifier notifier(*summon);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetQuadTree()->QueryCircle(MAPQT_CREATURE, summon->GetPositionX(), summon->GetPositionY(), GetVisibilityRange(), notifier);
+        QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
     }
     else
     {
@@ -2233,7 +2233,7 @@ Creature* WorldObject::FindNearestCreature(uint32 entry, float range, bool alive
     Trinity::CreatureLastSearcher<Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(this, creature, checker);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, GetPositionX(), GetPositionY(), range, searcher);
+        QueryMap(MAPQT_CREATURE, range, searcher);
     }
     else
     {
@@ -2249,7 +2249,7 @@ GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range, bool s
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     }
     else
     {
@@ -2265,7 +2265,7 @@ GameObject* WorldObject::FindNearestUnspawnedGameObject(uint32 entry, float rang
     Trinity::GameObjectLastSearcher<Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     }
     else
     {
@@ -2281,7 +2281,7 @@ GameObject* WorldObject::FindNearestGameObjectOfType(GameobjectTypes type, float
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectTypeInObjectRangeCheck> searcher(this, go, checker);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     }
     else
     {
@@ -3330,7 +3330,7 @@ void WorldObject::GetGameObjectListWithEntryInGrid(Container& gameObjectContaine
     Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(this, gameObjectContainer, check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), maxSearchRange, searcher);
+        QueryMap(MAPQT_GAMEOBJECT, maxSearchRange, searcher);
     }
     else
     {
@@ -3674,7 +3674,7 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         uint32 mask = MAPQT_WORLD & ~MAPQT_GAMEOBJECT & ~MAPQT_CORPSE;
-        GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+        QueryMap(mask, GetVisibilityRange(), notifier);
     }
     else
     {

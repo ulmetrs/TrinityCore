@@ -2964,7 +2964,7 @@ void UnitAura::FillTargetMap(std::unordered_map<Unit*, uint8>& targets, Unit* ca
             Trinity::UnitListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetUnitOwner(), units, check);
             if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
             {
-                GetUnitOwner()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetUnitOwner()->GetPositionX(), GetUnitOwner()->GetPositionY(), radius + extraSearchRadius, searcher);
+                GetUnitOwner()->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius + extraSearchRadius, searcher);
             }
             else
             {
@@ -3033,7 +3033,7 @@ void DynObjAura::FillTargetMap(std::unordered_map<Unit*, uint8>& targets, Unit* 
         Trinity::UnitListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetDynobjOwner(), units, check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            GetDynobjOwner()->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetDynobjOwner()->GetPositionX(), GetDynobjOwner()->GetPositionY(), radius, searcher);
+            GetDynobjOwner()->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius, searcher);
         }
         else
         {

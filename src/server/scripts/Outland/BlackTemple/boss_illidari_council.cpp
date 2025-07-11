@@ -327,7 +327,7 @@ struct boss_gathios_the_shatterer : public IllidariCouncilBossAI
                 Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, TargetList, checker);
                 if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                 {
-                    me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), 100.0f, searcher);
+                    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 100.0f, searcher);
                 }
                 else
                 {

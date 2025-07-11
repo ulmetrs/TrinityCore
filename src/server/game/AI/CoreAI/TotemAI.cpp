@@ -69,7 +69,7 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
         Trinity::UnitLastSearcher<Trinity::NearestAttackableUnitInObjectRangeCheck> checker(me, victim, u_check);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), max_range + extraSearchRadius, checker);
+            me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, max_range + extraSearchRadius, checker);
         }
         else
         {

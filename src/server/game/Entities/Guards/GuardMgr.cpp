@@ -231,7 +231,7 @@ void GuardMgr::SummonGuard(Player* attackedPlayer, Unit* enemy, bool ignoreCoold
     Trinity::AIRelocationNotifier notifier(*enemy);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        enemy->GetMap()->GetQuadTree()->QueryCircle(MAPQT_WORLD_CREATURE, enemy->GetPositionX(), enemy->GetPositionY(), enemy->GetVisibilityRange(), notifier);
+        enemy->QueryMap(MAPQT_WORLD_CREATURE, enemy->GetVisibilityRange(), notifier);
     }
     else
     {

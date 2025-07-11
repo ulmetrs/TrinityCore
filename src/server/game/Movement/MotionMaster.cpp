@@ -706,7 +706,7 @@ void MotionMaster::MoveEncircle(Unit* target)
     Trinity::UnitSearcher<Trinity::AnyUnitFulfillingConditionInRangeCheck> checker(_owner, collider, collisionCheck);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        _owner->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, _owner->GetPositionX(), _owner->GetPositionY(), (fanningRadius / radiusReduction), checker);
+        _owner->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, (fanningRadius / radiusReduction), checker);
     }
     else
     {

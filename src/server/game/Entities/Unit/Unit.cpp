@@ -6050,7 +6050,7 @@ void Unit::InterruptSpellsCastedOnMe(bool killDelayed, bool interruptPositiveSpe
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(this, targets, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), GetMap()->GetVisibilityRange(), searcher);
+        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, GetMap()->GetVisibilityRange(), searcher);
     }
     else
     {
@@ -6095,7 +6095,7 @@ void Unit::InterruptAttacksOnMe(float dist, bool guard_check)
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), GetMap()->GetVisibilityRange(), searcher);
+        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, GetMap()->GetVisibilityRange(), searcher);
     }
     else
     {
@@ -11429,7 +11429,7 @@ Unit* Unit::SelectNearbyTarget(Unit* exclude, float dist) const
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, GetPositionX(), GetPositionY(), dist, searcher);
+        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, dist, searcher);
     }
     else
     {
@@ -13179,7 +13179,7 @@ void Unit::UpdateObjectVisibility(bool forced)
         Trinity::AIRelocationNotifier notifier(*this);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, GetPositionX(), GetPositionY(), GetVisibilityRange(), notifier);
+            QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
         }
         else
         {
@@ -15018,7 +15018,7 @@ GameObject* Unit::FindNearestGuardPost(float range) const
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        GetMap()->GetQuadTree()->QueryCircle(MAPQT_GAMEOBJECT, GetPositionX(), GetPositionY(), range, searcher);
+        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     }
     else
     {

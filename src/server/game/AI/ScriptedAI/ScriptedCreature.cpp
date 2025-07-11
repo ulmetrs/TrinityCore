@@ -422,7 +422,7 @@ Unit* ScriptedAI::DoSelectLowestHpFriendly(float range, uint32 minHPDiff)
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
     }
     else
     {
@@ -439,7 +439,7 @@ Unit* ScriptedAI::DoSelectBelowHpPctFriendlyWithEntry(uint32 entry, float range,
     Trinity::UnitLastSearcher<Trinity::FriendlyBelowHpPctEntryInRange> searcher(me, unit, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_PLAYER | MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
     }
     else
     {

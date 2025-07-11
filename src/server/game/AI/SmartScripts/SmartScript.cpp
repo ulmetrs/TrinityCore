@@ -2815,7 +2815,7 @@ void SmartScript::GetWorldObjectsInDist(ObjectVector& targets, float dist) const
     Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(obj, targets, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        obj->GetMap()->GetQuadTree()->QueryCircle(MAPQT_ALL, obj->GetPositionX(), obj->GetPositionY(), dist, searcher);
+        obj->QueryMap(MAPQT_ALL, dist, searcher);
     }
     else
     {
@@ -3819,7 +3819,7 @@ Unit* SmartScript::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff) const
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+        me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
     }
     else
     {
@@ -3838,7 +3838,7 @@ Unit* SmartScript::DoSelectLowestHpPercentFriendly(float range, uint32 minHpPct,
     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, unit, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+        me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
     }
     else
     {
@@ -3877,7 +3877,7 @@ Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) co
     Trinity::UnitLastSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, unit, u_check);
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID_CREATURE, me->GetPositionX(), me->GetPositionY(), range, searcher);
+        me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
     }
     else
     {

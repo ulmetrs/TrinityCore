@@ -699,7 +699,7 @@ public:
                     Trinity::CreatureSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, sironas, check);
                     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
                     {
-                        me->GetMap()->GetQuadTree()->QueryCircle(MAPQT_CREATURE, me->GetPositionX(), me->GetPositionY(), SIZE_OF_GRIDS, searcher);
+                        me->QueryMap(MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
                     }
                     else
                     {

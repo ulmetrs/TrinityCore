@@ -1981,7 +1981,7 @@ public:
         Trinity::WorldObjectWorker<Trinity::RespawnDo> worker(player, u_do);
         if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
         {
-            player->GetMap()->GetQuadTree()->QueryCircle(MAPQT_GRID, player->GetPositionX(), player->GetPositionY(), player->GetGridActivationRange(), worker);
+            player->QueryMap(MAPQT_GRID, player->GetGridActivationRange(), worker);
         }
         else
         {
