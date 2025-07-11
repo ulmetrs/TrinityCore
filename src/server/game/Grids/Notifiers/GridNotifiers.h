@@ -71,11 +71,10 @@ namespace Trinity
         void Visit(CreatureMapType &);
         void Visit(DynamicObjectMapType &);
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
-        void operator()(GameObject* g) { }
         void operator()(Creature* c);
         void operator()(DynamicObject* d);
-        void operator()(Corpse* c) { }
     };
 
     struct TC_GAME_API PlayerRelocationNotifier : public VisibleNotifier
@@ -86,11 +85,9 @@ namespace Trinity
         void Visit(CreatureMapType &);
         void Visit(PlayerMapType &);
 
+        template<class T> void operator()(T* obj) { VisibleNotifier::operator()(obj); }
         void operator()(Player* p);
-        void operator()(GameObject* g) { VisibleNotifier::operator()(g); }
         void operator()(Creature* c);
-        void operator()(DynamicObject* d) { VisibleNotifier::operator()(d); }
-        void operator()(Corpse* c) { VisibleNotifier::operator()(c); }
     };
 
     struct TC_GAME_API CreatureRelocationNotifier
