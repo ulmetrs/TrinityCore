@@ -646,9 +646,13 @@ bool Map::AddToMap(T* obj)
     {
         //TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
         _quadTree->Insert(obj);
-        if (obj->GetSpawnId() == 21404 /* || other conditions */)
+        if (obj->IsCreature())
         {
-            TC_LOG_DEBUG("quadtrees", "Add To Map: {}", obj->GetQuadNodeInfo());
+            Creature* creature = obj->ToCreature();
+            if (creature->GetSpawnId() == 21404 /* || other conditions */)
+            {
+                TC_LOG_DEBUG("quadtrees", "Add To Map: {}", creature->GetQuadNodeInfo());
+            }
         }
     }
 
