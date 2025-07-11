@@ -383,7 +383,7 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -434,7 +434,7 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -545,7 +545,7 @@ bool Map::AddPlayerToMap(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "AddPlayerToMap QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "AddPlayerToMap QuadTree Insert");
         _quadTree->Insert(player);
     }
 
@@ -588,7 +588,7 @@ bool Map::AddPlayerToPartition(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "AddPlayerToPartition QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "AddPlayerToPartition QuadTree Insert");
         _quadTree->Insert(player);
     }
 
@@ -644,7 +644,7 @@ bool Map::AddToMap(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -731,7 +731,7 @@ bool Map::AddToPartition(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "AddToPartition QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "AddToPartition QuadTree Insert");
         _quadTree->Insert(obj);
     }
 
@@ -1292,7 +1292,7 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "RemovePlayerFromMap QuadNode Remove");
+        //TC_LOG_DEBUG("quadtrees", "RemovePlayerFromMap QuadNode Remove");
         static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
     }
 
@@ -1329,7 +1329,7 @@ void Map::RemovePlayerFromPartition(Player* player)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "RemovePlayerFromPartition QuadNode Remove");
+        //TC_LOG_DEBUG("quadtrees", "RemovePlayerFromPartition QuadNode Remove");
         static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
     }
 
@@ -1365,7 +1365,7 @@ void Map::RemoveFromMap(T *obj, bool remove)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
+        //TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
         static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
     }
 
@@ -1434,7 +1434,7 @@ void Map::RemoveFromPartition(T *obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "RemoveFromPartition QuadNode Remove");
+        //TC_LOG_DEBUG("quadtrees", "RemoveFromPartition QuadNode Remove");
         static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
     }
 
@@ -1451,7 +1451,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "PlayerRelocation QuadTree Insert");
+        //TC_LOG_DEBUG("quadtrees", "PlayerRelocation QuadTree Insert");
         _quadTree->Insert(player);
     }
 
