@@ -30,6 +30,8 @@
 #include "SpellInfo.h"
 #include "UnitAI.h"
 #include "UpdateData.h"
+#include "Transport.h"
+#include "Log.h"
 
 namespace Trinity
 {
@@ -207,15 +209,23 @@ namespace Trinity
     struct ObjectUpdater
     {
         uint32 i_timeDiff;
+
         explicit ObjectUpdater(const uint32 diff) : i_timeDiff(diff) { }
-        template<class T> void Visit(GridRefManager<T> &m);
-        void Visit(PlayerMapType &) { }
-        void Visit(CorpseMapType &) { }
 
         template<class T> void operator()(T*) { }
-        void operator()(GameObject* g);
-        void operator()(Creature* c);
-        void operator()(DynamicObject* d);
+        void operator()(GameObject* g)
+        {
+            if (!g->IsInWorld())
+                return;
+
+            if (dynamic_cast<Transport*>(g))
+            {
+                TC_LOG_DEBUG("quadtrees", "ObjectUpdater Transport or descendant: GUID {}", g->GetGUID().ToString());
+            }
+            g->Update(i_timeDiff);
+        }
+        void operator()(Creature* c){ if (c->IsInWorld()) c->Update(i_timeDiff); }
+        void operator()(DynamicObject* d){ if (d->IsInWorld()) d->Update(i_timeDiff); }
     };
 
     // SEARCHERS & LIST SEARCHERS & WORKERS

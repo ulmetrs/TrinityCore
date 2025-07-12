@@ -637,22 +637,6 @@ void MessageDistDelivererToHostile::operator()(DynamicObject* d)
     }
 }
 
-template<class T>
-void ObjectUpdater::Visit(GridRefManager<T> &m)
-{
-    for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-        if (iter->GetSource()->IsInWorld())
-            iter->GetSource()->Update(i_timeDiff);
-}
-
-template void ObjectUpdater::Visit<Creature>(CreatureMapType&);
-template void ObjectUpdater::Visit<GameObject>(GameObjectMapType&);
-template void ObjectUpdater::Visit<DynamicObject>(DynamicObjectMapType&);
-
-void ObjectUpdater::operator()(GameObject* g)     { if (g->IsInWorld()) g->Update(i_timeDiff); }
-void ObjectUpdater::operator()(Creature* c)       { if (c->IsInWorld()) c->Update(i_timeDiff); }
-void ObjectUpdater::operator()(DynamicObject* d)  { if (d->IsInWorld()) d->Update(i_timeDiff); }
-
 bool AnyDeadUnitObjectInRangeCheck::operator()(Player* u)
 {
     return !u->IsAlive() && !u->HasAuraType(SPELL_AURA_GHOST) && i_searchObj->IsWithinDistInMap(u, i_range);
