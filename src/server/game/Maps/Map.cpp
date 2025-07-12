@@ -826,9 +826,10 @@ void Map::Update(uint32 t_diff)
 {
     ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
 
+    if (GetId() == 530)
     {
         m_creatureQuadTreeLogTimer += t_diff;
-        if (m_creatureQuadTreeLogTimer >= 1)
+        if (m_creatureQuadTreeLogTimer >= 1000)
         {
             m_creatureQuadTreeLogTimer = 0;
             TC_LOG_DEBUG("quadtrees", "Start Search on map {}", GetId());
@@ -837,6 +838,13 @@ void Map::Update(uint32 t_diff)
             Trinity::ListSearcher<std::list<Creature*>, Trinity::AllCreaturesOfEntry> searcher(creatures, check);
             _quadTree->QueryAll(MAPQT_CREATURE, searcher);
             TC_LOG_DEBUG("quadtrees", "Finish Search on map {} - found {}", GetId(), creatures.size());
+            if (!creatures.empty())
+            {
+                for (auto c : creatures)
+                {
+                    TC_LOG_DEBUG("quadtrees", "{}", c->GetQuadNodeInfo());
+                }
+            }
         }
     }
 
