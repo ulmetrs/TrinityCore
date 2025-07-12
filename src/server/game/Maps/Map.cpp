@@ -1018,16 +1018,68 @@ void Map::Update(uint32 t_diff)
     {
         ZoneScopedN("Map::Update::RelocatedObjects")
 
-        for (Creature* obj : _relocatedCreatures)
-            _quadTree->Insert(obj);
+        for (Creature* creature : _relocatedCreatures)
+        {
+            Cell old_cell = creature->GetCell();
+            Cell new_cell(x, y);
+            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
+            {
+                creature->RemoveFromGrid();
+
+                if (old_cell.DiffGrid(new_cell))
+                    EnsureGridLoaded(new_cell);
+
+                AddToGrid(creature, new_cell);
+            }
+
+            _quadTree->Insert(creature);
+
+            creature->UpdatePositionData();
+            creature->UpdateObjectVisibility(false);
+        }
         _relocatedCreatures.clear();
 
-        for (GameObject* obj : _relocatedGameObjects)
-            _quadTree->Insert(obj);
+        for (GameObject* go : _relocatedGameObjects)
+        {
+            Cell old_cell = go->GetCell();
+            Cell new_cell(x, y);
+            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
+            {
+                go->RemoveFromGrid();
+
+                if (old_cell.DiffGrid(new_cell))
+                    EnsureGridLoaded(new_cell);
+
+                AddToGrid(go, new_cell);
+            }
+
+            _quadTree->Insert(go);
+
+            go->UpdateModelPosition();
+            go->UpdatePositionData();
+            go->UpdateObjectVisibility(false);
+        }
         _relocatedGameObjects.clear();
 
-        for (DynamicObject* obj : _relocatedDynamicObjects)
-            _quadTree->Insert(obj);
+        for (DynamicObject* dynObj : _relocatedDynamicObjects)
+        {
+            Cell old_cell = dynObj->GetCell();
+            Cell new_cell(x, y);
+            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
+            {
+                dynObj->RemoveFromGrid();
+
+                if (old_cell.DiffGrid(new_cell))
+                    EnsureGridLoaded(new_cell);
+
+                AddToGrid(dynObj, new_cell);
+            }
+
+            _quadTree->Insert(dynObj);
+
+            dynObj->UpdatePositionData();
+            dynObj->UpdateObjectVisibility(false);
+        }
         _relocatedDynamicObjects.clear();
     }
 
@@ -1282,23 +1334,7 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
 
-    Cell old_cell = creature->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-    {
-        creature->RemoveFromGrid();
-
-        if (old_cell.DiffGrid(new_cell))
-            EnsureGridLoaded(new_cell);
-
-        AddToGrid(creature, new_cell);
-    }
-
-    creature->UpdatePositionData();
-    creature->UpdateObjectVisibility(false);
-
-    _relocatedCreatures.push_back(creature);
-
+    _relocatedCreatures.insert(creature);
     if (creature->ShouldRelocateUpdateMapPartition())
         _updateMapPartitionCreatures.insert(creature);
 }
@@ -1307,45 +1343,14 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 {
     go->Relocate(x, y, z, orientation);
 
-    Cell old_cell = go->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-    {
-        go->RemoveFromGrid();
-
-        if (old_cell.DiffGrid(new_cell))
-            EnsureGridLoaded(new_cell);
-
-        AddToGrid(go, new_cell);
-    }
-
-    go->UpdateModelPosition();
-    go->UpdatePositionData();
-    go->UpdateObjectVisibility(false);
-
-    _relocatedGameObjects.push_back(go);
+    _relocatedGameObjects.insert(go);
 }
 
 void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float z, float orientation)
 {
     dynObj->Relocate(x, y, z, orientation);
 
-    Cell old_cell = dynObj->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-    {
-        dynObj->RemoveFromGrid();
-
-        if (old_cell.DiffGrid(new_cell))
-            EnsureGridLoaded(new_cell);
-
-        AddToGrid(dynObj, new_cell);
-    }
-
-    dynObj->UpdatePositionData();
-    dynObj->UpdateObjectVisibility(false);
-
-    _relocatedDynamicObjects.push_back(dynObj);
+    _relocatedDynamicObjects.insert(dynObj);
 }
 
 void Map::UnloadGrid(NGridType& ngrid)
