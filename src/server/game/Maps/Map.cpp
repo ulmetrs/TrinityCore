@@ -869,20 +869,20 @@ void Map::Update(uint32 t_diff)
             if (!player || !player->IsInWorld())
                 continue;
 
-            DebugTimer += t_diff;
-            if (DebugTimer >= 3000)
-            {
-                DebugTimer = 0;
+            // DebugTimer += t_diff;
+            // if (DebugTimer >= 3000)
+            // {
+            //     DebugTimer = 0;
 
-                Trinity::ObjectCounter quadCounter;
-                _quadTree->QueryAll(MAPQT_CREATURE, quadCounter);
-                uint32 creatureCount = quadCounter.count;
-                quadCounter.count = 0;
-                _quadTree->QueryAll(MAPQT_GAMEOBJECT, quadCounter);
-                uint32 gameObjectCount = quadCounter.count;
-                TC_LOG_DEBUG("quadtrees", "Finish Quad Count on map {} - found {} creatures and {} game objects", GetId(), creatureCount, gameObjectCount);
-                TC_LOG_DEBUG("quadtrees", "Debug count on map {} - {} creatures and {} game objects", GetId(), DebugCreatures.size(), DebugGameObjects.size());
-            }
+            //     Trinity::ObjectCounter quadCounter;
+            //     _quadTree->QueryAll(MAPQT_CREATURE, quadCounter);
+            //     uint32 creatureCount = quadCounter.count;
+            //     quadCounter.count = 0;
+            //     _quadTree->QueryAll(MAPQT_GAMEOBJECT, quadCounter);
+            //     uint32 gameObjectCount = quadCounter.count;
+            //     TC_LOG_DEBUG("quadtrees", "Finish Quad Count on map {} - found {} creatures and {} game objects", GetId(), creatureCount, gameObjectCount);
+            //     TC_LOG_DEBUG("quadtrees", "Debug count on map {} - {} creatures and {} game objects", GetId(), DebugCreatures.size(), DebugGameObjects.size());
+            // }
 
             // update players at tick
             player->Update(t_diff);
