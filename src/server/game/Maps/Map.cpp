@@ -825,6 +825,9 @@ void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 // @tswow-begin tracy
 void Map::Update(uint32 t_diff)
 {
+    if (GetId() != 0)
+        return;
+
     ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
 
     // @tswow-begin tswow-events
