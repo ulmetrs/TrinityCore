@@ -638,24 +638,20 @@ bool Map::AddToMap(T* obj)
         return false; //Should delete object
     }
 
-    Cell cell(cellCoord);
-    EnsureGridLoaded(cell);
-    AddToGrid(obj, cell);
+    if (obj->IsCreature())
+        DebugCreatures.push_back(obj->ToCreature());
+    if (obj->IsGameObject())
+        DebugGameObjects.push_back(obj->ToGameObject());
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
         ASSERT(obj->GetQuadNode() == nullptr);
-        //TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
         _quadTree->Insert(obj);
-        if (obj->IsCreature())
-        {
-            Creature* creature = obj->ToCreature();
-            if (creature->GetSpawnId() == 21404 /* || other conditions */)
-            {
-                TC_LOG_DEBUG("quadtrees", "Add To Map: {}", creature->GetQuadNodeInfo());
-            }
-        }
     }
+
+    Cell cell(cellCoord);
+    EnsureGridLoaded(cell);
+    AddToGrid(obj, cell);
 
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
@@ -734,15 +730,20 @@ bool Map::AddToPartition(T* obj)
         return false; //Should delete object
     }
 
-    Cell cell(cellCoord);
-    EnsureGridLoaded(cell);
-    AddToGrid(obj, cell);
+    if (obj->IsCreature())
+        DebugCreatures.push_back(obj->ToCreature());
+    if (obj->IsGameObject())
+        DebugGameObjects.push_back(obj->ToGameObject());
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        TC_LOG_DEBUG("quadtrees", "AddToPartition QuadTree Insert");
+        ASSERT(obj->GetQuadNode() == nullptr);
         _quadTree->Insert(obj);
     }
+
+    Cell cell(cellCoord);
+    EnsureGridLoaded(cell);
+    AddToGrid(obj, cell);
 
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
@@ -935,8 +936,13 @@ void Map::Update(uint32 t_diff)
                 Cell::VisitAllObjects(player, gridCounter, MAP_SIZE);
                 TC_LOG_DEBUG("quadtrees", "Finish Grid Count on map {} - found {}", GetId(), gridCounter.count);
                 Trinity::ObjectCounter quadCounter;
-                _quadTree->QueryAll(MAPQT_ALL, quadCounter);
-                TC_LOG_DEBUG("quadtrees", "Finish Quad Count on map {} - found {}", GetId(), quadCounter.count);
+                _quadTree->QueryAll(MAPQT_CREATURE, quadCounter);
+                uint32 creatureCount = quadCounter.count;
+                quadCounter.count = 0;
+                _quadTree->QueryAll(MAPQT_GAMEOBJECT, quadCounter);
+                uint32 gameObjectCount = quadCounter.count;
+                TC_LOG_DEBUG("quadtrees", "Finish Quad Count on map {} - found {} creatures and {} game objects", GetId(), creatureCount, gameObjectCount);
+                TC_LOG_DEBUG("quadtrees", "Debug count on map {} - {} creatures and {} game objects", GetId(), DebugCreatures.size(), DebugGameObjects.size());
             }
 
             // update players at tick
@@ -1397,6 +1403,17 @@ void Map::RemoveFromMap(T *obj, bool remove)
 {
     ZoneScopedN("Map::RemoveFromMap")
 
+    if (obj->IsCreature())
+        DebugCreatures.remove(obj->ToCreature());
+    if (obj->IsGameObject())
+        DebugGameObjects.remove(obj->ToGameObject());
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        ASSERT(obj->GetQuadNode());
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    }
+
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
 
@@ -1409,21 +1426,6 @@ void Map::RemoveFromMap(T *obj, bool remove)
     // note: RemoveFromWorld does this for inWorld objects
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
-
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        if (obj->IsCreature())
-        {
-            Creature* creature = obj->ToCreature();
-            if (creature->GetSpawnId() == 21404 /* || other conditions */)
-            {
-                TC_LOG_DEBUG("quadtrees", "Remove From Map: {}", creature->GetQuadNodeInfo());
-            }
-        }
-        //TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
-        ASSERT(obj->GetQuadNode());
-        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-    }
 
     obj->RemoveFromGrid();
 
@@ -1475,6 +1477,17 @@ void Map::RemoveFromPartition(T *obj)
 {
     ZoneScopedN("Map::RemoveFromPartition")
 
+    if (obj->IsCreature())
+        DebugCreatures.remove(obj->ToCreature());
+    if (obj->IsGameObject())
+        DebugGameObjects.remove(obj->ToGameObject());
+
+    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
+    {
+        ASSERT(obj->GetQuadNode());
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    }
+
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromPartition();
 
@@ -1487,12 +1500,6 @@ void Map::RemoveFromPartition(T *obj)
     // note: RemoveFromWorld does this for inWorld objects
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
-
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        TC_LOG_DEBUG("quadtrees", "RemoveFromPartition QuadNode Remove");
-        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-    }
 
     obj->RemoveFromGrid();  
 

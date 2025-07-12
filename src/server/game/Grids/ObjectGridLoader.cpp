@@ -54,6 +54,11 @@ class ObjectWorldLoader
 template <class T>
 void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* map, T *obj)
 {
+    if (obj->IsCreature())
+        map->DebugCreatures.push_back(obj->ToCreature());
+    if (obj->IsGameObject())
+        map->DebugGameObjects.push_back(obj->ToGameObject());
+
     // For full cutover to quad trees the loading basically needs to be replaced last, as we don't
     // want to create duplicate objects
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
@@ -68,8 +73,6 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
         map->AddToActive(obj);
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         map->AddToWaypointCreatures(obj->ToCreature());
-
-    
 
     ++count;
 }

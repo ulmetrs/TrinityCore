@@ -359,6 +359,10 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         Map(uint32 id, uint32 instanceOrPartitionId);
         virtual ~Map();
 
+        uint32 DebugTimer = 0;
+        std::list<Creature*> DebugCreatures;
+        std::list<GameObject*> DebugGameObjects;
+
         MapEntry const* GetEntry() const { return i_mapEntry; }
 
         // @tswow-begin
@@ -809,7 +813,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
-        uint32 m_creatureQuadTreeLogTimer = 0;
         MapQuadTree* _quadTree;
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
