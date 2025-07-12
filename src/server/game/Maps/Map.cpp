@@ -655,8 +655,8 @@ bool Map::AddToMap(T* obj)
         _relocatedCreatures.push_back(obj->ToCreature());
     else if (obj->IsGameObject())
         _relocatedGameObjects.push_back(obj->ToGameObject());
-    else if (obj->IsDynamicObject())
-        _relocatedDynamicObjects.push_back(obj->ToDynamicObject());
+    else if (obj->IsDynObject())
+        _relocatedDynamicObjects.push_back(obj->ToDynObject());
     else
         _quadTree->Insert(obj);
 
