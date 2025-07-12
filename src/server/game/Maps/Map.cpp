@@ -644,6 +644,7 @@ bool Map::AddToMap(T* obj)
 
     if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
+        ASSERT(obj->GetQuadNode() == nullptr);
         //TC_LOG_DEBUG("quadtrees", "AddToMap QuadTree Insert");
         _quadTree->Insert(obj);
         if (obj->IsCreature())
@@ -1422,6 +1423,7 @@ void Map::RemoveFromMap(T *obj, bool remove)
             }
         }
         //TC_LOG_DEBUG("quadtrees", "RemoveFromMap QuadNode Remove");
+        ASSERT(obj->GetQuadNode());
         static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
     }
 
