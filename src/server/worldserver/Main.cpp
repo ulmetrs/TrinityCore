@@ -129,9 +129,32 @@ void ShutdownCLIThread(std::thread* cliThread);
 bool LoadRealmInfo(Trinity::Asio::IoContext& ioContext);
 variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile, fs::path& configDir, std::string& winServiceAction);
 
+#include <windows.h>
+#include <dbghelp.h>
+#include <iostream>
+
+LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
+{
+    void* stack[62];
+    USHORT frames = CaptureStackBackTrace(0, 62, stack, NULL);
+
+    std::cerr << "=== Unhandled Exception! Printing stack trace: ===" << std::endl;
+    for (USHORT i = 0; i < frames; ++i)
+    {
+        std::cerr << stack[i] << std::endl;
+    }
+
+    // Optionally, use SymFromAddr to get symbols (requires SymInitialize, etc.)
+    // For better output, see more advanced usage below.
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 /// Launch the Trinity server
 extern int main(int argc, char** argv)
 {
+    SetUnhandledExceptionFilter(CrashHandler);
+
     // @tswow-begin
     setbuf(stdout,0);
     setbuf(stderr,0);
