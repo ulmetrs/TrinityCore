@@ -25,13 +25,10 @@
 #include "GameObject.h"
 #include "Group.h"
 #include "Player.h"
-#include "Log.h"
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "UnitAI.h"
 #include "UpdateData.h"
-#include "Transport.h"
-#include "Log.h"
 
 namespace Trinity
 {
@@ -213,17 +210,7 @@ namespace Trinity
         explicit ObjectUpdater(const uint32 diff) : i_timeDiff(diff) { }
 
         template<class T> void operator()(T*) { }
-        void operator()(GameObject* g)
-        {
-            if (!g->IsInWorld())
-                return;
-
-            if (dynamic_cast<Transport*>(g))
-            {
-                TC_LOG_DEBUG("quadtrees", "ObjectUpdater Transport or descendant: GUID {}", g->GetGUID().ToString());
-            }
-            g->Update(i_timeDiff);
-        }
+        void operator()(GameObject* g) { if (g->IsInWorld()) g->Update(i_timeDiff); }
         void operator()(Creature* c){ if (c->IsInWorld()) c->Update(i_timeDiff); }
         void operator()(DynamicObject* d){ if (d->IsInWorld()) d->Update(i_timeDiff); }
     };

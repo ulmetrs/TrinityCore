@@ -34,6 +34,7 @@
 #include "World.h"
 #include "WorldStatePackets.h"
 #include "TSMainThreadContext.h"
+#include "Transport.h"
 
 GameEventMgr* GameEventMgr::instance()
 {
@@ -1782,15 +1783,15 @@ public:
         {
             if (p.second->IsInWorld())
             {
-                TC_LOG_DEBUG("quadtrees", "Attempt OnGameEventHook {}", _eventId);
                 auto ai = p.second->AI();
                 if (!ai)
                 {
-                    TC_LOG_ERROR("quadtrees", "Null AI pointer for GameObject {} in event {}", p.second->GetGUID().ToString(), _eventId);
+                    TC_LOG_ERROR("quadtrees", "Null AI pointer for GameObject {} in event {}", p.second->GetEntry(), _eventId);
+                    if (dynamic_cast<GenericTransport*>(p.second))
+                        TC_LOG_DEBUG("quadtrees", "Null AI pointer for Transport {} in event {}", p.second->GetEntry(), _eventId);
                     continue;
                 }
                 ai->OnGameEvent(_activate, _eventId);
-                TC_LOG_DEBUG("quadtrees", "Finish OnGameEventHook {}", _eventId);
             }
         }
     }

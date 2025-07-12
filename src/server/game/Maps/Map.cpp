@@ -869,7 +869,7 @@ void Map::Update(uint32 t_diff)
                 continue;
 
             DebugTimer += t_diff;
-            if (DebugTimer >= 1000)
+            if (DebugTimer >= 3000)
             {
                 DebugTimer = 0;
 
