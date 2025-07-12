@@ -762,36 +762,6 @@ void Map::VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpd
     obj->QueryMap(mask, obj->GetGridActivationRange(), updater);
 }
 
-void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)
-{
-    // Check for valid position
-    if (!obj->IsPositionValid())
-        return;
-
-    // Update mobs/objects in ALL visible cells around object!
-    CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), obj->GetGridActivationRange());
-
-    for (uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
-    {
-        for (uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
-        {
-            // marked cells are those that have been visited
-            // don't visit the same cell twice
-            uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
-            if (isCellMarked(cell_id))
-                continue;
-
-            markCell(cell_id);
-
-            CellCoord pair(x, y);
-            Cell cell(pair);
-            cell.SetNoCreate();
-            Visit(cell, gridVisitor);
-            Visit(cell, worldVisitor);
-        }
-    }
-}
-
 void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 {
     // Nothing to do if no change
@@ -810,11 +780,6 @@ void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 // @tswow-begin tracy
 void Map::Update(uint32 t_diff)
 {
-    if (GetId() != 0 && GetId() != 1)
-        return;
-
-    ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
-
     // @tswow-begin tswow-events
     {
         ZoneScopedNC("TSMap::Tick", MAP_UPDATE_COLOR)
@@ -886,19 +851,11 @@ void Map::Update(uint32 t_diff)
     else
         _respawnCheckTimer -= t_diff;
 
-    /// update active cells around players and active objects
-    resetMarkedCells();
-
     Trinity::ObjectUpdater updater(t_diff);
-    // for creature
-    TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
-    // for pets
-    TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
-
     uint32_t updaterMask = MAPQT_ALL & ~MAPQT_PLAYER & ~MAPQT_CORPSE;
 
     {
-        ZoneScopedN("Map::Update::PlayersQuadTree")
+        ZoneScopedN("Map::Update::Players")
 
         // the player iterator is stored in the map object
         // to make sure calls to Map::Remove don't invalidate it
@@ -973,9 +930,8 @@ void Map::Update(uint32 t_diff)
         }
     }
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
     {
-        ZoneScopedN("Map::Update::ActiveObjectsQuadTree")
+        ZoneScopedN("Map::Update::ActiveObjects")
 
         // non-player active objects, increasing iterator in the loop in case of object removal
         // TODO should objects be removed during update? I thought they get put in move list
@@ -994,29 +950,7 @@ void Map::Update(uint32 t_diff)
             }
         }
     }
-    else
-    {
-        ZoneScopedN("Map::Update::ActiveObjects")
 
-        // non-player active objects, increasing iterator in the loop in case of object removal
-        // TODO should objects be removed during update? I thought they get put in move list
-        for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
-        {
-            WorldObject* obj = *m_activeNonPlayersIter;
-            ++m_activeNonPlayersIter;
-
-            if (!obj || !obj->IsInWorld())
-                continue;
-
-            {
-                ZoneScopedN("Map::Update::ActiveObjects::ActiveNonPlayer")
-
-                VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
-            }
-        }
-    }
-
-    // TODO make this permanent
     if (sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
     {
         ZoneScopedN("Map::Update::WaypointCreatures")
@@ -1029,12 +963,6 @@ void Map::Update(uint32 t_diff)
             ++m_waypointCreaturesIter;
 
             if (!creature || !creature->IsInWorld() || !creature->IsPositionValid())
-                continue;
-
-            // TODO remove this when quad trees are permanent
-            CellCoord cellCoord = creature->GetCell().GetCellCoord();
-            // The waypoint creature has already ticked its update from the above if the cell its in is marked
-            if (isCellMarked(cellCoord.GetId()))
                 continue;
 
             {
@@ -1057,10 +985,6 @@ void Map::Update(uint32 t_diff)
                     // (edge condition where members are on diff grid than leader)
                     for (Creature* member : members)
                     {
-                        CellCoord memberCellCoord = member->GetCell().GetCellCoord();
-                        if (isCellMarked(memberCellCoord.GetId()))
-                            continue;
-
                         member->Update(t_diff);
                     }
                 }
@@ -3794,6 +3718,16 @@ PartitionMap::~PartitionMap()
 {
 }
 
+void PartitionMap::Update(uint32 t_diff)
+{
+    ZoneScopedNC("PartitionMap::Update", MAP_UPDATE_COLOR)
+
+    Map::Update(t_diff);
+
+    if (i_data)
+        i_data->Update(t_diff);
+}
+
 Bounds PartitionMap::GetMapBounds() const
 {
     // Get parent partitioned map
@@ -4040,6 +3974,8 @@ bool InstanceMap::AddPlayerToMap(Player* player)
 
 void InstanceMap::Update(uint32 t_diff)
 {
+    ZoneScopedNC("InstanceMap::Update", MAP_UPDATE_COLOR)
+
     Map::Update(t_diff);
 
     if (i_data)

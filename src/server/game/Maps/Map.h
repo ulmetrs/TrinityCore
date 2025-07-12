@@ -403,7 +403,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> void RemoveFromPartition(T *);
 
         void VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater);
-        void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
         virtual void Update(uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
@@ -502,10 +501,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void AddObjectToRemoveList(WorldObject* obj);
         void AddObjectToSwitchList(WorldObject* obj, bool on);
         virtual void DelayedUpdate(uint32 diff);
-
-        void resetMarkedCells() { marked_cells.reset(); }
-        bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }
-        void markCell(uint32 pCellId) { marked_cells.set(pCellId); }
 
         bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
         uint32 GetPlayersCountExceptGMs() const;
@@ -816,7 +811,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         MapQuadTree* _quadTree;
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
-        std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
 
         bool i_scriptLock;
         std::set<WorldObject*> i_objectsToRemove;
@@ -966,6 +960,7 @@ class TC_GAME_API PartitionMap : public Map
         Map* GetParent() override { return _parent; }
         Bounds GetMapBounds() const override;
         void UpdateWeather(uint32 t_diff) override { /* do nothing, parent updates weather */ }
+        void Update(uint32) override;
 
         void SendZoneDynamicInfo(uint32 zoneId, Player* player) const override
         {
