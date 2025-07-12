@@ -1780,11 +1780,6 @@ public:
     {
         for (auto const& p : gameObjectMap)
         {
-            if (!p.second)
-            {
-                TC_LOG_ERROR("quadtrees", "Null GameObject pointer in gameObjectMap for event {}", _eventId);
-                continue;
-            }
             if (p.second->IsInWorld())
             {
                 TC_LOG_DEBUG("quadtrees", "Attempt OnGameEventHook {}", _eventId);
