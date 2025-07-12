@@ -181,11 +181,17 @@ void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&&
     float minY = centerY - radius;
     float maxY = centerY + radius;
 
-    std::function<void(const QuadNode<T>*)> query = [&](const QuadNode<T>* node)
+    std::stack<const QuadNode<T>*> nodeStack;
+    nodeStack.push(root.get());
+    while (!nodeStack.empty())
     {
+        const QuadNode<T>* node = nodeStack.top();
+        nodeStack.pop();
+
         if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
             node->_bounds.maxY < minY || node->_bounds.minY > maxY)
-            return;
+            continue;
+
         for (T* obj : node->objects)
         {
             float x = obj->GetPositionX();
@@ -195,25 +201,33 @@ void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&&
             if (dx * dx + dy * dy <= radiusSq)
                 visitor(obj);
         }
+
         if (!node->IsLeaf())
         {
             for (const auto& child : node->children)
+            {
                 if (child)
-                    query(child.get());
+                    nodeStack.push(child.get());
+            }
         }
-    };
-    query(root.get());
+    }
 }
 
 template<typename T>
 template<typename Func>
 void QuadTree<T>::QueryRange(float minX, float minY, float maxX, float maxY, Func&& visitor) const
 {
-    std::function<void(const QuadNode<T>*)> query = [&](const QuadNode<T>* node)
+    std::stack<const QuadNode<T>*> nodeStack;
+    nodeStack.push(root.get());
+    while (!nodeStack.empty())
     {
+        const QuadNode<T>* node = nodeStack.top();
+        nodeStack.pop();
+
         if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
             node->_bounds.maxY < minY || node->_bounds.minY > maxY)
-            return;
+            continue;
+
         for (T* obj : node->objects)
         {
             float x = obj->GetPositionX();
@@ -221,33 +235,41 @@ void QuadTree<T>::QueryRange(float minX, float minY, float maxX, float maxY, Fun
             if (x >= minX && x <= maxX && y >= minY && y <= maxY)
                 visitor(obj);
         }
+
         if (!node->IsLeaf())
         {
             for (const auto& child : node->children)
+            {
                 if (child)
-                    query(child.get());
+                    nodeStack.push(child.get());
+            }
         }
-    };
-    query(root.get());
+    }
 }
 
 template<typename T>
 template<typename Func>
 void QuadTree<T>::QueryAll(Func&& visitor) const
 {
-    std::function<void(const QuadNode<T>*)> query = [&](const QuadNode<T>* node)
+    std::stack<const QuadNode<T>*> nodeStack;
+    nodeStack.push(root.get());
+    while (!nodeStack.empty())
     {
+        const QuadNode<T>* node = nodeStack.top();
+        nodeStack.pop();
 
         for (T* obj : node->objects)
         {
             visitor(obj);
         }
+
         if (!node->IsLeaf())
         {
             for (const auto& child : node->children)
+            {
                 if (child)
-                    query(child.get());
+                    nodeStack.push(child.get());
+            }
         }
-    };
-    query(root.get());
+    }
 }
