@@ -34,6 +34,7 @@
 #include "World.h"
 #include "WorldStatePackets.h"
 #include "TSMainThreadContext.h"
+#include "Transport.h"
 
 GameEventMgr* GameEventMgr::instance()
 {
