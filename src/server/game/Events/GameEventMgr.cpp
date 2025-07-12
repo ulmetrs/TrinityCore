@@ -1782,6 +1782,8 @@ public:
         {
             if (p.second->IsInWorld())
             {
+                if (p.second->GetEntry() == 181646)
+                    TC_LOG_DEBUG("quadtrees", "GameObject {} in gameObjectMap for event {}", p.second->GetEntry(), _eventId);
                 auto ai = p.second->AI();
                 if (!ai)
                 {
