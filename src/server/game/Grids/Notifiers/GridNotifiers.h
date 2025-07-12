@@ -33,6 +33,14 @@
 
 namespace Trinity
 {
+    struct TC_GAME_API ObjectCounter
+    {
+        size_t count = 0;
+
+        template<class T> void Visit(GridRefManager<T> &m) { count += m.size(); }
+        template<class T> void operator()(T*) { count++; }
+    };
+
     struct TC_GAME_API VisibleNotifier
     {
         Player &i_player;

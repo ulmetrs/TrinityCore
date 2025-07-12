@@ -24,106 +24,6 @@
 #include <cassert>
 
 template<typename T>
-QuadTree<T>::QuadTree(Bounds bounds, int maxObjects, float cellSize)
-    : _bounds(bounds), _maxObjects(maxObjects)
-{
-    float width = _bounds.maxX - _bounds.minX;
-    float height = _bounds.maxY - _bounds.minY;
-
-    // 1. Find center
-    float centerX = (_bounds.minX + _bounds.maxX) * 0.5f;
-    float centerY = (_bounds.minY + _bounds.maxY) * 0.5f;
-
-    // 2. Find the maximum side length
-    float side = std::max(width, height);
-
-    // 3. Expand both min/max to make square
-    float halfSide = side * 0.5f;
-    _bounds.minX = centerX - halfSide;
-    _bounds.maxX = centerX + halfSide;
-    _bounds.minY = centerY - halfSide;
-    _bounds.maxY = centerY + halfSide;
-
-    // 4. Compute depth so that smallest quadrant is <= cellSize
-    _maxDepth = static_cast<int>(std::ceil(std::log2(side / cellSize)));
-
-    // 5. Create the root node using the new square bounds and computed depth
-    root = std::make_unique<QuadNode<T>>(_bounds, 0, _maxObjects, _maxDepth);
-}
-
-template<typename T>
-void QuadTree<T>::Clear()
-{
-    std::function<void(QuadNode<T>*)> clearNode = [&](QuadNode<T>* node)
-    {
-        for (T* obj : node->objects)
-            obj->SetQuadNode(nullptr);
-        if (!node->IsLeaf())
-        {
-            for (auto& child : node->children)
-                if (child)
-                    clearNode(child.get());
-        }
-    };
-    clearNode(root.get());
-    root = std::make_unique<QuadNode<T>>(_bounds, 0, _maxObjects, _maxDepth);
-}
-
-template<typename T>
-void QuadTree<T>::Insert(T* obj)
-{
-    float x = obj->GetPositionX();
-    float y = obj->GetPositionY();
-    if (x < _bounds.minX || x > _bounds.maxX || y < _bounds.minY || y > _bounds.maxY) {
-        TC_LOG_ERROR("quadtrees", "Object {} position ({}, {}) is outside tree bounds", 
-                     obj->GetGUID().ToString(), x, y);
-        return;
-    }
-
-    QuadNode<T>* currentNode = static_cast<QuadNode<T>*>(obj->GetQuadNode());
-    QuadNode<T>* node = root.get();
-
-    // Traverse to the correct leaf node
-    while (true)
-    {
-        if (node->IsLeaf())
-        {
-            // If already in this node, do nothing
-            if (currentNode == node)
-                return;
-
-            // Remove from previous node if needed
-            if (currentNode)
-                currentNode->Remove(obj);
-
-            node->objects.push_back(obj);
-            obj->SetQuadNode(node);
-
-            if (node->objects.size() > static_cast<size_t>(node->maxObjects) && node->depth < node->maxDepth)
-            {
-                node->Subdivide();
-
-                // Re-insert objects into children
-                auto objs = std::move(node->objects);
-                node->objects.clear();
-                for (T* o : objs)
-                {
-                    int idx = node->GetChildIndex(o->GetPositionX(), o->GetPositionY());
-                    node->children[idx]->objects.push_back(o);
-                    o->SetQuadNode(node->children[idx].get());
-                }
-            }
-            break;
-        }
-        else
-        {
-            int idx = node->GetChildIndex(obj->GetPositionX(), obj->GetPositionY());
-            node = node->children[idx].get();
-        }
-    }
-}
-
-template<typename T>
 void QuadNode<T>::Remove(T* obj)
 {
     auto it = std::find(objects.begin(), objects.end(), obj);
@@ -162,7 +62,114 @@ int QuadNode<T>::GetChildIndex(float x, float y) const
         return (y < midY) ? 3 : 1; // SE : NE
 }
 
+template<typename T>
+QuadTree<T>::QuadTree(Bounds bounds, size_t maxObjects, float cellSize)
+    : _bounds(bounds), _maxObjects(maxObjects)
+{
+    ASSERT(bounds.minX >= -MAP_HALFSIZE && bounds.minY >= -MAP_HALFSIZE);
+    ASSERT(bounds.maxX <= MAP_HALFSIZE && bounds.maxY <= MAP_HALFSIZE);
+    ASSERT(bounds.minX < bounds.maxX && bounds.minY < bounds.maxY);
+    ASSERT(maxObjects > 0);
+    ASSERT(cellSize > 0);
 
+    float width = _bounds.maxX - _bounds.minX;
+    float height = _bounds.maxY - _bounds.minY;
+
+    // 1. Find center
+    float centerX = (_bounds.minX + _bounds.maxX) * 0.5f;
+    float centerY = (_bounds.minY + _bounds.maxY) * 0.5f;
+
+    // 2. Find the maximum side length
+    float side = std::max(width, height);
+
+    // 3. Expand both min/max to make square
+    float halfSide = side * 0.5f;
+    _bounds.minX = centerX - halfSide;
+    _bounds.maxX = centerX + halfSide;
+    _bounds.minY = centerY - halfSide;
+    _bounds.maxY = centerY + halfSide;
+
+    // 4. Compute depth so that smallest quadrant is <= cellSize
+    _maxDepth = side <= 0 ? 0 : static_cast<int>(std::ceil(std::log2(side / cellSize)));
+
+    // 5. Create the root node using the new square bounds and computed depth
+    root = std::make_unique<QuadNode<T>>(_bounds, 0, _maxObjects, _maxDepth);
+}
+
+template<typename T>
+void QuadTree<T>::Clear()
+{
+    std::function<void(QuadNode<T>*)> clearNode = [&](QuadNode<T>* node)
+    {
+        for (T* obj : node->objects)
+            obj->SetQuadNode(nullptr);
+        if (!node->IsLeaf())
+        {
+            for (auto& child : node->children)
+                if (child)
+                    clearNode(child.get());
+        }
+    };
+    clearNode(root.get());
+    root = std::make_unique<QuadNode<T>>(_bounds, 0, _maxObjects, _maxDepth);
+}
+
+template<typename T>
+bool QuadTree<T>::Insert(T* obj)
+{
+    QuadNode<T>* currentNode = static_cast<QuadNode<T>*>(obj->GetQuadNode());
+
+    float x = obj->GetPositionX();
+    float y = obj->GetPositionY();
+    if (x < _bounds.minX || x > _bounds.maxX || y < _bounds.minY || y > _bounds.maxY)
+    {
+        if (currentNode)
+            currentNode->Remove(obj);
+        return false;
+    }
+    
+    QuadNode<T>* node = root.get();
+
+    // Traverse to the correct leaf node
+    while (true)
+    {
+        if (node->IsLeaf())
+        {
+            // If already in this node, do nothing
+            if (currentNode == node)
+                return true;
+
+            // Remove from previous node if needed
+            if (currentNode)
+                currentNode->Remove(obj);
+
+            obj->SetQuadNode(node);
+            node->objects.push_back(obj);
+
+            if (node->objects.size() > node->maxObjects && node->depth < node->maxDepth)
+            {
+                node->Subdivide();
+
+                // Re-insert objects into children
+                auto objs = std::move(node->objects);
+                node->objects.clear();
+                for (T* o : objs)
+                {
+                    int idx = node->GetChildIndex(o->GetPositionX(), o->GetPositionY());
+                    o->SetQuadNode(node->children[idx].get());
+                    node->children[idx]->objects.push_back(o);
+                }
+            }
+
+            return true;
+        }
+        else
+        {
+            int idx = node->GetChildIndex(obj->GetPositionX(), obj->GetPositionY());
+            node = node->children[idx].get();
+        }
+    }
+}
 
 template<typename T>
 template<typename Func>

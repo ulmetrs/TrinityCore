@@ -21,9 +21,6 @@
 #include "GridDefines.h"
 #include <vector>
 #include <memory>
-#include <algorithm>
-#include <functional>
-#include <cmath>
 
 class Player;
 class GameObject;
@@ -44,7 +41,7 @@ class QuadNode
 {
     friend class QuadTree<T>;
 public:
-    QuadNode(Bounds bounds, int depth, int maxObjects, int maxDepth)
+    QuadNode(Bounds bounds, size_t depth, size_t maxObjects, size_t maxDepth)
         : _bounds(bounds), depth(depth), maxObjects(maxObjects), maxDepth(maxDepth) {}
 
     bool IsLeaf() const { return !children[0]; }
@@ -52,24 +49,24 @@ public:
     void Subdivide();
     int GetChildIndex(float x, float y) const;
     Bounds GetBounds() const { return _bounds; }
-    int GetDepth() const { return depth; }
+    size_t GetDepth() const { return depth; }
 
 private:
     Bounds _bounds;
     std::vector<T*> objects;
     std::unique_ptr<QuadNode<T>> children[4];
-    int depth;
-    int maxObjects;
-    int maxDepth;
+    size_t depth;
+    size_t maxObjects;
+    size_t maxDepth;
 };
 
 template<typename T>
 class QuadTree
 {
 public:
-    QuadTree(Bounds bounds, int maxObjects = 8, float cellSize = SIZE_OF_GRID_CELL);
+    QuadTree(Bounds bounds, size_t maxObjects = 8, float cellSize = SIZE_OF_GRID_CELL);
     void Clear();
-    void Insert(T* obj);
+    bool Insert(T* obj);
 
     template<typename Func>
     void QueryCircle(float centerX, float centerY, float radius, Func&& visitor) const;
@@ -83,8 +80,8 @@ public:
 private:
     std::unique_ptr<QuadNode<T>> root;
     Bounds _bounds;
-    int _maxObjects;
-    int _maxDepth;
+    size_t _maxObjects;
+    size_t _maxDepth;
 };
 
 #include "QuadTree.tpp"

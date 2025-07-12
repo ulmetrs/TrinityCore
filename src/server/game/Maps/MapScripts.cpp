@@ -725,10 +725,6 @@ void Map::ScriptsProcess()
                     case SF_CASTSPELL_SEARCH_CREATURE: // source -> creature with entry
                         uSource = dynamic_cast<WorldObject*>(source);
                         uTarget = uSource ? uSource->FindNearestCreature(abs(step.script->CastSpell.CreatureEntry), step.script->CastSpell.SearchRadius) : nullptr;
-                        if (step.script->CastSpell.SpellID == 36804)
-                        {
-                            TC_LOG_DEBUG("quadtrees", "Called FindNearestCreature for {} in radius {} is null? {}", abs(step.script->CastSpell.CreatureEntry), step.script->CastSpell.SearchRadius, !uTarget);
-                        }
                         break;
                 }
 

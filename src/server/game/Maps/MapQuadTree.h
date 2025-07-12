@@ -56,18 +56,18 @@ public:
     struct always_false : std::false_type {};
 
     template<typename T>
-    void Insert(T* object)
+    bool Insert(T* object)
     {
         if constexpr (std::is_same_v<T, Player>)
-            playerTree.Insert(object);
+            return playerTree.Insert(object);
         else if constexpr (std::is_same_v<T, GameObject>)
-            gameObjectTree.Insert(object);
+            return gameObjectTree.Insert(object);
         else if constexpr (std::is_same_v<T, Creature>)
-            (object->IsStoredInWorldObjectGridContainer() ? worldCreatureTree : gridCreatureTree).Insert(object);
+            return (object->IsStoredInWorldObjectGridContainer() ? worldCreatureTree : gridCreatureTree).Insert(object);
         else if constexpr (std::is_same_v<T, DynamicObject>)
-            (object->IsStoredInWorldObjectGridContainer() ? worldDynamicObjectTree : gridDynamicObjectTree).Insert(object);
+            return (object->IsStoredInWorldObjectGridContainer() ? worldDynamicObjectTree : gridDynamicObjectTree).Insert(object);
         else if constexpr (std::is_same_v<T, Corpse>)
-            (object->IsStoredInWorldObjectGridContainer() ? worldCorpseTree : gridCorpseTree).Insert(object);
+            return (object->IsStoredInWorldObjectGridContainer() ? worldCorpseTree : gridCorpseTree).Insert(object);
         else
             static_assert(always_false<T>::value, "Unsupported type for MapQuadTree::Insert");
     }
