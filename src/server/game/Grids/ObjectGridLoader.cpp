@@ -59,10 +59,6 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
     if (obj->IsGameObject())
         map->DebugGameObjects.push_back(obj->ToGameObject());
 
-    // For full cutover to quad trees the loading basically needs to be replaced last, as we don't
-    // want to create duplicate objects
-    map->GetQuadTree()->Insert(obj);
-
     obj->AddToGrid(m);
     obj->SetCell(Cell(cell));
     obj->AddToWorld();
@@ -70,6 +66,10 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
         map->AddToActive(obj);
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         map->AddToWaypointCreatures(obj->ToCreature());
+
+    // For full cutover to quad trees the loading basically needs to be replaced last, as we don't
+    // want to create duplicate objects
+    map->GetQuadTree()->Insert(obj);
 
     ++count;
 }

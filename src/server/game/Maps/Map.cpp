@@ -381,10 +381,6 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
         TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
     }
 
-
-    ASSERT(obj->GetQuadNode());
-    _quadTree->Insert(obj);
-
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
     ASSERT(ngrid != nullptr);
 
@@ -404,6 +400,10 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
     }
 
     obj->m_isTempWorldObject = on;
+
+    // Must be after changing object type
+    ASSERT(obj->GetQuadNode());
+    _quadTree->Insert(obj);
 }
 
 template<>
@@ -430,9 +430,6 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
         TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
     }
 
-    ASSERT(obj->GetQuadNode());
-    _quadTree->Insert(obj);
-
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
     ASSERT(ngrid != nullptr);
 
@@ -450,11 +447,15 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
         grid.AddGridObject(obj);
         RemoveWorldObject(obj);
     }
+
+    ASSERT(obj->GetQuadNode());
+    _quadTree->Insert(obj);
 }
 
 template<class T>
 void Map::DeleteFromWorld(T* obj)
 {
+    TC_LOG_DEBUG("maps", "Deleting object {} from world", obj->GetGUID().ToString());
     // Note: In case resurrectable corpse and pet its removed from global lists in own destructor
     delete obj;
 }
@@ -1075,9 +1076,6 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 
     player->CombatStop();
 
-    ASSERT(player->GetQuadNode());
-    static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
-
     bool const inWorld = player->IsInWorld();
     player->RemoveFromWorld();
     SendRemoveTransports(player);
@@ -1090,6 +1088,9 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
         player->RemoveFromGrid();
     else
         ASSERT(remove); //maybe deleted in logoutplayer when player is not in a map
+
+    ASSERT(player->GetQuadNode());
+    static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
 
     if (remove)
         DeleteFromWorld(player);
@@ -1134,9 +1135,6 @@ void Map::RemoveFromMap(T *obj, bool remove)
     if (obj->IsGameObject())
         DebugGameObjects.remove(obj->ToGameObject());
 
-    ASSERT(obj->GetQuadNode());
-    static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
 
@@ -1153,6 +1151,9 @@ void Map::RemoveFromMap(T *obj, bool remove)
     obj->RemoveFromGrid();
 
     obj->ResetMap();
+
+    ASSERT(obj->GetQuadNode());
+    static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
 
     if (remove)
         DeleteFromWorld(obj);
