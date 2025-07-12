@@ -652,11 +652,11 @@ bool Map::AddToMap(T* obj)
     ASSERT(obj->GetQuadNode() == nullptr);
     // AddToMap is called during the update tree query, so we need to delay insertion for these types
     if (obj->IsCreature())
-        _relocatedCreatures.push_back(obj->ToCreature());
+        _relocatedCreatures.insert(obj->ToCreature());
     else if (obj->IsGameObject())
-        _relocatedGameObjects.push_back(obj->ToGameObject());
+        _relocatedGameObjects.insert(obj->ToGameObject());
     else if (obj->IsDynObject())
-        _relocatedDynamicObjects.push_back(obj->ToDynObject());
+        _relocatedDynamicObjects.insert(obj->ToDynObject());
     else
         _quadTree->Insert(obj);
 
@@ -1021,7 +1021,7 @@ void Map::Update(uint32 t_diff)
         for (Creature* creature : _relocatedCreatures)
         {
             Cell old_cell = creature->GetCell();
-            Cell new_cell(x, y);
+            Cell new_cell(creature->GetPositionX(), creature->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
             {
                 creature->RemoveFromGrid();
@@ -1042,7 +1042,7 @@ void Map::Update(uint32 t_diff)
         for (GameObject* go : _relocatedGameObjects)
         {
             Cell old_cell = go->GetCell();
-            Cell new_cell(x, y);
+            Cell new_cell(go->GetPositionX(), go->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
             {
                 go->RemoveFromGrid();
@@ -1064,7 +1064,7 @@ void Map::Update(uint32 t_diff)
         for (DynamicObject* dynObj : _relocatedDynamicObjects)
         {
             Cell old_cell = dynObj->GetCell();
-            Cell new_cell(x, y);
+            Cell new_cell(dynObj->GetPositionX(), dynObj->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
             {
                 dynObj->RemoveFromGrid();
