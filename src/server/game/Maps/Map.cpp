@@ -1012,89 +1012,6 @@ void Map::Update(uint32 t_diff)
         }
     }
 
-    // We must delay grid relocation until after entities are updated to avoid updating multiple times (by moving to an unmarked cell)
-    {
-        ZoneScopedN("Map::Update::GridRelocations::Creatures")
-
-        for (Creature* creature : _relocatedCreatures)
-        {
-            ASSERT(creature->GetQuadNode());
-            _quadTree->Insert(creature);
-
-            Cell old_cell = creature->GetCell();
-            Cell new_cell(creature->GetPositionX(), creature->GetPositionY());
-            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-            {
-                creature->RemoveFromGrid();
-
-                if (old_cell.DiffGrid(new_cell))
-                    EnsureGridLoaded(new_cell);
-
-                AddToGrid(creature, new_cell);
-            }
-            creature->UpdatePositionData();
-            creature->UpdateObjectVisibility(false);
-
-            if (creature->ShouldRelocateUpdateMapPartition())
-                _updateMapPartitionCreatures.insert(creature);
-        }
-
-        _relocatedCreatures.clear();
-    }
-
-    {
-        ZoneScopedN("Map::Update::GridRelocations::GameObjects")
-
-        for (GameObject* go : _relocatedGameObjects)
-        {
-            ASSERT(go->GetQuadNode());
-            _quadTree->Insert(go);
-
-            Cell old_cell = go->GetCell();
-            Cell new_cell(go->GetPositionX(), go->GetPositionY());
-            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-            {
-                go->RemoveFromGrid();
-
-                if (old_cell.DiffGrid(new_cell))
-                    EnsureGridLoaded(new_cell);
-
-                AddToGrid(go, new_cell);
-            }
-            go->UpdateModelPosition();
-            go->UpdatePositionData();
-            go->UpdateObjectVisibility(false);
-        }
-
-        _relocatedGameObjects.clear();
-    }
-
-    {
-        ZoneScopedN("Map::Update::GridRelocations::DynamicObjects")
-
-        for (DynamicObject* dynObj : _relocatedDynamicObjects)
-        {
-            ASSERT(dynObj->GetQuadNode());
-            _quadTree->Insert(dynObj);
-
-            Cell old_cell = dynObj->GetCell();
-            Cell new_cell(dynObj->GetPositionX(), dynObj->GetPositionY());
-            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-            {
-                dynObj->RemoveFromGrid();
-
-                if (old_cell.DiffGrid(new_cell))
-                    EnsureGridLoaded(new_cell);
-
-                AddToGrid(dynObj, new_cell);
-            }
-            dynObj->UpdatePositionData();
-            dynObj->UpdateObjectVisibility(false);
-        }
-
-        _relocatedDynamicObjects.clear();
-    }
-
     SendObjectUpdates();
 
     ///- Process necessary scripts
@@ -1341,73 +1258,77 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
-    if (creature->GetSpawnId() == 21404 /* || other conditions */)
-    {
-        TC_LOG_DEBUG("quadtrees", "Creature Relocation: {}", creature->GetQuadNodeInfo());
-    }
-
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
+
+    ASSERT(creature->GetQuadNode());
+    _quadTree->Insert(creature);
 
     Cell old_cell = creature->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
     {
-        _relocatedCreatures.insert(creature);
-    }
-    else
-    {
-        ASSERT(creature->GetQuadNode());
-        _quadTree->Insert(creature);
+        creature->RemoveFromGrid();
 
-        creature->UpdatePositionData();
-        creature->UpdateObjectVisibility(false);
+        if (old_cell.DiffGrid(new_cell))
+            EnsureGridLoaded(new_cell);
 
-        if (creature->ShouldRelocateUpdateMapPartition())
-            _updateMapPartitionCreatures.insert(creature);
+        AddToGrid(creature, new_cell);
     }
+
+    creature->UpdatePositionData();
+    creature->UpdateObjectVisibility(false);
+
+    if (creature->ShouldRelocateUpdateMapPartition())
+        _updateMapPartitionCreatures.insert(creature);
 }
 
 void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation)
 {
     go->Relocate(x, y, z, orientation);
 
+    ASSERT(go->GetQuadNode());
+    _quadTree->Insert(go);
+
     Cell old_cell = go->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
     {
-        _relocatedGameObjects.insert(go);
-    }
-    else
-    {
-        ASSERT(go->GetQuadNode());
-        _quadTree->Insert(go);
+        go->RemoveFromGrid();
 
-        go->UpdateModelPosition();
-        go->UpdatePositionData();
-        go->UpdateObjectVisibility(false);
+        if (old_cell.DiffGrid(new_cell))
+            EnsureGridLoaded(new_cell);
+
+        AddToGrid(go, new_cell);
     }
+
+    go->UpdateModelPosition();
+    go->UpdatePositionData();
+    go->UpdateObjectVisibility(false);
 }
 
 void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float z, float orientation)
 {
     dynObj->Relocate(x, y, z, orientation);
 
+    ASSERT(dynObj->GetQuadNode());
+    _quadTree->Insert(dynObj);
+
     Cell old_cell = dynObj->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
     {
-        _relocatedDynamicObjects.insert(dynObj);
-    }
-    else
-    {
-        ASSERT(dynObj->GetQuadNode());
-        _quadTree->Insert(dynObj);
+        dynObj->RemoveFromGrid();
 
-        dynObj->UpdatePositionData();
-        dynObj->UpdateObjectVisibility(false);
+        if (old_cell.DiffGrid(new_cell))
+            EnsureGridLoaded(new_cell);
+
+        AddToGrid(dynObj, new_cell);
     }
+
+    dynObj->UpdatePositionData();
+    dynObj->UpdateObjectVisibility(false);
 }
 
 void Map::UnloadGrid(NGridType& ngrid)
@@ -3723,9 +3644,6 @@ void PartitionMap::Update(uint32 t_diff)
     ZoneScopedNC("PartitionMap::Update", MAP_UPDATE_COLOR)
 
     Map::Update(t_diff);
-
-    if (i_data)
-        i_data->Update(t_diff);
 }
 
 Bounds PartitionMap::GetMapBounds() const
