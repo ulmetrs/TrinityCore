@@ -248,6 +248,7 @@ namespace Trinity
         ListSearcher(Container& container, Check& check)
             : ContainerInserter<typename Container::value_type>(container), i_check(check) { }
 
+        template<typename T> void operator()(T) { }
         void operator()(typename Container::value_type obj)
         {
             if (i_check(obj))
