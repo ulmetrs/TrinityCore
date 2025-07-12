@@ -1423,21 +1423,18 @@ void Player::Update(uint32 p_time)
         WorldObject const* viewPoint = m_seer;
         if (viewPoint->isNeedNotify(NOTIFY_VISIBILITY_CHANGED) && (this == viewPoint || viewPoint->IsPositionValid()))
         {
-            
+            ZoneScopedN("Player::Update::RelocationNotifierQuadTree")
             PlayerRelocationNotifier relocate(*this);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                ZoneScopedN("Player::Update::RelocationNotifierQuadTree")
-
-                viewPoint->QueryMap(MAPQT_ALL, 100, relocate);
-            }
-            else
-            {
-                ZoneScopedN("Player::Update::RelocationNotifier")
-
-                Cell::VisitAllObjects(viewPoint, relocate, 100, false);
-            }
+            viewPoint->QueryMap(MAPQT_ALL, 100, relocate);
             relocate.SendToSelf();
+
+            Trinity::ObjectCounter quadCounter;
+            viewPoint->QueryMap(MAPQT_ALL, 100, quadCounter);
+            TC_LOG_DEBUG("quadtrees", "QuadTrees Relocation Notifier objects found: {}", quadCounter.count);
+
+            Trinity::ObjectCounter gridCounter;
+            Cell::VisitAllObjects(viewPoint, gridCounter, 100, false);
+            TC_LOG_DEBUG("quadtrees", "Grid Relocation Notifier objects found: {}", gridCounter.count);
         }
 
         ResetAllNotifies();

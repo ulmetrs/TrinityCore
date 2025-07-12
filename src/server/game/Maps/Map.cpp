@@ -455,7 +455,6 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
 template<class T>
 void Map::DeleteFromWorld(T* obj)
 {
-    TC_LOG_DEBUG("quadtrees", "Deleting object {} from world", obj->GetGUID().ToString());
     // Note: In case resurrectable corpse and pet its removed from global lists in own destructor
     delete obj;
 }
@@ -463,7 +462,6 @@ void Map::DeleteFromWorld(T* obj)
 template<>
 void Map::DeleteFromWorld(Player* player)
 {
-    TC_LOG_DEBUG("quadtrees", "Deleting player {} from world", player->GetGUID().ToString());
     ObjectAccessor::RemoveObject(player);
     RemoveUpdateObject(player); /// @todo I do not know why we need this, it should be removed in ~Object anyway
     delete player;
@@ -472,7 +470,6 @@ void Map::DeleteFromWorld(Player* player)
 template<>
 void Map::DeleteFromWorld(Transport* transport)
 {
-    TC_LOG_DEBUG("quadtrees", "Deleting transport {} from world", transport->GetGUID().ToString());
     ObjectAccessor::RemoveObject(transport);
     delete transport;
 }
