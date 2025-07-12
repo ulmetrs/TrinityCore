@@ -240,6 +240,21 @@ namespace Trinity
         }
     };
 
+    template<class Container, class Check>
+    struct ListSearcher : ContainerInserter<typename Container::value_type>
+    {
+        Check& i_check;
+
+        ListSearcher(Container& container, Check& check)
+            : ContainerInserter<typename Container::value_type>(container), i_check(check) { }
+
+        void operator()(typename Container::value_type obj)
+        {
+            if (i_check(obj))
+                this->Insert(obj);
+        }
+    };
+
     template<class Check>
     struct WorldObjectSearcher
     {
@@ -296,6 +311,7 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
         void operator()(GameObject* g);
         void operator()(Creature* c);
@@ -328,6 +344,7 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p);
         void operator()(GameObject* g);
         void operator()(Creature* c);
@@ -407,6 +424,7 @@ namespace Trinity
 
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
+        template<class T> void operator()(T*) { }
         void operator()(Player* p)
         {
             if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_PLAYER))
@@ -417,7 +435,6 @@ namespace Trinity
             // @tswow-end
             i_do(p);
         }
-
         void operator()(GameObject* g)
         {
             if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_GAMEOBJECT))
@@ -428,7 +445,6 @@ namespace Trinity
             // @tswow-end
             i_do(g);
         }
-
         void operator()(Creature* c)
         {
             if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CREATURE))
@@ -439,7 +455,6 @@ namespace Trinity
             // @tswow-end
             i_do(c);
         }
-
         void operator()(DynamicObject* d)
         {
             if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_DYNAMICOBJECT))
@@ -450,7 +465,6 @@ namespace Trinity
             // @tswow-end
             i_do(d);
         }
-
         void operator()(Corpse* c)
         {
             if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CORPSE))

@@ -834,7 +834,7 @@ void Map::Update(uint32 t_diff)
             TC_LOG_DEBUG("quadtrees", "Start Search on map {}", GetId());
             std::list<Creature*> creatures;
             Trinity::AllCreaturesOfEntry check(21404);
-            Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntry> searcher(me, creatures, check);
+            Trinity::ListSearcher<std::list<Creature*>, Trinity::AllCreaturesOfEntry> searcher(creatures, check);
             _quadTree->QueryAll(MAPQT_CREATURE, searcher);
             TC_LOG_DEBUG("quadtrees", "Finish Search on map {} - found {}", GetId(), creatures.size());
         }
