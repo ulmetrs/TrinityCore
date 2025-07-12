@@ -126,6 +126,9 @@ Map* MapManager::CreateBaseMap(uint32 id)
         map = new MapInstanced(id);
         std::unique_ptr<Map> ptr(map); 
         _baseMaps[id] = std::move(ptr);
+
+        // All maps need a quad tree set before any updates, even empty ones
+        map->CreateQuadTree();
     }
     else
     {
