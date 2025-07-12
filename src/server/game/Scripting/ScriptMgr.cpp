@@ -402,8 +402,6 @@ class CreatureGameObjectScriptRegistrySwapHooks
 
     static void UnloadDestroyScript(Creature* creature)
     {
-        if (creature->GetEntry() == 181646)
-            TC_LOG_DEBUG("quadtrees", "AIM_Destroy From ScriptMgr {}", creature->GetEntry());
         bool const destroyed = creature->AIM_Destroy();
         ASSERT(destroyed,
                "Destroying the AI should never fail here!");
@@ -421,8 +419,6 @@ class CreatureGameObjectScriptRegistrySwapHooks
 
     static void UnloadDestroyScript(GameObject* gameobject)
     {
-        if (gameobject->GetEntry() == 181646)
-            TC_LOG_DEBUG("quadtrees", "UnloadDestroyScript for GameObject {}", gameobject->GetEntry());
         gameobject->AIM_Destroy();
 
         ASSERT(!gameobject->AI(),
@@ -466,8 +462,6 @@ class CreatureGameObjectScriptRegistrySwapHooks
         ASSERT(!gameobject->AI(),
                "The AI should be null here!");
 
-        if (gameobject->GetEntry() == 181646)
-            TC_LOG_DEBUG("quadtrees", "AIM_Initialize From ScriptMgr {}", gameobject->GetEntry());
         gameobject->AIM_Initialize();
     }
 

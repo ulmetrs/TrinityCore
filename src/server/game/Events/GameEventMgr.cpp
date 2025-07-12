@@ -34,7 +34,6 @@
 #include "World.h"
 #include "WorldStatePackets.h"
 #include "TSMainThreadContext.h"
-#include "Transport.h"
 
 GameEventMgr* GameEventMgr::instance()
 {
@@ -1780,22 +1779,8 @@ public:
     void Visit(std::unordered_map<ObjectGuid, GameObject*>& gameObjectMap)
     {
         for (auto const& p : gameObjectMap)
-        {
             if (p.second->IsInWorld())
-            {
-                if (p.second->GetEntry() == 181646)
-                    TC_LOG_DEBUG("quadtrees", "GameObject {} in gameObjectMap for event {}", p.second->GetEntry(), _eventId);
-                auto ai = p.second->AI();
-                if (!ai)
-                {
-                    TC_LOG_ERROR("quadtrees", "Null AI pointer for GameObject {} in event {}", p.second->GetEntry(), _eventId);
-                    if (dynamic_cast<GenericTransport*>(p.second))
-                        TC_LOG_DEBUG("quadtrees", "Null AI pointer for Transport {} in event {}", p.second->GetEntry(), _eventId);
-                    continue;
-                }
-                ai->OnGameEvent(_activate, _eventId);
-            }
-        }
+                p.second->AI()->OnGameEvent(_activate, _eventId);
     }
 
     template<class T>

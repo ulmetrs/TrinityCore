@@ -171,16 +171,12 @@ GameObject* GameObject::CreateGameObject(uint32 entry)
 
 void GameObject::AIM_Destroy()
 {
-    if (GetEntry() == 181646)
-        TC_LOG_DEBUG("quadtrees", "AIM_Destroy for GameObject {}", GetEntry());
     delete m_AI;
     m_AI = nullptr;
 }
 
 bool GameObject::AIM_Initialize()
 {
-    if (GetEntry() == 181646)
-        TC_LOG_DEBUG("quadtrees", "AIM_Initialize for GameObject {}", GetEntry());
     AIM_Destroy();
 
     m_AI = FactorySelector::SelectGameObjectAI(this);
@@ -189,8 +185,7 @@ bool GameObject::AIM_Initialize()
         return false;
 
     m_AI->InitializeAI();
-    if (GetEntry() == 181646)
-        TC_LOG_DEBUG("quadtrees", "AI is set for GameObject {}", GetEntry());
+
     return true;
 }
 
@@ -467,8 +462,6 @@ bool GameObject::Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, u
     }
 
     LastUsedScriptID = GetGOInfo()->ScriptId;
-    if (GetEntry() == 181646)
-        TC_LOG_DEBUG("quadtrees", "AIM_Initialize on Create for GameObject {}", GetEntry());
     AIM_Initialize();
 
     // Initialize loot duplicate count depending on raid difficulty
