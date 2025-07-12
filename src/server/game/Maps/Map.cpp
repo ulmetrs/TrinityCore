@@ -927,10 +927,10 @@ void Map::Update(uint32 t_diff)
                 continue;
 
 
-            m_creatureQuadTreeLogTimer += t_diff;
-            if (m_creatureQuadTreeLogTimer >= 1000)
+            DebugTimer += t_diff;
+            if (DebugTimer >= 1000)
             {
-                m_creatureQuadTreeLogTimer = 0;
+                DebugTimer = 0;
 
                 Trinity::ObjectCounter gridCounter;
                 Cell::VisitAllObjects(player, gridCounter, MAP_SIZE);
@@ -1005,19 +1005,6 @@ void Map::Update(uint32 t_diff)
 
             if (!player || !player->IsInWorld())
                 continue;
-
-            m_creatureQuadTreeLogTimer += t_diff;
-            if (m_creatureQuadTreeLogTimer >= 1000)
-            {
-                m_creatureQuadTreeLogTimer = 0;
-
-                Trinity::ObjectCounter gridCounter;
-                Cell::VisitAllObjects(player, gridCounter, MAP_SIZE);
-                TC_LOG_DEBUG("quadtrees", "Finish Grid Count on map {} - found {}", GetId(), gridCounter.count);
-                Trinity::ObjectCounter quadCounter;
-                _quadTree->QueryAll(MAPQT_ALL, quadCounter);
-                TC_LOG_DEBUG("quadtrees", "Finish Quad Count on map {} - found {}", GetId(), quadCounter.count);
-            }
 
             // update players at tick
             player->Update(t_diff);
