@@ -37,7 +37,7 @@ namespace Trinity
     {
         size_t count = 0;
 
-        template<class T> void Visit(GridRefManager<T> &m) { count += m.size(); }
+        template<class T> void Visit(GridRefManager<T> &m) { count += std::distance(m.begin(), m.end()); }
         template<class T> void operator()(T*) { count++; }
     };
 
