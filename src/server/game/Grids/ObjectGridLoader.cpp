@@ -54,11 +54,6 @@ class ObjectWorldLoader
 template <class T>
 void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* map, T *obj)
 {
-    if (obj->IsCreature())
-        map->DebugCreatures.push_back(obj->ToCreature());
-    if (obj->IsGameObject())
-        map->DebugGameObjects.push_back(obj->ToGameObject());
-
     obj->AddToGrid(m);
     obj->SetCell(Cell(cell));
     obj->AddToWorld();

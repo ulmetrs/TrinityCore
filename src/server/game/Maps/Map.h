@@ -359,10 +359,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         Map(uint32 id, uint32 instanceOrPartitionId);
         virtual ~Map();
 
-        uint32 DebugTimer = 0;
-        std::list<Creature*> DebugCreatures;
-        std::list<GameObject*> DebugGameObjects;
-
         MapEntry const* GetEntry() const { return i_mapEntry; }
 
         // @tswow-begin

@@ -880,8 +880,6 @@ void Map::Update(uint32 t_diff)
             //     quadCounter.count = 0;
             //     _quadTree->QueryAll(MAPQT_GAMEOBJECT, quadCounter);
             //     uint32 gameObjectCount = quadCounter.count;
-            //     TC_LOG_DEBUG("quadtrees", "Finish Quad Count on map {} - found {} creatures and {} game objects", GetId(), creatureCount, gameObjectCount);
-            //     TC_LOG_DEBUG("quadtrees", "Debug count on map {} - {} creatures and {} game objects", GetId(), DebugCreatures.size(), DebugGameObjects.size());
             // }
 
             // update players at tick
@@ -1200,11 +1198,6 @@ void Map::RemoveFromMap(T *obj, bool remove)
 {
     ZoneScopedN("Map::RemoveFromMap")
 
-    if (obj->IsCreature())
-        DebugCreatures.remove(obj->ToCreature());
-    if (obj->IsGameObject())
-        DebugGameObjects.remove(obj->ToGameObject());
-
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
 
@@ -1270,11 +1263,6 @@ template<class T>
 void Map::RemoveFromPartition(T *obj)
 {
     ZoneScopedN("Map::RemoveFromPartition")
-
-    if (obj->IsCreature())
-        DebugCreatures.remove(obj->ToCreature());
-    if (obj->IsGameObject())
-        DebugGameObjects.remove(obj->ToGameObject());
 
     ASSERT(obj->GetQuadNode());
     static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
