@@ -1094,8 +1094,9 @@ void WorldObject::ProcessPositionDataChanged(PositionFullTerrainStatus const& da
 
 void WorldObject::AddToWorld()
 {
-    if (IsInWorld())
-        return;
+    // TODO should we check this
+    //if (IsInWorld())
+    //    return;
 
     Object::AddToWorld();
     GetMap()->GetZoneAndAreaId(GetPhaseMask(), m_zoneId, m_areaId, GetPositionX(), GetPositionY(), GetPositionZ());
