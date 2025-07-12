@@ -327,6 +327,10 @@ void Map::InitVisibilityDistance()
 template<class T>
 void Map::AddToGrid(T* obj, Cell const& cell)
 {
+    if (dynamic_cast<GenericTransport*>(obj))
+    {
+        TC_LOG_DEBUG("quadtrees", "AddToGrid GenericTransport or descendant: GUID {}", obj->GetGUID().ToString());
+    }
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
     if (obj->IsStoredInWorldObjectGridContainer())
         grid->GetGridType(cell.CellX(), cell.CellY()).template AddWorldObject<T>(obj);
@@ -349,6 +353,10 @@ void Map::AddToGrid(Creature* obj, Cell const& cell)
 template<>
 void Map::AddToGrid(GameObject* obj, Cell const& cell)
 {
+    if (dynamic_cast<GenericTransport*>(obj))
+    {
+        TC_LOG_DEBUG("quadtrees", "AddToGrid GenericTransport or descendant: GUID {}", obj->GetGUID().ToString());
+    }
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
     grid->GetGridType(cell.CellX(), cell.CellY()).AddGridObject(obj);
 
@@ -1286,6 +1294,12 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
 
 void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation, bool respawnRelocationOnFail)
 {
+    // Add this debug check at the top:
+    if (dynamic_cast<GenericTransport*>(go))
+    {
+        TC_LOG_DEBUG("quadtrees", "GameObjectRelocation GenericTransport or descendant: GUID {}", go->GetGUID().ToString());
+    }
+
     Cell integrity_check(go->GetPositionX(), go->GetPositionY());
     Cell old_cell = go->GetCurrentCell();
 
@@ -1631,6 +1645,10 @@ bool Map::GameObjectCellRelocation(GameObject* go, Cell new_cell)
 
             go->RemoveFromGrid();
             AddToGrid(go, new_cell);
+            if (dynamic_cast<GenericTransport*>(go))
+            {
+                TC_LOG_DEBUG("quadtrees", "GameObjectCellRelocation AddedToGrid GenericTransport or descendant: GUID {}", go->GetGUID().ToString());
+            }
         }
         else
         {

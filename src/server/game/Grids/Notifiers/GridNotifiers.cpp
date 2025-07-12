@@ -444,8 +444,16 @@ template<class T>
 void ObjectUpdater::Visit(GridRefManager<T> &m)
 {
     for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
+    {
         if (iter->GetSource()->IsInWorld())
+        {
+            if (dynamic_cast<GenericTransport*>(iter->GetSource()))
+            {
+                TC_LOG_DEBUG("quadtrees", "ObjectUpdater GenericTransport or descendant: GUID {}", iter->GetSource()->GetGUID().ToString());
+            }
             iter->GetSource()->Update(i_timeDiff);
+        }
+    }
 }
 
 bool AnyDeadUnitObjectInRangeCheck::operator()(Player* u)
