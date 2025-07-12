@@ -1779,8 +1779,13 @@ public:
     void Visit(std::unordered_map<ObjectGuid, GameObject*>& gameObjectMap)
     {
         for (auto const& p : gameObjectMap)
+        {
             if (p.second->IsInWorld())
+            {
+                TC_LOG_DEBUG("quadtrees", "Attempt OnGameEventHook {}", _eventId);
                 p.second->AI()->OnGameEvent(_activate, _eventId);
+            }
+        }
     }
 
     template<class T>
