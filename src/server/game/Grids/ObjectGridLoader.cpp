@@ -61,10 +61,7 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
 
     // For full cutover to quad trees the loading basically needs to be replaced last, as we don't
     // want to create duplicate objects
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        map->GetQuadTree()->Insert(obj);
-    }
+    map->GetQuadTree()->Insert(obj);
 
     obj->AddToGrid(m);
     obj->SetCell(Cell(cell));
@@ -127,10 +124,7 @@ void ObjectWorldLoader::Visit(CorpseMapType& /*m*/)
     {
         for (Corpse* corpse : *corpses)
         {
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                i_map->GetQuadTree()->Insert(corpse);
-            }
+            i_map->GetQuadTree()->Insert(corpse);
 
             corpse->AddToWorld();
             GridType& cell = i_grid.GetGridType(i_cell.CellX(), i_cell.CellY());

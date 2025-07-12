@@ -381,11 +381,9 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
         TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
     }
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
-        _quadTree->Insert(obj);
-    }
+
+    ASSERT(obj->GetQuadNode());
+    _quadTree->Insert(obj);
 
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
     ASSERT(ngrid != nullptr);
@@ -432,11 +430,8 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
         TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
     }
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "SwitchGridContainers QuadTree Insert");
-        _quadTree->Insert(obj);
-    }
+    ASSERT(obj->GetQuadNode());
+    _quadTree->Insert(obj);
 
     NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
     ASSERT(ngrid != nullptr);
@@ -543,11 +538,8 @@ bool Map::AddPlayerToMap(Player* player)
     EnsureGridLoaded(cell);
     AddToGrid(player, cell);
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "AddPlayerToMap QuadTree Insert");
-        _quadTree->Insert(player);
-    }
+    ASSERT(player->GetQuadNode() == nullptr);
+    _quadTree->Insert(player);
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -586,11 +578,9 @@ bool Map::AddPlayerToPartition(Player* player)
     EnsureGridLoaded(cell);
     AddToGrid(player, cell);
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "AddPlayerToPartition QuadTree Insert");
-        _quadTree->Insert(player);
-    }
+
+    ASSERT(player->GetQuadNode() == nullptr);
+    _quadTree->Insert(player);
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -643,11 +633,8 @@ bool Map::AddToMap(T* obj)
     if (obj->IsGameObject())
         DebugGameObjects.push_back(obj->ToGameObject());
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        ASSERT(obj->GetQuadNode() == nullptr);
-        _quadTree->Insert(obj);
-    }
+    ASSERT(obj->GetQuadNode() == nullptr);
+    _quadTree->Insert(obj);
 
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
@@ -735,11 +722,8 @@ bool Map::AddToPartition(T* obj)
     if (obj->IsGameObject())
         DebugGameObjects.push_back(obj->ToGameObject());
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        ASSERT(obj->GetQuadNode() == nullptr);
-        _quadTree->Insert(obj);
-    }
+    ASSERT(obj->GetQuadNode() == nullptr);
+    _quadTree->Insert(obj);
 
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
@@ -1173,18 +1157,8 @@ void Map::Update(uint32 t_diff)
 
         for (Creature* creature : _relocatedCreatures)
         {
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                if (creature->GetSpawnId() == 21404 /* || other conditions */)
-                {
-                    TC_LOG_DEBUG("quadtrees", "Before Insert: {}", creature->GetQuadNodeInfo());
-                }
-                _quadTree->Insert(creature);
-                if (creature->GetSpawnId() == 21404 /* || other conditions */)
-                {
-                    TC_LOG_DEBUG("quadtrees", "After Insert: {}", creature->GetQuadNodeInfo());
-                }
-            }
+            ASSERT(creature->GetQuadNode());
+            _quadTree->Insert(creature);
 
             Cell old_cell = creature->GetCell();
             Cell new_cell(creature->GetPositionX(), creature->GetPositionY());
@@ -1212,10 +1186,8 @@ void Map::Update(uint32 t_diff)
 
         for (GameObject* go : _relocatedGameObjects)
         {
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                _quadTree->Insert(go);
-            }
+            ASSERT(go->GetQuadNode());
+            _quadTree->Insert(go);
 
             Cell old_cell = go->GetCell();
             Cell new_cell(go->GetPositionX(), go->GetPositionY());
@@ -1241,10 +1213,8 @@ void Map::Update(uint32 t_diff)
 
         for (DynamicObject* dynObj : _relocatedDynamicObjects)
         {
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                _quadTree->Insert(dynObj);
-            }
+            ASSERT(dynObj->GetQuadNode());
+            _quadTree->Insert(dynObj);
 
             Cell old_cell = dynObj->GetCell();
             Cell new_cell(dynObj->GetPositionX(), dynObj->GetPositionY());
@@ -1327,11 +1297,8 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 
     player->CombatStop();
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "RemovePlayerFromMap QuadNode Remove");
-        static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
-    }
+    ASSERT(player->GetQuadNode());
+    static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
 
     bool const inWorld = player->IsInWorld();
     player->RemoveFromWorld();
@@ -1364,11 +1331,8 @@ void Map::RemovePlayerFromPartition(Player* player)
 
     player->CombatStop();
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "RemovePlayerFromPartition QuadNode Remove");
-        static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
-    }
+    ASSERT(player->GetQuadNode());
+    static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
 
     //bool const inWorld = player->IsInWorld();
     player->RemoveFromPartition();
@@ -1392,11 +1356,8 @@ void Map::RemoveFromMap(T *obj, bool remove)
     if (obj->IsGameObject())
         DebugGameObjects.remove(obj->ToGameObject());
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        ASSERT(obj->GetQuadNode());
-        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-    }
+    ASSERT(obj->GetQuadNode());
+    static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
 
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
@@ -1466,11 +1427,8 @@ void Map::RemoveFromPartition(T *obj)
     if (obj->IsGameObject())
         DebugGameObjects.remove(obj->ToGameObject());
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        ASSERT(obj->GetQuadNode());
-        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
-    }
+    ASSERT(obj->GetQuadNode());
+    static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
 
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromPartition();
@@ -1496,11 +1454,8 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
     if (player->IsVehicle())
         player->GetVehicleKit()->RelocatePassengers();
 
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        //TC_LOG_DEBUG("quadtrees", "PlayerRelocation QuadTree Insert");
-        _quadTree->Insert(player);
-    }
+    ASSERT(player->GetQuadNode());
+    _quadTree->Insert(player);
 
     Cell old_cell = player->GetCell();
     Cell new_cell(x, y);
@@ -1542,18 +1497,8 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     }
     else
     {
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            if (creature->GetSpawnId() == 21404 /* || other conditions */)
-            {
-                TC_LOG_DEBUG("quadtrees", "Before Insert: {}", creature->GetQuadNodeInfo());
-            }
-            _quadTree->Insert(creature);
-            if (creature->GetSpawnId() == 21404 /* || other conditions */)
-            {
-                TC_LOG_DEBUG("quadtrees", "After Insert: {}", creature->GetQuadNodeInfo());
-            }
-        }
+        ASSERT(creature->GetQuadNode());
+        _quadTree->Insert(creature);
 
         creature->UpdatePositionData();
         creature->UpdateObjectVisibility(false);
@@ -1575,10 +1520,8 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
     }
     else
     {
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            _quadTree->Insert(go);
-        }
+        ASSERT(go->GetQuadNode());
+        _quadTree->Insert(go);
 
         go->UpdateModelPosition();
         go->UpdatePositionData();
@@ -1598,10 +1541,8 @@ void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float
     }
     else
     {
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            _quadTree->Insert(dynObj);
-        }
+        ASSERT(dynObj->GetQuadNode());
+        _quadTree->Insert(dynObj);
 
         dynObj->UpdatePositionData();
         dynObj->UpdateObjectVisibility(false);
