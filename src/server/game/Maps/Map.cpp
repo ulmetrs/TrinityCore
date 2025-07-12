@@ -455,7 +455,7 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
 template<class T>
 void Map::DeleteFromWorld(T* obj)
 {
-    TC_LOG_DEBUG("maps", "Deleting object {} from world", obj->GetGUID().ToString());
+    TC_LOG_DEBUG("quadtrees", "Deleting object {} from world", obj->GetGUID().ToString());
     // Note: In case resurrectable corpse and pet its removed from global lists in own destructor
     delete obj;
 }
@@ -463,6 +463,7 @@ void Map::DeleteFromWorld(T* obj)
 template<>
 void Map::DeleteFromWorld(Player* player)
 {
+    TC_LOG_DEBUG("quadtrees", "Deleting player {} from world", player->GetGUID().ToString());
     ObjectAccessor::RemoveObject(player);
     RemoveUpdateObject(player); /// @todo I do not know why we need this, it should be removed in ~Object anyway
     delete player;
@@ -471,6 +472,7 @@ void Map::DeleteFromWorld(Player* player)
 template<>
 void Map::DeleteFromWorld(Transport* transport)
 {
+    TC_LOG_DEBUG("quadtrees", "Deleting transport {} from world", transport->GetGUID().ToString());
     ObjectAccessor::RemoveObject(transport);
     delete transport;
 }
@@ -634,9 +636,6 @@ bool Map::AddToMap(T* obj)
     if (obj->IsGameObject())
         DebugGameObjects.push_back(obj->ToGameObject());
 
-    ASSERT(obj->GetQuadNode() == nullptr);
-    _quadTree->Insert(obj);
-
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(obj, cell);
@@ -649,6 +648,9 @@ bool Map::AddToMap(T* obj)
         AddToActive(obj);
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         AddToWaypointCreatures(obj->ToCreature());
+
+    ASSERT(obj->GetQuadNode() == nullptr);
+    _quadTree->Insert(obj);
 
     //something, such as vehicle, needs to be update immediately
     //also, trigger needs to cast spell, if not update, cannot see visual
