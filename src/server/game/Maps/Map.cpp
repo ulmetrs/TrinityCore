@@ -826,7 +826,7 @@ void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 // @tswow-begin tracy
 void Map::Update(uint32 t_diff)
 {
-    if (GetId() != 1)
+    if (GetId() != 0 && GetId() != 1)
         return;
 
     ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
@@ -932,9 +932,6 @@ void Map::Update(uint32 t_diff)
             {
                 DebugTimer = 0;
 
-                Trinity::ObjectCounter gridCounter;
-                Cell::VisitAllObjects(player, gridCounter, MAP_SIZE);
-                TC_LOG_DEBUG("quadtrees", "Finish Grid Count on map {} - found {}", GetId(), gridCounter.count);
                 Trinity::ObjectCounter quadCounter;
                 _quadTree->QueryAll(MAPQT_CREATURE, quadCounter);
                 uint32 creatureCount = quadCounter.count;
