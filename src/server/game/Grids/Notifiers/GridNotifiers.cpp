@@ -447,9 +447,9 @@ void ObjectUpdater::Visit(GridRefManager<T> &m)
     {
         if (iter->GetSource()->IsInWorld())
         {
-            if (dynamic_cast<GenericTransport*>(iter->GetSource()))
+            if (dynamic_cast<Transport*>(iter->GetSource()))
             {
-                TC_LOG_DEBUG("quadtrees", "ObjectUpdater GenericTransport or descendant: GUID {}", iter->GetSource()->GetGUID().ToString());
+                TC_LOG_DEBUG("quadtrees", "ObjectUpdater Transport or descendant: GUID {}", iter->GetSource()->GetGUID().ToString());
             }
             iter->GetSource()->Update(i_timeDiff);
         }

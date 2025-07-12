@@ -327,9 +327,9 @@ void Map::InitVisibilityDistance()
 template<class T>
 void Map::AddToGrid(T* obj, Cell const& cell)
 {
-    if (dynamic_cast<GenericTransport*>(obj))
+    if (dynamic_cast<Transport*>(obj))
     {
-        TC_LOG_DEBUG("quadtrees", "AddToGrid GenericTransport or descendant: GUID {}", obj->GetGUID().ToString());
+        TC_LOG_DEBUG("quadtrees", "AddToGrid Transport or descendant: GUID {}", obj->GetGUID().ToString());
     }
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
     if (obj->IsStoredInWorldObjectGridContainer())
@@ -353,9 +353,9 @@ void Map::AddToGrid(Creature* obj, Cell const& cell)
 template<>
 void Map::AddToGrid(GameObject* obj, Cell const& cell)
 {
-    if (dynamic_cast<GenericTransport*>(obj))
+    if (dynamic_cast<Transport*>(obj))
     {
-        TC_LOG_DEBUG("quadtrees", "AddToGrid GenericTransport or descendant: GUID {}", obj->GetGUID().ToString());
+        TC_LOG_DEBUG("quadtrees", "AddToGrid Transport or descendant: GUID {}", obj->GetGUID().ToString());
     }
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
     grid->GetGridType(cell.CellX(), cell.CellY()).AddGridObject(obj);
@@ -1295,9 +1295,9 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
 void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation, bool respawnRelocationOnFail)
 {
     // Add this debug check at the top:
-    if (dynamic_cast<GenericTransport*>(go))
+    if (dynamic_cast<Transport*>(go))
     {
-        TC_LOG_DEBUG("quadtrees", "GameObjectRelocation GenericTransport or descendant: GUID {}", go->GetGUID().ToString());
+        TC_LOG_DEBUG("quadtrees", "GameObjectRelocation Transport or descendant: GUID {}", go->GetGUID().ToString());
     }
 
     Cell integrity_check(go->GetPositionX(), go->GetPositionY());
@@ -1645,9 +1645,9 @@ bool Map::GameObjectCellRelocation(GameObject* go, Cell new_cell)
 
             go->RemoveFromGrid();
             AddToGrid(go, new_cell);
-            if (dynamic_cast<GenericTransport*>(go))
+            if (dynamic_cast<Transport*>(go))
             {
-                TC_LOG_DEBUG("quadtrees", "GameObjectCellRelocation AddedToGrid GenericTransport or descendant: GUID {}", go->GetGUID().ToString());
+                TC_LOG_DEBUG("quadtrees", "GameObjectCellRelocation AddedToGrid Transport or descendant: GUID {}", go->GetGUID().ToString());
             }
         }
         else
