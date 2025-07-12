@@ -15,6 +15,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Player.h"
+#include "GameObject.h"
+#include "Creature.h"
+#include "DynamicObject.h"
+#include "Corpse.h"
 #include <cassert>
 
 template<typename T>
