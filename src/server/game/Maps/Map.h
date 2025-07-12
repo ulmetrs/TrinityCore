@@ -809,6 +809,10 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
         MapQuadTree* _quadTree;
+        // Vectors are faster to iterate and duplicate entries are not a problem (quad tree will handle it)
+        std::vector<Creature*> _relocatedCreatures;
+        std::vector<GameObject*> _relocatedGameObjects;
+        std::vector<DynamicObject*> _relocatedDynamicObjects;
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
 

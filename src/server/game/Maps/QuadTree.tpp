@@ -206,6 +206,7 @@ void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&&
             float dy = y - centerY;
             if (dx * dx + dy * dy <= radiusSq)
                 visitor(obj);
+            index++;
         }
 
         if (!node->IsLeaf())

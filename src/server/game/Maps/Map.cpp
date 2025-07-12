@@ -1015,6 +1015,22 @@ void Map::Update(uint32 t_diff)
         }
     }
 
+    {
+        ZoneScopedN("Map::Update::RelocatedObjects")
+
+        for (WorldObject* obj : _relocatedCreatures)
+            _quadTree->Insert(obj);
+        _relocatedCreatures.clear();
+
+        for (WorldObject* obj : _relocatedGameObjects)
+            _quadTree->Insert(obj);
+        _relocatedGameObjects.clear();
+
+        for (WorldObject* obj : _relocatedDynamicObjects)
+            _quadTree->Insert(obj);
+        _relocatedDynamicObjects.clear();
+    }
+
     SendObjectUpdates();
 
     ///- Process necessary scripts
@@ -1235,6 +1251,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
     if (player->IsVehicle())
         player->GetVehicleKit()->RelocatePassengers();
 
+    // Players can reinsert immediately as they are not updated from a query
     ASSERT(player->GetQuadNode());
     _quadTree->Insert(player);
 
@@ -1265,9 +1282,6 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
 
-    ASSERT(creature->GetQuadNode());
-    _quadTree->Insert(creature);
-
     Cell old_cell = creature->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1282,6 +1296,8 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
 
     creature->UpdatePositionData();
     creature->UpdateObjectVisibility(false);
+
+    _relocatedCreatures.push_back(creature);
 
     if (creature->ShouldRelocateUpdateMapPartition())
         _updateMapPartitionCreatures.insert(creature);
@@ -1309,6 +1325,8 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
     go->UpdateModelPosition();
     go->UpdatePositionData();
     go->UpdateObjectVisibility(false);
+
+    _relocatedGameObjects.push_back(go);
 }
 
 void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float z, float orientation)
@@ -1332,6 +1350,8 @@ void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float
 
     dynObj->UpdatePositionData();
     dynObj->UpdateObjectVisibility(false);
+
+    _relocatedDynamicObjects.push_back(dynObj);
 }
 
 void Map::UnloadGrid(NGridType& ngrid)
