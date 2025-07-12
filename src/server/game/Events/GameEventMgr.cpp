@@ -1779,8 +1779,20 @@ public:
     void Visit(std::unordered_map<ObjectGuid, GameObject*>& gameObjectMap)
     {
         for (auto const& p : gameObjectMap)
+        {
             if (p.second->IsInWorld())
-                p.second->AI()->OnGameEvent(_activate, _eventId);
+            {
+                auto ai = p.second->AI();
+                if (!ai)
+                {
+                    TC_LOG_ERROR("quadtrees", "Null AI pointer for GameObject {} in event {}", p.second->GetEntry(), _eventId);
+                    if (dynamic_cast<GenericTransport*>(p.second))
+                        TC_LOG_DEBUG("quadtrees", "Null AI pointer for Transport {} in event {}", p.second->GetEntry(), _eventId);
+                    continue;
+                }
+                ai->OnGameEvent(_activate, _eventId);
+            }
+        }
     }
 
     template<class T>
