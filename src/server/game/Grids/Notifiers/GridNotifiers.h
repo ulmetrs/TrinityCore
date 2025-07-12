@@ -1899,6 +1899,16 @@ namespace Trinity
             float m_fRange;
     };
 
+    class AllCreaturesOfEntry
+    {
+        public:
+            AllCreaturesOfEntry(uint32 entry) : _entry(entry) { }
+            bool operator()(Creature* c) const { return c->GetEntry() == _entry;}
+
+        private:
+            uint32 _entry;
+    };
+
     class PlayerAtMinimumRangeAway
     {
         public:
