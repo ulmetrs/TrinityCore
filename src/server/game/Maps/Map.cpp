@@ -581,7 +581,6 @@ bool Map::AddPlayerToPartition(Player* player)
     EnsureGridLoaded(cell);
     AddToGrid(player, cell);
 
-
     ASSERT(player->GetQuadNode() == nullptr);
     _quadTree->Insert(player);
 
@@ -631,11 +630,6 @@ bool Map::AddToMap(T* obj)
         return false; //Should delete object
     }
 
-    if (obj->IsCreature())
-        DebugCreatures.push_back(obj->ToCreature());
-    if (obj->IsGameObject())
-        DebugGameObjects.push_back(obj->ToGameObject());
-
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(obj, cell);
@@ -649,14 +643,23 @@ bool Map::AddToMap(T* obj)
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
         AddToWaypointCreatures(obj->ToCreature());
 
-    ASSERT(obj->GetQuadNode() == nullptr);
-    _quadTree->Insert(obj);
-
     //something, such as vehicle, needs to be update immediately
     //also, trigger needs to cast spell, if not update, cannot see visual
     obj->SetIsNewObject(true);
     obj->UpdateObjectVisibilityOnCreate();
     obj->SetIsNewObject(false);
+
+    ASSERT(obj->GetQuadNode() == nullptr);
+    // AddToMap is called during the update tree query, so we need to delay insertion for these types
+    if (obj->IsCreature())
+        _relocatedCreatures.push_back(obj->ToCreature());
+    else if (obj->IsGameObject())
+        _relocatedGameObjects.push_back(obj->ToGameObject());
+    else if (obj->IsDynamicObject())
+        _relocatedDynamicObjects.push_back(obj->ToDynamicObject());
+    else
+        _quadTree->Insert(obj);
+
     return true;
 }
 
@@ -720,14 +723,6 @@ bool Map::AddToPartition(T* obj)
         return false; //Should delete object
     }
 
-    if (obj->IsCreature())
-        DebugCreatures.push_back(obj->ToCreature());
-    if (obj->IsGameObject())
-        DebugGameObjects.push_back(obj->ToGameObject());
-
-    ASSERT(obj->GetQuadNode() == nullptr);
-    _quadTree->Insert(obj);
-
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(obj, cell);
@@ -746,6 +741,11 @@ bool Map::AddToPartition(T* obj)
     obj->SetIsNewObject(true);
     obj->UpdateObjectVisibilityOnCreate();
     obj->SetIsNewObject(false);
+
+    // AddToPartition is done outside of a query so safe to insert
+    ASSERT(obj->GetQuadNode() == nullptr);
+    _quadTree->Insert(obj);
+
     return true;
 }
 
@@ -1307,9 +1307,6 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 {
     go->Relocate(x, y, z, orientation);
 
-    ASSERT(go->GetQuadNode());
-    _quadTree->Insert(go);
-
     Cell old_cell = go->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1332,9 +1329,6 @@ void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float 
 void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float z, float orientation)
 {
     dynObj->Relocate(x, y, z, orientation);
-
-    ASSERT(dynObj->GetQuadNode());
-    _quadTree->Insert(dynObj);
 
     Cell old_cell = dynObj->GetCell();
     Cell new_cell(x, y);
