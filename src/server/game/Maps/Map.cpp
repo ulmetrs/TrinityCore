@@ -1018,15 +1018,15 @@ void Map::Update(uint32 t_diff)
     {
         ZoneScopedN("Map::Update::RelocatedObjects")
 
-        for (WorldObject* obj : _relocatedCreatures)
+        for (Creature* obj : _relocatedCreatures)
             _quadTree->Insert(obj);
         _relocatedCreatures.clear();
 
-        for (WorldObject* obj : _relocatedGameObjects)
+        for (GameObject* obj : _relocatedGameObjects)
             _quadTree->Insert(obj);
         _relocatedGameObjects.clear();
 
-        for (WorldObject* obj : _relocatedDynamicObjects)
+        for (DynamicObject* obj : _relocatedDynamicObjects)
             _quadTree->Insert(obj);
         _relocatedDynamicObjects.clear();
     }
