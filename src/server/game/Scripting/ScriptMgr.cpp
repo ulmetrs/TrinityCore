@@ -419,6 +419,8 @@ class CreatureGameObjectScriptRegistrySwapHooks
 
     static void UnloadDestroyScript(GameObject* gameobject)
     {
+        if (gameobject->GetEntry() == 181646)
+            TC_LOG_DEBUG("quadtrees", "UnloadDestroyScript for GameObject {}", gameobject->GetEntry());
         gameobject->AIM_Destroy();
 
         ASSERT(!gameobject->AI(),
