@@ -29,6 +29,7 @@ void QuadNode<T>::Remove(T* obj)
     auto it = std::find(objects.begin(), objects.end(), obj);
     if (it != objects.end())
     {
+        TC_LOG_DEBUG("quadtrees", "Removing Object {} Node: {} {} {} {} at index {}", obj->GetEntry(), _bounds.minX, _bounds.minY, _bounds.maxX, _bounds.maxY, std::distance(objects.begin(), it));
         obj->SetQuadNode(nullptr);
         objects.erase(it);
     }
@@ -125,6 +126,7 @@ bool QuadTree<T>::Insert(T* obj)
     {
         if (currentNode)
             currentNode->Remove(obj);
+
         return false;
     }
     
@@ -145,6 +147,7 @@ bool QuadTree<T>::Insert(T* obj)
 
             obj->SetQuadNode(node);
             node->objects.push_back(obj);
+            TC_LOG_DEBUG("quadtrees", "Inserting Object {} Node: {} {} {} {} at index {}", obj->GetEntry(), node->_bounds.minX, node->_bounds.minY, node->_bounds.maxX, node->_bounds.maxY, node->objects.size()-1);
 
             if (node->objects.size() > node->maxObjects && node->depth < node->maxDepth)
             {
@@ -157,6 +160,7 @@ bool QuadTree<T>::Insert(T* obj)
                 {
                     int idx = node->GetChildIndex(o->GetPositionX(), o->GetPositionY());
                     o->SetQuadNode(node->children[idx].get());
+                    TC_LOG_DEBUG("quadtrees", "ReInserting Object {} Node: {} {} {} {} at index {}", o->GetEntry(), node->children[idx]->_bounds.minX, node->children[idx]->_bounds.minY, node->children[idx]->_bounds.maxX, node->children[idx]->_bounds.maxY, node->children[idx]->objects.size());
                     node->children[idx]->objects.push_back(o);
                 }
             }
@@ -192,8 +196,10 @@ void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&&
             node->_bounds.maxY < minY || node->_bounds.minY > maxY)
             continue;
 
+        uint32 index = 0;
         for (T* obj : node->objects)
         {
+            TC_LOG_DEBUG("quadtrees", "Checking Node: {} {} {} {} at index {}", node->_bounds.minX, node->_bounds.minY, node->_bounds.maxX, node->_bounds.maxY, index);
             float x = obj->GetPositionX();
             float y = obj->GetPositionY();
             float dx = x - centerX;
