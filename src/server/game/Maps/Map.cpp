@@ -1138,7 +1138,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
-    ++DebugCreatureRelocation1;
+    ++DebugCreatureRelocation;
 
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
