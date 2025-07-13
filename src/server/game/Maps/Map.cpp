@@ -232,9 +232,9 @@ void Map::LoadAllCells()
 {
     LoadAllGrids();
 
-    MapObjectGuids& guids = sObjectMgr->GetMapObjectGuids(GetId(), GetSpawnMode());
+    MapObjectGuids const* guids = sObjectMgr->GetMapObjectGuids(GetId(), GetSpawnMode());
 
-    for (auto const& guid : guids.creatures)
+    for (ObjectGuid::LowType guid : guids->creatures)
     {
         if (!ShouldBeSpawnedOnGridLoad<Creature>(guid))
             continue;
@@ -255,7 +255,7 @@ void Map::LoadAllCells()
         _quadTree->Insert(c);
     }
 
-    for (auto const& guid : guids.gameobjects)
+    for (ObjectGuid::LowType guid : guids->gameobjects)
     {
         if (!ShouldBeSpawnedOnGridLoad<GameObject>(guid))
             continue;
