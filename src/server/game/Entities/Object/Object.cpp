@@ -1886,29 +1886,15 @@ void WorldObject::SendMessageToSet(WorldPacket const* data, bool self) const
 void WorldObject::SendMessageToSetInRange(WorldPacket const* data, float dist, bool /*self*/) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        QueryMap(mask, dist, notifier);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, notifier, dist);
-    }
+    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+    QueryMap(mask, dist, notifier);
 }
 
 void WorldObject::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        QueryMap(mask, GetVisibilityRange(), notifier);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
-    }
+    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+    QueryMap(mask, GetVisibilityRange(), notifier);
 }
 
 void WorldObject::SendObjectDeSpawnAnim(ObjectGuid guid)
@@ -2068,14 +2054,7 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
 
     // call MoveInLineOfSight for nearby creatures
     Trinity::AIRelocationNotifier notifier(*summon);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        summon->QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
-    }
-    else
-    {
-        Cell::VisitAllObjects(summon, notifier, GetVisibilityRange());
-    }
+    summon->QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
 
     return summon;
 }
@@ -2232,14 +2211,7 @@ Creature* WorldObject::FindNearestCreature(uint32 entry, float range, bool alive
     Creature* creature = nullptr;
     Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck checker(*this, entry, alive, range);
     Trinity::CreatureLastSearcher<Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(this, creature, checker);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_CREATURE, range, searcher);
-    }
-    else
-    {
-        Cell::VisitAllObjects(this, searcher, range);
-    }
+    QueryMap(MAPQT_CREATURE, range, searcher);
     return creature;
 }
 
@@ -2248,14 +2220,7 @@ GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range, bool s
     GameObject* go = nullptr;
     Trinity::NearestGameObjectEntryInObjectRangeCheck checker(*this, entry, range, spawnedOnly);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(this, searcher, range);
-    }
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return go;
 }
 
@@ -2264,14 +2229,7 @@ GameObject* WorldObject::FindNearestUnspawnedGameObject(uint32 entry, float rang
     GameObject* go = nullptr;
     Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck checker(*this, entry, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(this, searcher, range);
-    }
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return go;
 }
 
@@ -2280,14 +2238,7 @@ GameObject* WorldObject::FindNearestGameObjectOfType(GameobjectTypes type, float
     GameObject* go = nullptr;
     Trinity::NearestGameObjectTypeInObjectRangeCheck checker(*this, type, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectTypeInObjectRangeCheck> searcher(this, go, checker);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(this, searcher, range);
-    }
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return go;
 }
 
@@ -2297,15 +2248,7 @@ Player* WorldObject::SelectNearestPlayer(float distance) const
 
     Trinity::NearestPlayerInObjectRangeCheck checker(this, distance);
     Trinity::PlayerLastSearcher<Trinity::NearestPlayerInObjectRangeCheck> searcher(this, target, checker);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER, distance, searcher);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, searcher, distance);
-    }
-
+    QueryMap(MAPQT_PLAYER, distance, searcher);
     return target;
 }
 
@@ -3336,14 +3279,7 @@ void WorldObject::GetGameObjectListWithEntryInGrid(Container& gameObjectContaine
 {
     Trinity::AllGameObjectsWithEntryInRange check(this, entry, maxSearchRange);
     Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(this, gameObjectContainer, check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_GAMEOBJECT, maxSearchRange, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(this, searcher, maxSearchRange);
-    }
+    QueryMap(MAPQT_GAMEOBJECT, maxSearchRange, searcher);
 }
 
 template <typename Container>
@@ -3351,14 +3287,7 @@ void WorldObject::GetCreatureListWithEntryInGrid(Container& creatureContainer, u
 {
     Trinity::AllCreaturesOfEntryInRange check(this, entry, maxSearchRange);
     Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(this, creatureContainer, check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_GRID_CREATURE, maxSearchRange, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(this, searcher, maxSearchRange);
-    }
+    QueryMap(MAPQT_GRID_CREATURE, maxSearchRange, searcher);
 }
 
 template <typename Container>
@@ -3366,14 +3295,7 @@ void WorldObject::GetPlayerListInGrid(Container& playerContainer, float maxSearc
 {
     Trinity::AnyPlayerInObjectRangeCheck checker(this, maxSearchRange, alive);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, playerContainer, checker);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER, maxSearchRange, searcher);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, searcher, maxSearchRange);
-    }
+    QueryMap(MAPQT_PLAYER, maxSearchRange, searcher);
 }
 
 void WorldObject::GetNearPoint2D(WorldObject const* searcher, float& x, float& y, float distance2d, float absAngle) const
@@ -3666,14 +3588,8 @@ void WorldObject::DestroyForNearbyPlayers()
     std::list<Player*> targets;
     Trinity::AnyPlayerInObjectRangeCheck check(this, GetVisibilityRange(), false);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, targets, check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER, GetVisibilityRange(), searcher);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, searcher, GetVisibilityRange());
-    }
+    QueryMap(MAPQT_PLAYER, GetVisibilityRange(), searcher);
+
     for (std::list<Player*>::const_iterator iter = targets.begin(); iter != targets.end(); ++iter)
     {
         Player* player = (*iter);
@@ -3700,15 +3616,8 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
 {
     //updates object's visibility for nearby players
     Trinity::VisibleChangesNotifier notifier(*this);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        QueryMap(mask, GetVisibilityRange(), notifier);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
-    }
+    uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+    QueryMap(mask, GetVisibilityRange(), notifier);
 }
 
 struct WorldObjectChangeAccumulator
@@ -3817,16 +3726,8 @@ void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
 {
     WorldObjectChangeAccumulator notifier(*this, data_map);
     //we must build packets for all visible players
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-        QueryMap(mask, GetVisibilityRange(), notifier);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
-    }
-
+    uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
+    QueryMap(mask, GetVisibilityRange(), notifier);
     ClearUpdateMask(false);
 }
 

@@ -68,6 +68,7 @@
 #include "Mail.h"
 #include "MailPackets.h"
 #include "MapManager.h"
+#include "MapQuadTree.h"
 #include "MiscPackets.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -1432,7 +1433,7 @@ void Player::Update(uint32 p_time)
             QueryMap(MAPQT_WORLD, 115, quadCounter);
             TC_LOG_DEBUG("quadtrees", "QuadTrees World objects found: {}", quadCounter.count);
             quadCounter.count = 0;
-            QueryMap(MAPQT_WORLD, 115, quadCounter);
+            QueryMap(MAPQT_GRID, 115, quadCounter);
             TC_LOG_DEBUG("quadtrees", "QuadTrees Grid objects found: {}", quadCounter.count);
 
             Trinity::ObjectCounter gridCounter(*this, 100);

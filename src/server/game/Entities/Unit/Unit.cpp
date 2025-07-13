@@ -6048,14 +6048,7 @@ void Unit::InterruptSpellsCastedOnMe(bool killDelayed, bool interruptPositiveSpe
     // Maximum spell range=100m ?
     Trinity::AnyUnitInObjectRangeCheck u_check(this, 100.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(this, targets, u_check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, GetMap()->GetVisibilityRange(), searcher);
-    }
-    else
-    {
-        Cell::VisitAllObjects(this, searcher, GetMap()->GetVisibilityRange());
-    }
+    QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, GetMap()->GetVisibilityRange(), searcher);
 
     for (const auto& iter : targets)
     {
@@ -6093,14 +6086,7 @@ void Unit::InterruptAttacksOnMe(float dist, bool guard_check)
     UnitList targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, this, GetMap()->GetVisibilityRange());
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, GetMap()->GetVisibilityRange(), searcher);
-    }
-    else
-    {
-        Cell::VisitAllObjects(this, searcher, GetMap()->GetVisibilityRange());
-    }
+    QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, GetMap()->GetVisibilityRange(), searcher);
 
     for (const auto& iter : targets)
     {
@@ -11427,14 +11413,7 @@ Unit* Unit::SelectNearbyTarget(Unit* exclude, float dist) const
     std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, this, dist);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, dist, searcher);
-    }
-    else
-    {
-        Cell::VisitAllObjects(this, searcher, dist);
-    }
+    QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, dist, searcher);
 
     // remove current target
     if (GetVictim())
@@ -13177,14 +13156,7 @@ void Unit::UpdateObjectVisibility(bool forced)
         WorldObject::UpdateObjectVisibility(true);
         // call MoveInLineOfSight for nearby creatures
         Trinity::AIRelocationNotifier notifier(*this);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
-        }
-        else
-        {
-            Cell::VisitAllObjects(this, notifier, GetVisibilityRange());
-        }
+        QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
     }
 }
 
@@ -14841,14 +14813,7 @@ void Unit::Talk(std::string_view text, ChatMsg msgType, Language language, float
     Trinity::CustomChatTextBuilder builder(this, msgType, text, language, target);
     Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> localizer(builder);
     Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> > worker(this, textRange, localizer);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER, textRange, worker);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, worker, textRange);
-    }
+    QueryMap(MAPQT_PLAYER, textRange, worker);
 }
 
 void Unit::Say(std::string_view text, Language language, WorldObject const* target /*= nullptr*/)
@@ -14904,14 +14869,7 @@ void Unit::Talk(uint32 textId, ChatMsg msgType, float textRange, WorldObject con
     Trinity::BroadcastTextBuilder builder(this, msgType, textId, GetGender(), target);
     Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> localizer(builder);
     Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> > worker(this, textRange, localizer);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_PLAYER, textRange, worker);
-    }
-    else
-    {
-        Cell::VisitWorldObjects(this, worker, textRange);
-    }
+    QueryMap(MAPQT_PLAYER, textRange, worker);
 }
 
 void Unit::Say(uint32 textId, WorldObject const* target /*= nullptr*/)
@@ -15026,19 +14984,9 @@ float Unit::GetCollisionHeight() const
 GameObject* Unit::FindNearestGuardPost(float range) const
 {
     GameObject* guardPost = nullptr;
-
     Trinity::NearestGuardPostInRangeCheck u_check(this, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestGuardPostInRangeCheck> searcher(this, guardPost, u_check);
-
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        QueryMap(MAPQT_GAMEOBJECT, range, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(this, searcher, range);
-    }
-
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return guardPost;
 }
 

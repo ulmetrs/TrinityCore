@@ -3078,14 +3078,7 @@ void Map::ApplyDynamicModeRespawnScaling(WorldObject const* obj, ObjectGuid::Low
 
             DynamicCreatureRespawnRatesChecker check(crea);
             Trinity::PlayerWorker<DynamicCreatureRespawnRatesChecker> searcher(crea, check);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                crea->QueryMap(MAPQT_PLAYER, checkRange, searcher);
-            }
-            else
-            {
-                Cell::VisitWorldObjects(crea, searcher, checkRange);
-            }
+            crea->QueryMap(MAPQT_PLAYER, checkRange, searcher);
 
             // No dynamic respawns around an in progress escort
             if (check.HasNearbyEscort())
