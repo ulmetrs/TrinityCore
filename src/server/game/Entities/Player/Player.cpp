@@ -1427,6 +1427,20 @@ void Player::Update(uint32 p_time)
             PlayerRelocationNotifier relocate(*this);
             viewPoint->QueryMap(MAPQT_ALL, 100, relocate);
             relocate.SendToSelf();
+
+            Trinity::ObjectCounter quadCounter(*this, 100);
+            QueryMap(MAPQT_WORLD, 115, quadCounter);
+            TC_LOG_DEBUG("quadtrees", "QuadTrees World objects found: {}", quadCounter.count);
+            quadCounter.count = 0;
+            QueryMap(MAPQT_WORLD, 115, quadCounter);
+            TC_LOG_DEBUG("quadtrees", "QuadTrees Grid objects found: {}", quadCounter.count);
+
+            Trinity::ObjectCounter gridCounter(*this, 100);
+            Cell::VisitWorldObjects()(this, gridCounter, 115, false);
+            TC_LOG_DEBUG("quadtrees", "Grid World objects found: {}", gridCounter.count);
+            gridCounter.count = 0;
+            Cell::VisitGridObjects()(this, gridCounter, 115, false);
+            TC_LOG_DEBUG("quadtrees", "Grid Grid objects found: {}", gridCounter.count);
         }
 
         ResetAllNotifies();
@@ -6717,14 +6731,6 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
     Trinity::MessageDistDeliverer notifier(this, data, dist);
     uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
     QueryMap(mask, dist, notifier);
-    
-    Trinity::ObjectCounter quadCounter(*this, dist);
-    QueryMap(mask, dist + 15, quadCounter);
-    TC_LOG_DEBUG("quadtrees", "QuadTrees SendMessageToSetInRange objects found: {}", quadCounter.count);
-
-    Trinity::ObjectCounter gridCounter(*this, dist);
-    Cell::VisitAllObjects(this, gridCounter, dist + 15, false);
-    TC_LOG_DEBUG("quadtrees", "Grid SendMessageToSetInRange objects found: {}", gridCounter.count);
 }
 
 void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool self, bool own_team_only, bool required3dDist /*= false*/) const
@@ -6735,14 +6741,6 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
     Trinity::MessageDistDeliverer notifier(this, data, dist, own_team_only, nullptr, required3dDist);
     uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
     QueryMap(mask, dist, notifier);
-    
-    Trinity::ObjectCounter quadCounter(*this, dist);
-    QueryMap(mask, dist + 15, quadCounter);
-    TC_LOG_DEBUG("quadtrees", "QuadTrees SendMessageToSetInRange2 objects found: {}", quadCounter.count);
-
-    Trinity::ObjectCounter gridCounter(*this, dist);
-    Cell::VisitAllObjects(this, gridCounter, dist + 15, false);
-    TC_LOG_DEBUG("quadtrees", "Grid SendMessageToSetInRange2 objects found: {}", gridCounter.count);
 }
 
 void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
@@ -6753,14 +6751,6 @@ void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcv
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
     uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
     QueryMap(mask, GetVisibilityRange(), notifier);
-
-    Trinity::ObjectCounter quadCounter(*this, GetVisibilityRange());
-    QueryMap(mask, GetVisibilityRange() + 15, quadCounter);
-    TC_LOG_DEBUG("quadtrees", "QuadTrees SendMessageToSet objects found: {}", quadCounter.count);
-
-    Trinity::ObjectCounter gridCounter(*this, GetVisibilityRange());
-    Cell::VisitAllObjects(this, gridCounter, GetVisibilityRange() + 15, false);
-    TC_LOG_DEBUG("quadtrees", "Grid SendMessageToSet objects found: {}", gridCounter.count);
 }
 
 void Player::SendDirectMessage(WorldPacket const* data) const
@@ -23348,14 +23338,6 @@ void Player::UpdateVisibilityForPlayer()
     Trinity::VisibleNotifier notifier(*this);
     m_seer->QueryMap(MAPQT_ALL, GetSightRange(), notifier);
     notifier.SendToSelf();   // send gathered data
-
-    Trinity::ObjectCounter quadCounter(*m_seer, GetSightRange());
-    m_seer->QueryMap(MAPQT_ALL, GetSightRange() + 15, quadCounter);
-    TC_LOG_DEBUG("quadtrees", "QuadTrees UpdateVisibilityForPlayer objects found: {}", quadCounter.count);
-
-    Trinity::ObjectCounter gridCounter(*m_seer, GetSightRange());
-    Cell::VisitAllObjects(m_seer, gridCounter, GetSightRange() + 15, false);
-    TC_LOG_DEBUG("quadtrees", "Grid UpdateVisibilityForPlayer objects found: {}", gridCounter.count);
 }
 
 // @tswow-begin
