@@ -4474,14 +4474,6 @@ NameReservation = 0
 AlwaysUpdateWaypointCreatures = 0
 
 #
-#     TestQuadTrees
-#       Description: A debug setting for testing quad trees and comparing spans to the grid appoach.
-#       Default:    0 - (don't)
-#                   1 - (do)
-
-TestQuadTrees = 0
-
-#
 #
 ###################################################################################################
 
