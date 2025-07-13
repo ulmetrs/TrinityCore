@@ -1986,7 +1986,7 @@ namespace Trinity
     class AllWorldObjectsInRange
     {
         public:
-            AllWorldObjectsInRange(  float maxRange) : m_pObject(object), m_fRange(maxRange) { }
+            AllWorldObjectsInRange(WorldObject const* object, float maxRange) : m_pObject(object), m_fRange(maxRange) { }
 
             bool operator()(WorldObject* go) const
             {
