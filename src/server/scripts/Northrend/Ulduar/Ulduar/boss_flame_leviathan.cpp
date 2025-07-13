@@ -1268,7 +1268,6 @@ class npc_lorekeeper : public CreatureScript
                 {
                     me->RemoveNpcFlag(UNIT_NPC_FLAG_GOSSIP);
                     player->PlayerTalkClass->SendCloseGossip();
-                    _instance->instance->LoadGrid(364, -16); // make sure leviathan is loaded
 
                     if (Creature* leviathan = _instance->GetCreature(DATA_FLAME_LEVIATHAN))
                     {

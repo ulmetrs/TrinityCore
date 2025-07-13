@@ -19,7 +19,6 @@
 #define TRINITYCORE_CORPSE_H
 
 #include "Object.h"
-#include "GridObject.h"
 #include "DatabaseEnvFwd.h"
 #include "GridDefines.h"
 #include "Loot.h"
@@ -47,7 +46,7 @@ enum CorpseFlags
     CORPSE_FLAG_LOOTABLE    = 0x20
 };
 
-class TC_GAME_API Corpse : public WorldObject, public GridObject<Corpse>
+class TC_GAME_API Corpse : public WorldObject
 {
     public:
         explicit Corpse(CorpseType type = CORPSE_BONES);

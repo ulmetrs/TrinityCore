@@ -40,16 +40,6 @@ namespace Trinity
         ObjectCounter(WorldObject const& source, float range) : _source(source),  _range(range), count(0) { }
 
         template<class T>
-        void Visit(GridRefManager<T>& m)
-        {
-            for (auto itr = m.begin(); itr != m.end(); ++itr)
-            {
-                T* obj = itr->GetSource();
-                if (_source.IsWithinDist(obj, _range, false))
-                    ++count;
-            }
-        }
-        template<class T>
         void operator()(T* obj)
         {
             if (_source.IsWithinDist(obj, _range, false) )
@@ -68,16 +58,6 @@ namespace Trinity
         void SendToSelf(void);
 
         template<class T>
-        void Visit(GridRefManager<T> &m)
-        {
-            for (typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-            {
-                vis_guids.erase(iter->GetSource()->GetGUID());
-                i_player.UpdateVisibilityOf(iter->GetSource(), i_data, i_visibleNow);
-            }
-        }
-
-        template<class T>
         void operator()(T* obj)
         {
             vis_guids.erase(obj->GetGUID());
@@ -90,10 +70,6 @@ namespace Trinity
         WorldObject &i_object;
 
         explicit VisibleChangesNotifier(WorldObject &object) : i_object(object) { }
-        template<class T> void Visit(GridRefManager<T> &) { }
-        void Visit(PlayerMapType &);
-        void Visit(CreatureMapType &);
-        void Visit(DynamicObjectMapType &);
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
@@ -105,10 +81,6 @@ namespace Trinity
     {
         PlayerRelocationNotifier(Player &player) : VisibleNotifier(player) { }
 
-        template<class T> void Visit(GridRefManager<T> &m) { VisibleNotifier::Visit(m); }
-        void Visit(CreatureMapType &);
-        void Visit(PlayerMapType &);
-
         template<class T> void operator()(T* obj) { VisibleNotifier::operator()(obj); }
         void operator()(Player* p);
         void operator()(Creature* c);
@@ -118,9 +90,6 @@ namespace Trinity
     {
         Creature &i_creature;
         CreatureRelocationNotifier(Creature &c) : i_creature(c) { }
-        template<class T> void Visit(GridRefManager<T> &) { }
-        void Visit(CreatureMapType &);
-        void Visit(PlayerMapType &);
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
@@ -132,8 +101,6 @@ namespace Trinity
         Unit &i_unit;
         bool isCreature;
         explicit AIRelocationNotifier(Unit &unit) : i_unit(unit), isCreature(unit.GetTypeId() == TYPEID_UNIT)  { }
-        template<class T> void Visit(GridRefManager<T> &) { }
-        void Visit(CreatureMapType &);
 
         template<class T> void operator()(T*) { }
         void operator()(Creature* c);
@@ -161,11 +128,6 @@ namespace Trinity
                 if (Player const* player = src->ToPlayer())
                     team = player->GetTeam();
         }
-
-        void Visit(PlayerMapType &m);
-        void Visit(CreatureMapType &m);
-        void Visit(DynamicObjectMapType &m);
-        template<class SKIP> void Visit(GridRefManager<SKIP> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
@@ -199,11 +161,6 @@ namespace Trinity
             : i_source(src), i_message(msg), i_phaseMask(src->GetPhaseMask()), i_phase_id(src->m_phase_id), i_distSq(dist * dist)
         {
         }
-
-        void Visit(PlayerMapType &m);
-        void Visit(CreatureMapType &m);
-        void Visit(DynamicObjectMapType &m);
-        template<class SKIP> void Visit(GridRefManager<SKIP> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
@@ -294,14 +251,6 @@ namespace Trinity
             : i_mapTypeMask(mapTypeMask), i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
         // @tswow-end
 
-        void Visit(GameObjectMapType &m);
-        void Visit(PlayerMapType &m);
-        void Visit(CreatureMapType &m);
-        void Visit(CorpseMapType &m);
-        void Visit(DynamicObjectMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         void operator()(Player* p);
         void operator()(GameObject* g);
         void operator()(Creature* c);
@@ -324,15 +273,6 @@ namespace Trinity
             // @tswow-begin
             :  i_mapTypeMask(mapTypeMask), i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
-
-
-        void Visit(GameObjectMapType &m);
-        void Visit(PlayerMapType &m);
-        void Visit(CreatureMapType &m);
-        void Visit(CorpseMapType &m);
-        void Visit(DynamicObjectMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
@@ -359,14 +299,6 @@ namespace Trinity
               i_mapTypeMask(mapTypeMask), i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_check(check) { }
             // @tswow-end
 
-        void Visit(PlayerMapType &m);
-        void Visit(CreatureMapType &m);
-        void Visit(CorpseMapType &m);
-        void Visit(GameObjectMapType &m);
-        void Visit(DynamicObjectMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
         void operator()(GameObject* g);
@@ -390,62 +322,6 @@ namespace Trinity
             // @tswow-begin
             : i_mapTypeMask(mapTypeMask), i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_do(_do) { }
             // @tswow-end
-
-        void Visit(GameObjectMapType &m)
-        {
-            if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_GAMEOBJECT))
-                return;
-            for (GameObjectMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-
-        void Visit(PlayerMapType &m)
-        {
-            if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_PLAYER))
-                return;
-            for (PlayerMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-        void Visit(CreatureMapType &m)
-        {
-            if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CREATURE))
-                return;
-            for (CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-
-        void Visit(CorpseMapType &m)
-        {
-            if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_CORPSE))
-                return;
-            for (CorpseMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-
-        void Visit(DynamicObjectMapType &m)
-        {
-            if (!(i_mapTypeMask & GRID_MAP_TYPE_MASK_DYNAMICOBJECT))
-                return;
-            for (DynamicObjectMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p)
@@ -517,11 +393,6 @@ namespace Trinity
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
 
-
-        void Visit(GameObjectMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
     };
@@ -541,10 +412,6 @@ namespace Trinity
             // @tswow-begin
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
-
-        void Visit(GameObjectMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
@@ -566,10 +433,6 @@ namespace Trinity
               i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_check(check) { }
             // @tswow-end
 
-        void Visit(GameObjectMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(GameObject* g);
     };
@@ -581,17 +444,6 @@ namespace Trinity
         // @tswow-begin
             : _func(func), _phaseMask(searcher->GetPhaseMask()),_uint64(searcher->m_phase_id) { }
         // @tswow-end
-
-        void Visit(GameObjectMapType& m)
-        {
-            for (GameObjectMapType::iterator itr = m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(_phaseMask,_uint64))
-                // @tswow-end
-                    _func(itr->GetSource());
-        }
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(GameObject* g)
@@ -629,11 +481,6 @@ namespace Trinity
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
 
-        void Visit(CreatureMapType &m);
-        void Visit(PlayerMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
         void operator()(Creature* c);
@@ -654,11 +501,6 @@ namespace Trinity
             // @tswow-begin
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
-
-        void Visit(CreatureMapType &m);
-        void Visit(PlayerMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
@@ -682,11 +524,6 @@ namespace Trinity
               i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_check(check) { }
             // @tswow-end
 
-        void Visit(PlayerMapType &m);
-        void Visit(CreatureMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
         void operator()(Creature* c);
@@ -709,10 +546,6 @@ namespace Trinity
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
 
-        void Visit(CreatureMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Creature* c);
     };
@@ -732,10 +565,6 @@ namespace Trinity
             // @tswow-begin
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
-
-        void Visit(CreatureMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Creature* c);
@@ -757,10 +586,6 @@ namespace Trinity
               i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_check(check) { }
             // @tswow-end
 
-        void Visit(CreatureMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Creature* c);
     };
@@ -778,17 +603,6 @@ namespace Trinity
             // @tswow-begin
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_do(_do) { }
             // @tswow-end
-
-        void Visit(CreatureMapType &m)
-        {
-            for (CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Creature* c)
@@ -817,10 +631,6 @@ namespace Trinity
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_object(result), i_check(check) { }
             // @tswow-end
 
-        void Visit(PlayerMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
     };
@@ -846,10 +656,6 @@ namespace Trinity
             : ContainerInserter<Player*>(container),
               i_phaseMask(phaseMask), i_check(check) { }
 
-        void Visit(PlayerMapType &m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
     };
@@ -870,10 +676,6 @@ namespace Trinity
         {
         }
 
-        void Visit(PlayerMapType& m);
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
-
         template<class T> void operator()(T*) { }
         void operator()(Player* p);
     };
@@ -891,17 +693,6 @@ namespace Trinity
             // @tswow-begin
             : i_phaseMask(searcher->GetPhaseMask()), i_phase_id(searcher->m_phase_id), i_do(_do) { }
             // @tswow-end
-
-        void Visit(PlayerMapType &m)
-        {
-            for (PlayerMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                // @tswow-begin
-                if (itr->GetSource()->InSamePhase(i_phaseMask,i_phase_id))
-                // @tswow-end
-                    i_do(itr->GetSource());
-        }
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p)
@@ -922,15 +713,6 @@ namespace Trinity
 
         PlayerDistWorker(WorldObject const* searcher, float _dist, Do& _do)
             : i_searcher(searcher), i_dist(_dist), i_do(_do) { }
-
-        void Visit(PlayerMapType &m)
-        {
-            for (PlayerMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                if (itr->GetSource()->InSamePhase(i_searcher) && itr->GetSource()->IsWithinDist(i_searcher, i_dist))
-                    i_do(itr->GetSource());
-        }
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) { }
 
         template<class T> void operator()(T*) { }
         void operator()(Player* p)

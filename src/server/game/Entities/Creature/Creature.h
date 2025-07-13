@@ -24,7 +24,6 @@
 #include "DatabaseEnvFwd.h"
 #include "Duration.h"
 #include "Loot.h"
-#include "GridObject.h"
 #include <list>
 
 class CreatureOutfit;
@@ -60,7 +59,7 @@ typedef std::list<VendorItemCount> VendorItemCounts;
 typedef std::vector<uint8> CreatureTextRepeatIds;
 typedef std::unordered_map<uint8, CreatureTextRepeatIds> CreatureTextRepeatGroup;
 
-class TC_GAME_API Creature : public Unit, public GridObject<Creature>
+class TC_GAME_API Creature : public Unit
 {
     public:
         explicit Creature(bool isWorldObject = false);

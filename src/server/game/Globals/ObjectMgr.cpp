@@ -17,6 +17,7 @@
 
 // @tswow-begin
 #include "AreaBoundary.h"
+#include "MapObject.h"
 #include "TSProfile.h"
 // @tswow-end
 #include "ObjectMgr.h"
@@ -2408,22 +2409,9 @@ void ObjectMgr::LoadCreatures()
     TC_LOG_INFO("server.loading", ">> Loaded {} creatures in {} ms", _creatureDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
-CellObjectGuids const* ObjectMgr::GetCellObjectGuids(uint16 mapid, uint8 spawnMode, uint32 cell_id)
-{
-    if (CellObjectGuidsMap const* mapGuids = Trinity::Containers::MapGetValuePtr(_mapObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode)))
-        return Trinity::Containers::MapGetValuePtr(*mapGuids, cell_id);
-
-    return nullptr;
-}
-
-CellObjectGuidsMap const* ObjectMgr::GetMapObjectGuids(uint16 mapid, uint8 spawnMode)
+MapObjectGuids const* ObjectMgr::GetMapObjectGuids(uint16 mapid, uint8 spawnMode)
 {
     return Trinity::Containers::MapGetValuePtr(_mapObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
-}
-
-CellObjectGuids const* ObjectMgr::GetTreeObjectGuids(uint16 mapid, uint8 spawnMode)
-{
-    return Trinity::Containers::MapGetValuePtr(_treeObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
 }
 
 void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* data)
@@ -2433,12 +2421,8 @@ void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* 
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.creatures.insert(guid);
-
-            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
-            tree_guids.creatures.insert(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.creatures.insert(guid);
         }
     }
 }
@@ -2450,12 +2434,8 @@ void ObjectMgr::RemoveCreatureFromGrid(ObjectGuid::LowType guid, CreatureData co
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.creatures.erase(guid);
-
-            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
-            tree_guids.creatures.erase(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.creatures.erase(guid);
         }
     }
 }
@@ -2966,12 +2946,8 @@ void ObjectMgr::AddGameobjectToGrid(ObjectGuid::LowType guid, GameObjectData con
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.gameobjects.insert(guid);
-
-            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
-            tree_guids.gameobjects.insert(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.gameobjects.insert(guid);
         }
     }
 }
@@ -2983,12 +2959,8 @@ void ObjectMgr::RemoveGameobjectFromGrid(ObjectGuid::LowType guid, GameObjectDat
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.gameobjects.erase(guid);
-
-            CellObjectGuids& tree_guids = _treeObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
-            tree_guids.gameobjects.erase(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.gameobjects.erase(guid);
         }
     }
 }

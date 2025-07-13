@@ -22,7 +22,6 @@
 #include "TSCustomPacket.h"
 #include "TSDBJson.h"
 // @tswow-end
-#include "GridObject.h"
 #include "Unit.h"
 #include "DatabaseEnvFwd.h"
 #include "DBCEnums.h"
@@ -917,7 +916,7 @@ struct ResurrectionData
 
 #define SPELL_DK_RAISE_ALLY 46619
 
-class TC_GAME_API Player : public Unit, public GridObject<Player>
+class TC_GAME_API Player : public Unit
 {
     friend class WorldSession;
     friend class CinematicMgr;

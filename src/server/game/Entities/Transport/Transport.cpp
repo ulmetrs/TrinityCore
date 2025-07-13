@@ -579,20 +579,17 @@ void Transport::LoadStaticPassengers()
     if (!mapId)
         return;
 
-    CellObjectGuidsMap const* cells = sObjectMgr->GetMapObjectGuids(mapId, GetMap()->GetSpawnMode());
-    if (!cells)
+    MapObjectGuids const* guids = sObjectMgr->GetMapObjectGuids(mapId, GetMap()->GetSpawnMode());
+    if (!guids)
         return;
 
-    for (auto const& [cellId, guids] : *cells)
-    {
-        // GameObjects on transport
-        for (ObjectGuid::LowType spawnId : guids.gameobjects)
-            CreateGOPassenger(spawnId, sObjectMgr->GetGameObjectData(spawnId));
+    // GameObjects on transport
+    for (ObjectGuid::LowType spawnId : guids->gameobjects)
+        CreateGOPassenger(spawnId, sObjectMgr->GetGameObjectData(spawnId));
 
-        // Creatures on transport
-        for (ObjectGuid::LowType spawnId : guids.creatures)
-            CreateNPCPassenger(spawnId, sObjectMgr->GetCreatureData(spawnId));
-    }
+    // Creatures on transport
+    for (ObjectGuid::LowType spawnId : guids->creatures)
+        CreateNPCPassenger(spawnId, sObjectMgr->GetCreatureData(spawnId));
 }
 
 void Transport::UnloadStaticPassengers()

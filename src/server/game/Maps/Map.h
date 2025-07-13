@@ -23,7 +23,6 @@
 #include "Cell.h"
 #include "DynamicTree.h"
 #include "GridDefines.h"
-#include "GridRefManager.h"
 #include "MapDefines.h"
 #include "MapQuadTree.h"
 #include "MapRefManager.h"
@@ -352,7 +351,7 @@ private:
     const std::vector<ListType*>& lists_;
 };
 
-class TC_GAME_API Map : public GridRefManager<NGridType>
+class TC_GAME_API Map
 {
     friend class MapReference;
     public:
@@ -414,14 +413,12 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T, class CONTAINER>
         void Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor);
 
-        bool IsGridLoaded(uint32 gridId) const { return IsGridLoaded(GridCoord(gridId % MAX_NUMBER_OF_GRIDS, gridId / MAX_NUMBER_OF_GRIDS)); }
-        bool IsGridLoaded(float x, float y) const { return IsGridLoaded(Trinity::ComputeGridCoord(x, y)); }
-        bool IsGridLoaded(Position const& pos) const { return IsGridLoaded(pos.GetPositionX(), pos.GetPositionY()); }
+        bool IsGridLoaded(uint32 gridId) const { return _cellsLoaded; }
+        bool IsGridLoaded(float x, float y) const { return _cellsLoaded; }
+        bool IsGridLoaded(Position const& pos) const { return _cellsLoaded; }
 
-        void LoadGrid(float x, float y);
         void LoadAllCells();
         void LoadAllGrids();
-        void UnloadGrid(NGridType& ngrid);
         virtual void UnloadAll();
 
         uint32 GetId() const;
@@ -602,14 +599,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         GameObjectBySpawnIdContainer& GetGameObjectBySpawnIdStore() { return _gameobjectBySpawnIdStore; }
         GameObjectBySpawnIdContainer const& GetGameObjectBySpawnIdStore() const { return _gameobjectBySpawnIdStore; }
 
-        std::unordered_set<Corpse*> const* GetCorpsesInCell(uint32 cellId) const
-        {
-            auto itr = _corpsesByCell.find(cellId);
-            if (itr != _corpsesByCell.end())
-                return &itr->second;
-
-            return nullptr;
-        }
+        std::unordered_set<Corpse*> const* GetCorpses() const { return &_corpses; }
 
         Corpse* GetCorpseByPlayer(ObjectGuid const& ownerGuid) const
         {
@@ -748,19 +738,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void SendInitSelf(Player* player);
 
-        bool IsGridLoaded(GridCoord const&) const;
-        void EnsureGridCreated(GridCoord const&);
-        bool EnsureGridLoaded(Cell const&);
+        void EnsureGridCreated(int gx, int gy);
 
-        void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
-
-        NGridType* getNGrid(uint32 x, uint32 y) const
-        {
-            ASSERT(x < MAX_NUMBER_OF_GRIDS && y < MAX_NUMBER_OF_GRIDS, "x = %u, y = %u", x, y);
-            return i_grids[x][y];
-        }
-
-        void setNGrid(NGridType* grid, uint32 x, uint32 y);
         void ScriptsProcess();
 
         void SendObjectUpdates();
@@ -805,7 +784,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
         MapQuadTree* _quadTree;
-        NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+        bool _cellsLoaded;
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
 
         bool i_scriptLock;
@@ -873,10 +852,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void AddFarSpellCallback(FarSpellCallback&& callback);
 
     private:
-        // Type specific code for add/remove to/from grid
-        template<class T>
-        void AddToGrid(T* object, Cell const& cell);
-
         template<class T>
         void DeleteFromWorld(T*);
 
@@ -923,7 +898,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         MapStoredObjectTypesContainer _objectsStore;
         CreatureBySpawnIdContainer _creatureBySpawnIdStore;
         GameObjectBySpawnIdContainer _gameobjectBySpawnIdStore;
-        std::unordered_map<uint32/*cellId*/, std::unordered_set<Corpse*>> _corpsesByCell;
+        std::unordered_set<Corpse*> _corpses;
         std::unordered_map<ObjectGuid, Corpse*> _corpsesByPlayer;
         std::unordered_set<Corpse*> _corpseBones;
         std::unordered_set<Object*> _updateObjects;
@@ -1066,20 +1041,24 @@ class TC_GAME_API BattlegroundMap : public Map
         Map* _parent;
         Battleground* m_bg;
 };
-
-template<class T, class CONTAINER>
-inline void Map::Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor)
-{
-    const uint32 x = cell.GridX();
-    const uint32 y = cell.GridY();
-    const uint32 cell_x = cell.CellX();
-    const uint32 cell_y = cell.CellY();
-
-    if (!cell.NoCreate())
-        EnsureGridLoaded(cell);
-
-    NGridType* grid = getNGrid(x, y);
-    if (grid && grid->isGridObjectDataLoaded())
-        grid->VisitGrid(cell_x, cell_y, visitor);
-}
 #endif
+
+struct TC_GAME_API ObjectGridCleaner
+{
+    template<class T>
+    void operator()(T* obj)
+    {
+        obj->CleanupsBeforeDelete();
+    }
+};
+
+// TODO this probably doesn't work, if not we need to collect every object and delete them
+struct TC_GAME_API ObjectGridUnloader
+{
+    template<class T>
+    void operator()(T* obj)
+    {
+        obj->CleanupsBeforeDelete();
+        delete obj;
+    }
+};
