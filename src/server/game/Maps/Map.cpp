@@ -850,8 +850,7 @@ void Map::Update(uint32 t_diff)
     // for pets
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
-    DebugCreatureRelocation1 = 0;
-    DebugCreatureRelocation2 = 0;
+    DebugCreatureRelocation = 0;
 
     {
         ZoneScopedN("Map::Update::Players")
@@ -1012,8 +1011,6 @@ void Map::Update(uint32 t_diff)
 
         for (Creature* creature : _relocatedCreatures)
         {
-            ++DebugCreatureRelocation2;
-
             Cell old_cell = creature->GetCell();
             Cell new_cell(creature->GetPositionX(), creature->GetPositionY());
             if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
@@ -1082,8 +1079,7 @@ void Map::Update(uint32 t_diff)
         _relocatedDynamicObjects.clear();
     }
 
-    TC_LOG_DEBUG("quadtrees", "Map {} DebugCreatureRelocation1: {}", GetId(), DebugCreatureRelocation1);
-    TC_LOG_DEBUG("quadtrees", "Map {} DebugCreatureRelocation2: {}", GetId(), DebugCreatureRelocation2);
+    TC_LOG_DEBUG("quadtrees", "Map {} DebugCreatureRelocation: {}", GetId(), DebugCreatureRelocation);
 
     SendObjectUpdates();
 
@@ -1306,7 +1302,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
-    ++DebugCreatureRelocation1;
+    ++DebugCreatureRelocation;
 
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
