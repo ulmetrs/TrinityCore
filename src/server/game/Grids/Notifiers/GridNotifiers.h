@@ -34,10 +34,10 @@ namespace Trinity
 {
     struct TC_GAME_API ObjectCounter
     {
-        WorldObject* _source;
+        WorldObject &_source;
         float _range;
         size_t count;
-        ObjectCounter(WorldObject* source, float range) : _source(source),  _range(range), count(0) { }
+        ObjectCounter(WorldObject &source, float range) : _source(source),  _range(range), count(0) { }
 
         template<class T>
         void Visit(GridRefManager<T>& m)
@@ -45,14 +45,14 @@ namespace Trinity
             for (auto itr = m.begin(); itr != m.end(); ++itr)
             {
                 T* obj = itr->GetSource();
-                if (_source->IsWithinDist(obj, _range, false))
+                if (_source.IsWithinDist(obj, _range, false))
                     ++count;
             }
         }
         template<class T>
         void operator()(T* obj)
         {
-            if (_source->IsWithinDist(obj, _range, false) )
+            if (_source.IsWithinDist(obj, _range, false) )
                 ++count;
         }
     };
