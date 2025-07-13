@@ -17,7 +17,6 @@
 
 #include "ScriptMgr.h"
 #include "AreaBoundary.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -31,7 +30,6 @@
 #include "SpellScript.h"
 #include "TypeContainerVisitor.h"
 #include "ulduar.h"
-#include "World.h"
 #include <G3D/Vector3.h>
 
 enum Spells
@@ -1046,14 +1044,7 @@ struct npc_thorim_trashAI : public ScriptedAI
             Unit* target = nullptr;
             MostHPMissingInRange checker(caster, range, heal);
             Trinity::UnitLastSearcher<MostHPMissingInRange> searcher(caster, target, checker);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                caster->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
-            }
-            else
-            {
-                Cell::VisitGridObjects(caster, searcher, range);
-            }
+            caster->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
 
             return target;
         }
@@ -2107,14 +2098,7 @@ class spell_thorim_activate_lightning_orb_periodic : public SpellScriptLoader
 
                 UpperOrbCheck check;
                 Trinity::CreatureListSearcher<UpperOrbCheck> searcher(caster, triggers, check);
-                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                {
-                    caster->QueryMap(MAPQT_GRID_CREATURE, 100.0f, searcher);
-                }
-                else
-                {
-                    Cell::VisitGridObjects(caster, searcher, 100.f);
-                }
+                caster->QueryMap(MAPQT_GRID_CREATURE, 100.0f, searcher);
 
                 if (!triggers.empty())
                 {

@@ -26,7 +26,6 @@ SDCategory: Onyxia's Lair
 EndScriptData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
 #include "MotionMaster.h"
@@ -34,7 +33,6 @@ EndScriptData */
 #include "onyxias_lair.h"
 #include "ScriptedCreature.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 enum Yells
 {
@@ -352,14 +350,8 @@ struct boss_onyxia : public BossAI
                         GameObject* Floor = nullptr;
                         Trinity::GameObjectInRangeCheck check(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), 15);
                         Trinity::GameObjectLastSearcher<Trinity::GameObjectInRangeCheck> searcher(me, Floor, check);
-                        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                        {
-                            me->QueryMap(MAPQT_GAMEOBJECT, 30.0f, searcher);
-                        }
-                        else
-                        {
-                            Cell::VisitGridObjects(me, searcher, 30.0f);
-                        }
+                        me->QueryMap(MAPQT_GAMEOBJECT, 30.0f, searcher);
+
                         if (Floor)
                             instance->SetGuidData(DATA_FLOOR_ERUPTION_GUID, Floor->GetGUID());
                         events.ScheduleEvent(EVENT_BELLOWING_ROAR, 30s);

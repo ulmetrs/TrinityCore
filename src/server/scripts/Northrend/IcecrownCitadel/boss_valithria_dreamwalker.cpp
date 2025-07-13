@@ -16,7 +16,6 @@
  */
 
 #include "icecrown_citadel.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -26,7 +25,6 @@
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
-#include "World.h"
 
 enum Texts
 {
@@ -223,14 +221,7 @@ class ValithriaDespawner : public BasicEvent
         bool Execute(uint64 /*currTime*/, uint32 /*diff*/) override
         {
             Trinity::CreatureWorker<ValithriaDespawner> worker(_creature, *this);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                _creature->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
-            }
-            else
-            {
-                Cell::VisitGridObjects(_creature, worker, 333.0f);
-            }
+            _creature->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
             return true;
         }
 
@@ -974,14 +965,7 @@ struct npc_dream_cloud : public ScriptedAI
                     Player* player = nullptr;
                     Trinity::AnyPlayerInObjectRangeCheck check(me, 5.0f);
                     Trinity::PlayerSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, player, check);
-                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                    {
-                        me->QueryMap(MAPQT_PLAYER, 7.5f, searcher);
-                    }
-                    else
-                    {
-                        Cell::VisitWorldObjects(me, searcher, 7.5f);
-                    }
+                    me->QueryMap(MAPQT_PLAYER, 7.5f, searcher);
 
                     _events.ScheduleEvent(player ? EVENT_EXPLODE : EVENT_CHECK_PLAYER, 1s);
                     break;

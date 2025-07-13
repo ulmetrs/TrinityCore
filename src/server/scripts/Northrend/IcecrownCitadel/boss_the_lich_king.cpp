@@ -16,7 +16,6 @@
  */
 
 #include "icecrown_citadel.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "CreatureTextMgr.h"
 #include "DBCStores.h"
@@ -32,7 +31,6 @@
 #include "TemporarySummon.h"
 #include "Vehicle.h"
 #include "Weather.h"
-#include "World.h"
 
 enum Texts
 {
@@ -539,15 +537,7 @@ struct boss_the_lich_king : public BossAI
         // Reset The Frozen Throne gameobjects
         FrozenThroneResetWorker reset;
         Trinity::GameObjectWorker<FrozenThroneResetWorker> worker(me, reset);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            me->QueryMap(MAPQT_GAMEOBJECT, 333.0f, worker);
-        }
-        else
-        {
-            Cell::VisitGridObjects(me, worker, 333.0f);
-        }
-        
+        me->QueryMap(MAPQT_GAMEOBJECT, 333.0f, worker);
 
         // Reset any light override
         me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, 0, 5s);

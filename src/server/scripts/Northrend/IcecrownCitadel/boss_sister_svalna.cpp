@@ -16,7 +16,6 @@
  */
 
 #include "icecrown_citadel.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -27,7 +26,6 @@
 #include "SpellScript.h"
 #include "TemporarySummon.h"
 #include "VehicleDefines.h"
-#include "World.h"
 
 enum ICCSisterSvalnaTexts
 {
@@ -661,14 +659,7 @@ struct npc_crok_scourgebane : public EscortAI
                 std::list<Creature*> temp;
                 FrostwingVrykulSearcher check(me, 80.0f);
                 Trinity::CreatureListSearcher<FrostwingVrykulSearcher> searcher(me, temp, check);
-                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                {
-                    me->QueryMap(MAPQT_GRID_CREATURE, 80.0f, searcher);
-                }
-                else
-                {
-                    Cell::VisitGridObjects(me, searcher, 80.0f);
-                }
+                me->QueryMap(MAPQT_GRID_CREATURE, 80.0f, searcher);
 
                 _aliveTrash.clear();
                 for (auto itr = temp.begin(); itr != temp.end(); ++itr)
@@ -695,14 +686,7 @@ struct npc_crok_scourgebane : public EscortAI
             Player* player = nullptr;
             Trinity::AnyPlayerInObjectRangeCheck check(me, 60.0f);
             Trinity::PlayerSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, player, check);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                me->QueryMap(MAPQT_PLAYER, 60.0f, searcher);
-            }
-            else
-            {
-                Cell::VisitWorldObjects(me, searcher, 60.0f);
-            }
+            me->QueryMap(MAPQT_PLAYER, 60.0f, searcher);
             
             // wipe
             if (!player)
@@ -712,14 +696,7 @@ struct npc_crok_scourgebane : public EscortAI
                 {
                     FrostwingGauntletRespawner respawner;
                     Trinity::CreatureWorker<FrostwingGauntletRespawner> worker(me, respawner);
-                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                    {
-                        me->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
-                    }
-                    else
-                    {
-                        Cell::VisitGridObjects(me, worker, 333.0f);
-                    }
+                    me->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
                     Talk(SAY_CROK_DEATH);
                 }
                 return;
@@ -1015,14 +992,7 @@ private:
         Creature* target = nullptr;
         Trinity::MostHPMissingInRange u_check(me, 60.0f, 0);
         Trinity::CreatureLastSearcher<Trinity::MostHPMissingInRange> searcher(me, target, u_check);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            me->QueryMap(MAPQT_GRID_CREATURE, 60.0f, searcher);
-        }
-        else
-        {
-            Cell::VisitGridObjects(me, searcher, 60.0f);
-        }
+        me->QueryMap(MAPQT_GRID_CREATURE, 60.0f, searcher);
         return target;
     }
 };

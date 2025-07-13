@@ -31,17 +31,14 @@ npc_geezle
 EndContentData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
-#include "Log.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 /*######
 ## npc_draenei_survivor
@@ -576,14 +573,7 @@ public:
             std::list<Player*> players;
             Trinity::AnyPlayerInObjectRangeCheck checker(me, radius);
             Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, players, checker);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                me->QueryMap(MAPQT_PLAYER, radius, searcher);
-            }
-            else
-            {
-                Cell::VisitWorldObjects(me, searcher, radius);
-            }
+            me->QueryMap(MAPQT_PLAYER, radius, searcher);
 
             for (std::list<Player*>::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                 if ((*itr)->GetQuestStatus(QUEST_TREES_COMPANY) == QUEST_STATUS_INCOMPLETE && (*itr)->HasAura(SPELL_TREE_DISGUISE))

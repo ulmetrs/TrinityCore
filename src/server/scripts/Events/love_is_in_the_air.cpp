@@ -16,14 +16,12 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "CreatureAIImpl.h"
 #include "GridNotifiersImpl.h"
 #include "Player.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
-#include "World.h"
 
 enum SpellsPicnic
 {
@@ -81,15 +79,8 @@ class spell_love_is_in_the_air_romantic_picnic : public AuraScript
         std::list<Player*> playerList;
         Trinity::AnyPlayerInObjectRangeCheck checker(target, INTERACTION_DISTANCE*2);
         Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(target, playerList, checker);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            target->QueryMap(MAPQT_PLAYER, INTERACTION_DISTANCE * 2, searcher);
-        }
-        else
-        {
-            Cell::VisitWorldObjects(target, searcher, INTERACTION_DISTANCE * 2);
-        }
-        
+        target->QueryMap(MAPQT_PLAYER, INTERACTION_DISTANCE * 2, searcher);
+
         for (std::list<Player*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
         {
             if (Player* playerFound = (*itr))

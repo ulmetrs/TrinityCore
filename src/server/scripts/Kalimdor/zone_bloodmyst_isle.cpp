@@ -16,7 +16,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
@@ -25,7 +24,6 @@
 #include "Player.h"
 #include "ScriptedEscortAI.h"
 #include "SpellScript.h"
-#include "World.h"
 
 /*######
 ## Quest 9759: Ending Their World
@@ -697,14 +695,7 @@ public:
                     Creature* sironas = nullptr;
                     Trinity::AllCreaturesOfEntryInRange check(me, NPC_SIRONAS, SIZE_OF_GRIDS);
                     Trinity::CreatureSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, sironas, check);
-                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                    {
-                        me->QueryMap(MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
-                    }
-                    else
-                    {
-                        Cell::VisitAllObjects(me, searcher, SIZE_OF_GRIDS);
-                    }
+                    me->QueryMap(MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
 
                     if (sironas)
                     {

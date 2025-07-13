@@ -23,7 +23,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "CombatAI.h"
 #include "Containers.h"
 #include "GameObjectAI.h"
@@ -41,7 +40,6 @@
 #include "SpellScript.h"
 #include "ulduar.h"
 #include "Vehicle.h"
-#include "World.h"
 
 enum Spells
 {
@@ -1812,14 +1810,8 @@ class spell_vehicle_throw_passenger : public SpellScriptLoader
                             std::list<WorldObject*> targetList;
                             Trinity::WorldObjectSpellAreaTargetCheck check(99, GetExplTargetDest(), GetCaster(), GetCaster(), GetSpellInfo(), TARGET_CHECK_DEFAULT, nullptr);
                             Trinity::WorldObjectListSearcher<Trinity::WorldObjectSpellAreaTargetCheck> searcher(GetCaster(), targetList, check);
-                            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                            {
-                                GetCaster()->QueryMap(MAPQT_ALL, 99.0f, searcher);
-                            }
-                            else
-                            {
-                                Cell::VisitAllObjects(GetCaster(), searcher, 99.0f);
-                            }
+                            GetCaster()->QueryMap(MAPQT_ALL, 99.0f, searcher);
+
                             float minDist = 99 * 99;
                             Unit* target = nullptr;
                             for (std::list<WorldObject*>::iterator itr = targetList.begin(); itr != targetList.end(); ++itr)

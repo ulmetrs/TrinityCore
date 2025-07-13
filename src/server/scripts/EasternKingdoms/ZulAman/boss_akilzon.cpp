@@ -25,7 +25,6 @@ SQLUpdate:
 EndScriptData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MiscPackets.h"
 #include "MotionMaster.h"
@@ -34,7 +33,6 @@ EndScriptData */
 #include "TemporarySummon.h"
 #include "Weather.h"
 #include "zulaman.h"
-#include "World.h"
 
 enum Spells
 {
@@ -161,14 +159,7 @@ class boss_akilzon : public CreatureScript
                     std::list<Unit*> tempUnitMap;
                     Trinity::AnyAoETargetUnitInObjectRangeCheck u_check(me, me, SIZE_OF_GRIDS);
                     Trinity::UnitListSearcher<Trinity::AnyAoETargetUnitInObjectRangeCheck> searcher(me, tempUnitMap, u_check);
-                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                    {
-                        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
-                    }
-                    else
-                    {
-                        Cell::VisitAllObjects(me, searcher, SIZE_OF_GRIDS);
-                    }
+                    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
 
                     // deal damage
                     for (std::list<Unit*>::const_iterator i = tempUnitMap.begin(); i != tempUnitMap.end(); ++i)

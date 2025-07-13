@@ -16,7 +16,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -25,7 +24,6 @@
 #include "ScriptedGossip.h"
 #include "SpellInfo.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 /*######
 ## npc_clintar_spirit
@@ -146,14 +144,8 @@ public:
             std::list<Player*> playerOnQuestList;
             Trinity::AnyPlayerInObjectRangeCheck checker(me, 5.0f);
             Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, playerOnQuestList, checker);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                me->QueryMap(MAPQT_PLAYER, 5.0f, searcher);
-            }
-            else
-            {
-                Cell::VisitWorldObjects(me, searcher, 5.0f);
-            }
+            me->QueryMap(MAPQT_PLAYER, 5.0f, searcher);
+
             for (std::list<Player*>::const_iterator itr = playerOnQuestList.begin(); itr != playerOnQuestList.end(); ++itr)
             {
                 // Check if found player target has active quest

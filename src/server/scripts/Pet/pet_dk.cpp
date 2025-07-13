@@ -22,13 +22,11 @@
 
 #include "ScriptMgr.h"
 #include "CombatAI.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
-#include "World.h"
 
 enum DeathKnightSpells
 {
@@ -64,14 +62,7 @@ struct npc_pet_dk_ebon_gargoyle : CasterAI
         std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(me, me, 30.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, targets, u_check);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 30.0f, searcher);
-        }
-        else
-        {
-            Cell::VisitAllObjects(me, searcher, 30.0f);
-        }
+        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 30.0f, searcher);
 
         for (Unit* target : targets)
         {

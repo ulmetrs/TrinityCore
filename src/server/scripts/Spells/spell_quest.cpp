@@ -768,14 +768,8 @@ class spell_q11010_q11102_q11023_choose_loc : public SpellScript
         std::list<Player*> playerList;
         Trinity::AnyPlayerInObjectRangeCheck checker(caster, 65.0f);
         Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(caster, playerList, checker);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            caster->QueryMap(MAPQT_PLAYER, 65.0f, searcher);
-        }
-        else
-        {
-            Cell::VisitWorldObjects(caster, searcher, 65.0f);
-        }
+        caster->QueryMap(MAPQT_PLAYER, 65.0f, searcher);
+
         for (std::list<Player*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
             // Check if found player target is on fly mount or using flying form
             if ((*itr)->HasAuraType(SPELL_AURA_FLY) || (*itr)->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED))

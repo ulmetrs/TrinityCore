@@ -28,7 +28,6 @@ go_legion_obelisk
 EndContentData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "CreatureAIImpl.h"
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
@@ -42,7 +41,6 @@ EndContentData */
 #include "SpellInfo.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 /*######
 ## npc_nether_drake
@@ -540,14 +538,8 @@ class npc_simon_bunny : public CreatureScript
                 std::list<WorldObject*> ClusterList;
                 Trinity::AllWorldObjectsInRange objects(me, searchDistance);
                 Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
-                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                {
-                    me->QueryMap(MAPQT_ALL, searchDistance, searcher);
-                }
-                else
-                {
-                    Cell::VisitAllObjects(me, searcher, searchDistance);
-                }
+                me->QueryMap(MAPQT_ALL, searchDistance, searcher);
+
                 for (std::list<WorldObject*>::const_iterator i = ClusterList.begin(); i != ClusterList.end(); ++i)
                 {
                     if (GameObject* go = (*i)->ToGameObject())

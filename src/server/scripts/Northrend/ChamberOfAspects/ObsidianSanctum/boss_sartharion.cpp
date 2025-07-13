@@ -16,7 +16,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -25,7 +24,6 @@
 #include "obsidian_sanctum.h"
 #include "ScriptedCreature.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 enum Enums
 {
@@ -395,14 +393,7 @@ struct boss_sartharion : public BossAI
         std::list<Creature*> fireCyclonesList;
         Trinity::AllCreaturesOfEntryInRange checker(me, NPC_FIRE_CYCLONE, 200.0f);
         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, fireCyclonesList, checker);
-        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-        {
-            me->QueryMap(MAPQT_CREATURE, 200.0f, searcher);
-        }
-        else
-        {
-            Cell::VisitAllObjects(me, searcher, 200.0f);
-        }
+        me->QueryMap(MAPQT_CREATURE, 200.0f, searcher);
 
         if (fireCyclonesList.empty())
             return;

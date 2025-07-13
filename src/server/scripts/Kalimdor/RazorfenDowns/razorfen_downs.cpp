@@ -27,7 +27,6 @@ npc_henry_stern
 EndContentData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -38,7 +37,6 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 /*###
 ## npc_belnistrasz for Quest 3525 "Extinguishing the Idol"
@@ -209,15 +207,8 @@ public:
                         std::list<WorldObject*> ClusterList;
                         Trinity::AllWorldObjectsInRange objects(me, 50.0f);
                         Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
-                        if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                        {
-                            me->QueryMap(MAPQT_ALL, 50.0f, searcher);
-                        }
-                        else
-                        {
-                            Cell::VisitAllObjects(me, searcher, 50.0f);
-                        }
-                        
+                        me->QueryMap(MAPQT_ALL, 50.0f, searcher);
+
                         for (std::list<WorldObject*>::const_iterator itr = ClusterList.begin(); itr != ClusterList.end(); ++itr)
                         {
                             if (Player* player = (*itr)->ToPlayer())

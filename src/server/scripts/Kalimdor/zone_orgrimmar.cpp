@@ -27,9 +27,7 @@ npc_shenthul
 npc_thrall_warchief
 EndContentData */
 
-#include "MapQuadTree.h"
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -37,7 +35,6 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 /*######
 ## npc_shenthul
@@ -458,14 +455,7 @@ public:
                 std::list<Unit*> citizenList;
                 Trinity::AnyFriendlyUnitInObjectRangeCheck checker(me, me, 25.0f);
                 Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, citizenList, checker);
-                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                {
-                    me->QueryMap(MAPQT_GRID_CREATURE, 20.0f, searcher);
-                }
-                else
-                {
-                    Cell::VisitGridObjects(me, searcher, 20.0f);
-                }
+                me->QueryMap(MAPQT_GRID_CREATURE, 20.0f, searcher);
 
                 for (Unit* target : citizenList)
                 {

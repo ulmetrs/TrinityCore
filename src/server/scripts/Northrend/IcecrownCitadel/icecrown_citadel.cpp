@@ -16,7 +16,6 @@
  */
 
 #include "icecrown_citadel.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
@@ -30,7 +29,6 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "TemporarySummon.h"
-#include "World.h"
 
 enum ICCTexts
 {
@@ -669,14 +667,7 @@ struct npc_icc_orb_controller : public ScriptedAI
             std::vector<Creature*> creatures;
             ICCOrbControllerMinionSearch check(me, false);
             Trinity::CreatureListSearcher<ICCOrbControllerMinionSearch> searcher(me, creatures, check);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                me->QueryMap(MAPQT_GRID_CREATURE, 10.0f, searcher);
-            }
-            else
-            {
-                Cell::VisitGridObjects(me, searcher, 10.0f);
-            }
+            me->QueryMap(MAPQT_GRID_CREATURE, 10.0f, searcher);
 
             if (creatures.empty())
                 return;
@@ -803,14 +794,7 @@ struct DarkFallenAI : public ScriptedAI
                 std::vector<Creature*> creatures;
                 ICCOrbControllerMinionSearch check(me, true);
                 Trinity::CreatureListSearcher<ICCOrbControllerMinionSearch> searcher(me, creatures, check);
-                if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                {
-                    me->QueryMap(MAPQT_GRID_CREATURE, 10.0f, searcher);
-                }
-                else
-                {
-                    Cell::VisitGridObjects(me, searcher, 10.0f);
-                }
+                me->QueryMap(MAPQT_GRID_CREATURE, 10.0f, searcher);
 
                 if (!creatures.empty())
                 {
@@ -1100,14 +1084,7 @@ struct npc_icc_nerubar_broodkeeper : public ScriptedAI
                     Unit* target = nullptr;
                     Trinity::MostHPPercentMissingInRange u_check(me, 40.0f, 1, 75);
                     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, target, u_check);
-                    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-                    {
-                        me->QueryMap(MAPQT_GRID_CREATURE, 40.0f, searcher);
-                    }
-                    else
-                    {
-                        Cell::VisitGridObjects(me, searcher, 40.0f);
-                    }
+                    me->QueryMap(MAPQT_GRID_CREATURE, 40.0f, searcher);
 
                     if (target)
                         DoCast(target, SPELL_DARK_MENDING);
