@@ -34,10 +34,10 @@ namespace Trinity
 {
     struct TC_GAME_API ObjectCounter
     {
-        WorldObject &_source;
+        WorldObject const& _source;
         float _range;
         size_t count;
-        ObjectCounter(WorldObject &source, float range) : _source(source),  _range(range), count(0) { }
+        ObjectCounter(WorldObject const& source, float range) : _source(source),  _range(range), count(0) { }
 
         template<class T>
         void Visit(GridRefManager<T>& m)
