@@ -89,46 +89,6 @@ void VisibleNotifier::SendToSelf()
         i_player.SendInitialVisiblePackets(*it);
 }
 
-void VisibleChangesNotifier::Visit(PlayerMapType &m)
-{
-    for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        if (iter->GetSource() == &i_object)
-            continue;
-
-        iter->GetSource()->UpdateVisibilityOf(&i_object);
-
-        if (iter->GetSource()->HasSharedVision())
-        {
-            for (SharedVisionList::const_iterator i = iter->GetSource()->GetSharedVisionList().begin();
-                i != iter->GetSource()->GetSharedVisionList().end(); ++i)
-            {
-                if ((*i)->m_seer == iter->GetSource())
-                    (*i)->UpdateVisibilityOf(&i_object);
-            }
-        }
-    }
-}
-
-void VisibleChangesNotifier::Visit(CreatureMapType &m)
-{
-    for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        if (iter->GetSource()->HasSharedVision())
-            for (SharedVisionList::const_iterator i = iter->GetSource()->GetSharedVisionList().begin();
-                i != iter->GetSource()->GetSharedVisionList().end(); ++i)
-                if ((*i)->m_seer == iter->GetSource())
-                    (*i)->UpdateVisibilityOf(&i_object);
-}
-
-void VisibleChangesNotifier::Visit(DynamicObjectMapType &m)
-{
-    for (DynamicObjectMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        if (Unit* caster = iter->GetSource()->GetCaster())
-            if (Player* player = caster->ToPlayer())
-                if (player->m_seer == iter->GetSource())
-                    player->UpdateVisibilityOf(&i_object);
-}
-
 void VisibleChangesNotifier::operator()(Player* p)
 {
     if (p == &i_object)
@@ -186,40 +146,6 @@ inline void CreatureUnitRelocationWorker(Creature* c, Unit* u)
     }
 }
 
-void PlayerRelocationNotifier::Visit(PlayerMapType &m)
-{
-    for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Player* player = iter->GetSource();
-
-        vis_guids.erase(player->GetGUID());
-
-        i_player.UpdateVisibilityOf(player, i_data, i_visibleNow);
-
-        if (player->m_seer->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            continue;
-
-        player->UpdateVisibilityOf(&i_player);
-    }
-}
-
-void PlayerRelocationNotifier::Visit(CreatureMapType &m)
-{
-    bool relocated_for_ai = (&i_player == i_player.m_seer);
-
-    for (CreatureMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
-    {
-        Creature* c = iter->GetSource();
-
-        vis_guids.erase(c->GetGUID());
-
-        i_player.UpdateVisibilityOf(c, i_data, i_visibleNow);
-
-        if (relocated_for_ai && !c->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            CreatureUnitRelocationWorker(c, &i_player);
-    }
-}
-
 void PlayerRelocationNotifier::operator()(Player* p)
 {
     vis_guids.erase(p->GetGUID());
@@ -244,34 +170,6 @@ void PlayerRelocationNotifier::operator()(Creature* c)
         CreatureUnitRelocationWorker(c, &i_player);
 }
 
-void CreatureRelocationNotifier::Visit(PlayerMapType &m)
-{
-    for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Player* player = iter->GetSource();
-
-        if (!player->m_seer->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            player->UpdateVisibilityOf(&i_creature);
-
-        CreatureUnitRelocationWorker(&i_creature, player);
-    }
-}
-
-void CreatureRelocationNotifier::Visit(CreatureMapType &m)
-{
-    if (!i_creature.IsAlive())
-        return;
-
-    for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Creature* c = iter->GetSource();
-        CreatureUnitRelocationWorker(&i_creature, c);
-
-        if (!c->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            CreatureUnitRelocationWorker(c, &i_creature);
-    }
-}
-
 void CreatureRelocationNotifier::operator()(Player* p)
 {
     if (!p->m_seer->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
@@ -291,120 +189,11 @@ void CreatureRelocationNotifier::operator()(Creature* c)
         CreatureUnitRelocationWorker(c, &i_creature);
 }
 
-void AIRelocationNotifier::Visit(CreatureMapType &m)
-{
-    for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Creature* c = iter->GetSource();
-        CreatureUnitRelocationWorker(c, &i_unit);
-        if (isCreature)
-            CreatureUnitRelocationWorker((Creature*)&i_unit, c);
-    }
-}
-
 void AIRelocationNotifier::operator()(Creature* c)
 {
     CreatureUnitRelocationWorker(c, &i_unit);
     if (isCreature)
         CreatureUnitRelocationWorker((Creature*)&i_unit, c);
-}
-
-void MessageDistDeliverer::Visit(PlayerMapType &m)
-{
-    for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Player* target = iter->GetSource();
-        // @tswow-begin
-        if (!target->InSamePhase(i_phaseMask,i_phase_id))
-        // @tswow-end
-            continue;
-
-        if (required3dDist)
-        {
-            if (target->GetExactDistSq(i_source) > i_distSq)
-                continue;
-        }
-        else
-        {
-            if (target->GetExactDist2dSq(i_source) > i_distSq)
-                continue;
-        }
-
-        // Send packet to all who are sharing the player's vision
-        if (target->HasSharedVision())
-        {
-            SharedVisionList::const_iterator i = target->GetSharedVisionList().begin();
-            for (; i != target->GetSharedVisionList().end(); ++i)
-                if ((*i)->m_seer == target)
-                    SendPacket(*i);
-        }
-
-        if (target->m_seer == target || target->GetVehicle())
-            SendPacket(target);
-    }
-}
-
-void MessageDistDeliverer::Visit(CreatureMapType &m)
-{
-    for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Creature* target = iter->GetSource();
-        // @tswow-begin
-        if (!target->InSamePhase(i_phaseMask,i_phase_id))
-        // @tswow-end
-            continue;
-
-        if (required3dDist)
-        {
-            if (target->GetExactDistSq(i_source) > i_distSq)
-                continue;
-        }
-        else
-        {
-            if (target->GetExactDist2dSq(i_source) > i_distSq)
-                continue;
-        }
-
-        // Send packet to all who are sharing the creature's vision
-        if (target->HasSharedVision())
-        {
-            SharedVisionList::const_iterator i = target->GetSharedVisionList().begin();
-            for (; i != target->GetSharedVisionList().end(); ++i)
-                if ((*i)->m_seer == target)
-                    SendPacket(*i);
-        }
-    }
-}
-
-void MessageDistDeliverer::Visit(DynamicObjectMapType &m)
-{
-    for (DynamicObjectMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        DynamicObject* target = iter->GetSource();
-        // @tswow-begin
-        if (!target->InSamePhase(i_phaseMask,i_phase_id))
-        // @tswow-end
-            continue;
-
-        if (required3dDist)
-        {
-            if (target->GetExactDistSq(i_source) > i_distSq)
-                continue;
-        }
-        else
-        {
-            if (target->GetExactDist2dSq(i_source) > i_distSq)
-                continue;
-        }
-
-        if (Unit* caster = target->GetCaster())
-        {
-            // Send packet back to the caster if the caster has vision of dynamic object
-            Player* player = caster->ToPlayer();
-            if (player && player->m_seer == target)
-                SendPacket(player);
-        }
-    }
 }
 
 void MessageDistDeliverer::operator()(Player* p)
@@ -494,80 +283,6 @@ void MessageDistDeliverer::operator()(DynamicObject* d)
         Player* p = caster->ToPlayer();
         if (p && p->m_seer == d)
             SendPacket(p);
-    }
-}
-
-void MessageDistDelivererToHostile::Visit(PlayerMapType &m)
-{
-    for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Player* target = iter->GetSource();
-        // @tswow-begin
-        if (!target->InSamePhase(i_phaseMask,i_phase_id))
-        // @tswow-end
-            continue;
-
-        if (target->GetExactDist2dSq(i_source) > i_distSq)
-            continue;
-
-        // Send packet to all who are sharing the player's vision
-        if (target->HasSharedVision())
-        {
-            SharedVisionList::const_iterator i = target->GetSharedVisionList().begin();
-            for (; i != target->GetSharedVisionList().end(); ++i)
-                if ((*i)->m_seer == target)
-                    SendPacket(*i);
-        }
-
-        if (target->m_seer == target || target->GetVehicle())
-            SendPacket(target);
-    }
-}
-
-void MessageDistDelivererToHostile::Visit(CreatureMapType &m)
-{
-    for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Creature* target = iter->GetSource();
-        // @tswow-begin
-        if (!target->InSamePhase(i_phaseMask,i_phase_id))
-        // @tswow-end
-            continue;
-
-        if (target->GetExactDist2dSq(i_source) > i_distSq)
-            continue;
-
-        // Send packet to all who are sharing the creature's vision
-        if (target->HasSharedVision())
-        {
-            SharedVisionList::const_iterator i = target->GetSharedVisionList().begin();
-            for (; i != target->GetSharedVisionList().end(); ++i)
-                if ((*i)->m_seer == target)
-                    SendPacket(*i);
-        }
-    }
-}
-
-void MessageDistDelivererToHostile::Visit(DynamicObjectMapType &m)
-{
-    for (DynamicObjectMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        DynamicObject* target = iter->GetSource();
-        // @tswow-begin
-        if (!target->InSamePhase(i_phaseMask,i_phase_id))
-        // @tswow-end
-            continue;
-
-        if (target->GetExactDist2dSq(i_source) > i_distSq)
-            continue;
-
-        if (Unit* caster = target->GetCaster())
-        {
-            // Send packet back to the caster if the caster has vision of dynamic object
-            Player* player = caster->ToPlayer();
-            if (player && player->m_seer == target)
-                SendPacket(player);
-        }
     }
 }
 
