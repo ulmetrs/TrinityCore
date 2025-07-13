@@ -996,15 +996,7 @@ public:
             Creature* passenger = nullptr;
             Trinity::AllCreaturesOfEntryInRange check(handler->GetPlayer(), entry, 20.0f);
             Trinity::CreatureSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(handler->GetPlayer(), passenger, check);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                handler->GetPlayer()->QueryMap(MAPQT_CREATURE, 30.0f, searcher);
-            }
-            else
-            {
-                Cell::VisitAllObjects(handler->GetPlayer(), searcher, 30.0f);
-            }
-            
+            handler->GetPlayer()->QueryMap(MAPQT_CREATURE, 30.0f, searcher);
             if (!passenger || passenger == target)
                 return false;
             passenger->EnterVehicle(target, *seatId);

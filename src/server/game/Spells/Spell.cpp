@@ -1888,34 +1888,14 @@ void Spell::SearchTargets(SEARCHER& searcher, uint32 containerMask, WorldObject*
         x = pos->GetPositionX();
         y = pos->GetPositionY();
 
-        Map* map = referer->GetMap();
-
+        // TODO for this initial massive PR we need to keep the call patterns as identical to the old code, but when we fully move
+        // to quad trees we can refactor these methods to use our quad tree masks and likely we don't need this helper at all.
+        // This would be more efficient to make the Query call with actual mask rather than checking the mask in each operator function.
         if (searchInWorld)
-        {
-            // TODO for this initial massive PR we need to keep the call patterns as identical to the old code, but when we fully move
-            // to quad trees we can refactor these methods to use our quad tree masksm and likely we don't need this helper at all.
-            // This would be more efficient to make the Query call with actual mask rather than checking the mask in each operator function.
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                referer->QueryMap(MAPQT_WORLD, x, y, radius, searcher);
-            }
-            else
-            {
-                Cell::VisitWorldObjects(x, y, map, searcher, radius);
-            }
-        }
+            referer->QueryMap(MAPQT_WORLD, x, y, radius, searcher);
 
         if (searchInGrid)
-        {
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                referer->QueryMap(MAPQT_GRID, x, y, radius, searcher);
-            }
-            else
-            {
-                Cell::VisitGridObjects(x, y, map, searcher, radius);
-            }
-        }
+            referer->QueryMap(MAPQT_GRID, x, y, radius, searcher);
     }
 }
 

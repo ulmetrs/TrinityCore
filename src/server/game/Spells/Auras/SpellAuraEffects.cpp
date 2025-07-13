@@ -2255,15 +2255,8 @@ void AuraEffect::HandleFeignDeath(AuraApplication const* aurApp, uint8 mode, boo
             UnitList targets;
             Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(target, target, target->GetMap()->GetVisibilityRange());
             Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(target, targets, u_check);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                target->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, target->GetMap()->GetVisibilityRange(), searcher);
-            }
-            else
-            {
-                Cell::VisitAllObjects(target, searcher, target->GetMap()->GetVisibilityRange());
-            }
-            
+            target->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, target->GetMap()->GetVisibilityRange(), searcher);
+
             for (UnitList::iterator iter = targets.begin(); iter != targets.end(); ++iter)
             {
                 if (!(*iter)->HasUnitState(UNIT_STATE_CASTING))
@@ -5892,14 +5885,7 @@ void AuraEffect::HandleRaidProcFromChargeWithValueAuraProc(AuraApplication* aurA
             Unit* triggerTarget = nullptr;
             Trinity::MostHPMissingGroupInRange u_check(target, radius, 0, false);
             Trinity::UnitLastSearcher<Trinity::MostHPMissingGroupInRange> searcher(target, triggerTarget, u_check);
-            if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-            {
-                target->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius, searcher);
-            }
-            else
-            {
-                Cell::VisitAllObjects(target, searcher, radius);
-            }
+            target->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius, searcher);
 
             if (triggerTarget)
             {

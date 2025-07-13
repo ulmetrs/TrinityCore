@@ -478,15 +478,8 @@ GameObject* ChatHandler::GetNearbyGameObject()
     GameObject* obj = nullptr;
     Trinity::NearestGameObjectCheck check(*pl);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectCheck> searcher(pl, obj, check);
-    if (sWorld->getBoolConfig(CONFIG_TEST_QUAD_TREES))
-    {
-        pl->QueryMap(MAPQT_GAMEOBJECT, SIZE_OF_GRIDS, searcher);
-    }
-    else
-    {
-        Cell::VisitGridObjects(pl, searcher, SIZE_OF_GRIDS);
-    }
-    
+    pl->QueryMap(MAPQT_GAMEOBJECT, SIZE_OF_GRIDS, searcher);
+
     return obj;
 }
 
