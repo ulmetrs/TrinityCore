@@ -725,7 +725,6 @@ void Map::ScriptsProcess()
                     case SF_CASTSPELL_SEARCH_CREATURE: // source -> creature with entry
                         uSource = dynamic_cast<WorldObject*>(source);
                         uTarget = uSource ? uSource->FindNearestCreature(abs(step.script->CastSpell.CreatureEntry), step.script->CastSpell.SearchRadius) : nullptr;
-                        TC_LOG_DEBUG("quadTrees", "{} no target worldobject found for spell {} on map {} creature entry {} search radius {}", step.script->GetDebugInfo(), step.script->CastSpell.SpellID, GetId(), step.script->CastSpell.CreatureEntry, step.script->CastSpell.SearchRadius);
                         break;
                 }
 
