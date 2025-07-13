@@ -234,6 +234,9 @@ void Map::LoadAllCells()
 
     MapObjectGuids const* guids = sObjectMgr->GetMapObjectGuids(GetId(), GetSpawnMode());
 
+    DebugActiveObjects = 0;
+    DebugWaypointCreatures = 0;
+
     for (ObjectGuid::LowType guid : guids->creatures)
     {
         if (!ShouldBeSpawnedOnGridLoad<Creature>(guid))
