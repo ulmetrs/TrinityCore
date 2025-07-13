@@ -368,6 +368,9 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         std::set<ObjectGuid> m_delayedGuids;
         // @tswow-end
 
+        uint32 DebugCreatureRelocation1 = 0;
+        uint32 DebugCreatureRelocation2 = 0;
+
         // currently unused for normal maps
         bool CanUnload(uint32 diff)
         {
