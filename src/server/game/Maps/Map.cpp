@@ -248,9 +248,17 @@ void Map::LoadAllCells()
 
         c->AddToWorld();
         if (c->isActiveObject())
+        {
             AddToActive(c);
+            ++DebugActiveObjects;
+        }
+            
         if (c->GetWaypointPath() != 0)
+        {
             AddToWaypointCreatures(c);
+            ++DebugWaypointCreatures;
+            TC_LOG_DEBUG("quadtrees", "Map {} Adding WP Creature {} at {},{}", GetId(), c->GetSpawnId(), c->GetPositionX(), c->GetPositionY());
+        }
 
         _quadTree->Insert(c);
     }
@@ -271,7 +279,10 @@ void Map::LoadAllCells()
 
         g->AddToWorld();
         if (g->isActiveObject())
+        {
             AddToActive(g);
+            ++DebugActiveObjects;
+        }
 
         _quadTree->Insert(g);
     }
@@ -282,6 +293,9 @@ void Map::LoadAllCells()
 
         _quadTree->Insert(corpse);
     }
+
+    TC_LOG_DEBUG("quadtrees", "Map {} Active objects: {}", GetId(), DebugActiveObjects);
+    TC_LOG_DEBUG("quadtrees", "Map {} Waypoint creatures: {}", GetId(),DebugWaypointCreatures);
 
     Balance();
     _cellsLoaded = true;
@@ -729,8 +743,7 @@ void Map::Update(uint32 t_diff)
     Trinity::ObjectUpdater updater(t_diff);
     uint32_t updaterMask = MAPQT_ALL & ~MAPQT_PLAYER & ~MAPQT_CORPSE;
 
-    DebugCreatureRelocation1 = 0;
-    DebugCreatureRelocation2 = 0;
+    DebugCreatureRelocation = 0;
 
     {
         ZoneScopedN("Map::Update::Players")
@@ -880,8 +893,6 @@ void Map::Update(uint32 t_diff)
 
         for (Creature* creature : _relocatedCreatures)
         {
-            ++DebugCreatureRelocation2;
-
             _quadTree->Insert(creature); // SAFE TO INSERT
 
             creature->UpdatePositionData();
@@ -913,8 +924,7 @@ void Map::Update(uint32 t_diff)
         _relocatedCorpses.clear();
     }
 
-    TC_LOG_DEBUG("quadtrees", "DebugCreatureRelocation1 Map {} - Count {}", GetId(), DebugCreatureRelocation1);
-    TC_LOG_DEBUG("quadtrees", "DebugCreatureRelocation2 Map {} - Count {}", GetId(), DebugCreatureRelocation2);
+    TC_LOG_DEBUG("quadtrees", "DebugCreatureRelocation Map {} - Count {}", GetId(), DebugCreatureRelocation);
 
     SendObjectUpdates();
 
