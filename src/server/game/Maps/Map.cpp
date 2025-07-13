@@ -276,7 +276,7 @@ void Map::LoadAllCells()
         _quadTree->Insert(g);
     }
 
-    for (auto corpse : GetCorpses())
+    for (Corpse* corpse : _corpses)
     {
         corpse->AddToWorld();
 
@@ -4463,7 +4463,7 @@ void Map::AddCorpse(Corpse* corpse)
 {
     corpse->SetMap(this);
 
-    _corpsesByCell[corpse->GetCellCoord().GetId()].insert(corpse);
+    _corpses.insert(corpse);
     if (corpse->GetType() != CORPSE_BONES)
         _corpsesByPlayer[corpse->GetOwnerGUID()] = corpse;
     else
@@ -4483,7 +4483,7 @@ void Map::RemoveCorpse(Corpse* corpse)
         corpse->ResetMap();
     }
 
-    _corpsesByCell[corpse->GetCellCoord().GetId()].erase(corpse);
+    _corpses.erase(corpse);
     if (corpse->GetType() != CORPSE_BONES)
         _corpsesByPlayer.erase(corpse->GetOwnerGUID());
     else
