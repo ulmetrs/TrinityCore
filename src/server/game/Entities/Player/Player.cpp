@@ -1436,10 +1436,10 @@ void Player::Update(uint32 p_time)
             TC_LOG_DEBUG("quadtrees", "QuadTrees Grid objects found: {}", quadCounter.count);
 
             Trinity::ObjectCounter gridCounter(*this, 100);
-            Cell::VisitWorldObjects()(this, gridCounter, 115, false);
+            Cell::VisitWorldObjects(this, gridCounter, 115, false);
             TC_LOG_DEBUG("quadtrees", "Grid World objects found: {}", gridCounter.count);
             gridCounter.count = 0;
-            Cell::VisitGridObjects()(this, gridCounter, 115, false);
+            Cell::VisitGridObjects(this, gridCounter, 115, false);
             TC_LOG_DEBUG("quadtrees", "Grid Grid objects found: {}", gridCounter.count);
         }
 
