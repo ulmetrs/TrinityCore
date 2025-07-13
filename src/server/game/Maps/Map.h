@@ -368,6 +368,9 @@ class TC_GAME_API Map
         std::set<ObjectGuid> m_delayedGuids;
         // @tswow-end
 
+        uint32 DebugCreatureRelocation1;
+        uint32 DebugCreatureRelocation2;
+
         // currently unused for normal maps
         bool CanUnload(uint32 diff)
         {
