@@ -1427,20 +1427,6 @@ void Player::Update(uint32 p_time)
             PlayerRelocationNotifier relocate(*this);
             viewPoint->QueryMap(MAPQT_ALL, 100, relocate);
             relocate.SendToSelf();
-
-            Trinity::ObjectCounter quadCounter(*this, 100);
-            QueryMap(MAPQT_WORLD, 115, quadCounter);
-            TC_LOG_DEBUG("quadtrees", "QuadTrees World objects found: {}", quadCounter.count);
-            quadCounter.count = 0;
-            QueryMap(MAPQT_GRID, 115, quadCounter);
-            TC_LOG_DEBUG("quadtrees", "QuadTrees Grid objects found: {}", quadCounter.count);
-
-            Trinity::ObjectCounter gridCounter(*this, 100);
-            Cell::VisitWorldObjects(this, gridCounter, 115, false);
-            TC_LOG_DEBUG("quadtrees", "Grid World objects found: {}", gridCounter.count);
-            gridCounter.count = 0;
-            Cell::VisitGridObjects(this, gridCounter, 115, false);
-            TC_LOG_DEBUG("quadtrees", "Grid Grid objects found: {}", gridCounter.count);
         }
 
         ResetAllNotifies();
