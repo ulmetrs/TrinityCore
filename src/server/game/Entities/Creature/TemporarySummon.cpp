@@ -204,10 +204,11 @@ void TempSummon::Update(uint32 diff)
     }
 }
 
-void TempSummon::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
+void TempSummon::InitStats(uint32 duration)
 {
     ASSERT(!IsPet());
 
+    m_creatureLevel = GetLevel();
     m_timer = duration;
     m_lifetime = duration;
     m_inCombatDuration = duration > UINT32_MAX / 2 ? UINT32_MAX : duration * 2;
@@ -384,6 +385,14 @@ void TempSummon::CheckSummonPropertiesFlags(Unit* caster)
                 if (CanStartAttack(enemy, true))
                     AI()->AttackStart(enemy);
     }
+
+    if (m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL)
+    {
+        if (HasUnitTypeMask(UNIT_MASK_GUARDIAN))
+            ((Guardian*)this)->InitStatsForLevel(m_creatureLevel);
+        else
+            SetLevel(m_creatureLevel);
+    }
 }
 
 std::string TempSummon::GetDebugInfo() const
@@ -404,9 +413,9 @@ Minion::Minion(SummonPropertiesEntry const* properties, Unit* owner, bool isWorl
     m_followAngle = PET_FOLLOW_ANGLE;
 }
 
-void Minion::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
+void Minion::InitStats(uint32 duration)
 {
-    TempSummon::InitStats(duration, levelOverride);
+    TempSummon::InitStats(duration);
 
     SetReactState(REACT_PASSIVE);
 
@@ -473,18 +482,11 @@ Guardian::Guardian(SummonPropertiesEntry const* properties, Unit* owner, bool is
     }
 }
 
-void Guardian::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
+void Guardian::InitStats(uint32 duration)
 {
-    Minion::InitStats(duration, levelOverride);
+    Minion::InitStats(duration);
 
-    uint8 level = GetLevel();
-
-    if (levelOverride)
-        level = levelOverride;
-    else if (m_Properties->Flags & SUMMON_PROP_FLAG_USE_CREATURE_LEVEL)
-        level = GetOwner()->GetLevel();
-
-    InitStatsForLevel(level);
+    InitStatsForLevel(GetOwner()->GetLevel());
 
     if (GetOwner()->GetTypeId() == TYPEID_PLAYER && HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))
         m_charmInfo->InitCharmCreateSpells();
@@ -518,9 +520,9 @@ Puppet::Puppet(SummonPropertiesEntry const* properties, Unit* owner)
     m_unitTypeMask |= UNIT_MASK_PUPPET;
 }
 
-void Puppet::InitStats(uint32 duration, uint8 levelOverride /*= 0*/)
+void Puppet::InitStats(uint32 duration)
 {
-    Minion::InitStats(duration, levelOverride);
+    Minion::InitStats(duration);
 
     SetLevel(GetOwner()->GetLevel());
 

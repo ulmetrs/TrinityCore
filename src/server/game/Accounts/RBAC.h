@@ -755,6 +755,7 @@ enum RBACPermissions
     // @epoch-begin
     RBAC_PERM_COMMAND_TELE_INSTANCE_ID                       = 1009,
     RBAC_PERM_COMMAND_LIST_INSTANCE_ID                       = 1010,
+    RBAC_PERM_COMMAND_ONLOGIN                                = 1011,
     // @epoch-end
 
     // @tswow-begin

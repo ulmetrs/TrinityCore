@@ -805,6 +805,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND]    = sConfigMgr->GetBoolDefault("AllowTwoSide.AddFriend", false);
     m_bool_configs[CONFIG_NAME_RESERVATION] = sConfigMgr->GetBoolDefault("NameReservation", false);
     m_bool_configs[CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES] = sConfigMgr->GetBoolDefault("AlwaysUpdateWaypointCreatures", false);
+    m_int_configs[CONFIG_MUTE_DEFAULT_GUILD_BROADCASTS] = sConfigMgr->GetIntDefault("MuteDefaultGuildBroadcasts", 0);
     /** @epoch-end */
 
     m_int_configs[CONFIG_MIN_PLAYER_NAME]                     = sConfigMgr->GetIntDefault ("MinPlayerName",  2);

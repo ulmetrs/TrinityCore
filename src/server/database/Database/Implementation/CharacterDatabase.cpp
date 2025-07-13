@@ -602,9 +602,14 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     // DeserterTracker
     PrepareStatement(CHAR_INS_DESERTER_TRACK, "INSERT INTO battleground_deserters (guid, type, datetime) VALUES (?, ?, NOW())", CONNECTION_ASYNC);
 
-    // @epoch-begin Anticheat Lua Cheaters
+    // @epoch-begin
+    // Anticheat Lua Cheaters
     PrepareStatement(CHAR_INS_ANTICHEAT_LUA_CHEATERS, "INSERT IGNORE INTO `lua_cheaters` (guid, account, macro) VALUES (?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_ANTICHEAT_LUA_CHEATERS, "SELECT guid, account FROM lua_cheaters WHERE account = ?", CONNECTION_SYNCH);
+    // OnLogin Commands
+    PrepareStatement(CHAR_INS_ON_LOGIN_COMMANDS, "INSERT INTO on_login_commands (player_guid, command, created_at, updated_at) VALUES (?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_SEL_ON_LOGIN_COMMANDS_BY_GUID, "SELECT id, player_guid, command FROM on_login_commands WHERE player_guid = ? AND deleted_at IS NULL ORDER BY id ASC", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_UPD_ON_LOGIN_COMMANDS, "UPDATE on_login_commands SET updated_at = UNIX_TIMESTAMP(), deleted_at = UNIX_TIMESTAMP() WHERE id = ?", CONNECTION_ASYNC);
     // @epoch-end
 
     // @tswow-begin CustomItemReloading
