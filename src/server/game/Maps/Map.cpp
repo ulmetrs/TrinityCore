@@ -2975,6 +2975,7 @@ void Map::ProcessRespawns()
     ZoneScopedN("Map::ProcessRespawns")
 
     time_t now = GameTime::GetGameTime();
+    uint32 count = 0;
     while (!_respawnTimes->empty())
     {
         RespawnInfoWithHandle* next = _respawnTimes->top();
@@ -2993,6 +2994,9 @@ void Map::ProcessRespawns()
             // step 3: get rid of the actual entry
             RemoveRespawnTime(next->type, next->spawnId, nullptr, true);
             delete next;
+
+            if (++count >= 2)
+                break;
         }
         else if (CheckRespawn(next)) // see if we're allowed to respawn
         { // ok, respawn
@@ -3006,6 +3010,9 @@ void Map::ProcessRespawns()
             // step 3: get rid of the actual entry
             RemoveRespawnTime(next->type, next->spawnId, nullptr, true);
             delete next;
+
+            if (++count >= 2)
+                break;
         }
         else if (!next->respawnTime)
         { // just remove this respawn entry without rescheduling

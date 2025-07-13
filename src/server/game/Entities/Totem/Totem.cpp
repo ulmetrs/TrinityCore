@@ -48,7 +48,7 @@ void Totem::Update(uint32 time)
     Creature::Update(time);
 }
 
-void Totem::InitStats(uint32 duration, uint8 levelOverride)
+void Totem::InitStats(uint32 duration)
 {
     // client requires SMSG_TOTEM_CREATED to be sent before adding to world and before removing old totem
     if (Player* owner = GetOwner()->ToPlayer())
@@ -72,7 +72,7 @@ void Totem::InitStats(uint32 duration, uint8 levelOverride)
                          GetEntry(), owner->GetGUID().ToString(), owner->GetLevel(), EnumUtils::ToTitle(Races(owner->GetRace())), EnumUtils::ToTitle(Classes(owner->GetClass())), slot, GetUInt32Value(UNIT_CREATED_BY_SPELL));
     }
 
-    Minion::InitStats(duration, levelOverride);
+    Minion::InitStats(duration);
 
     // Get spell cast by totem
     if (SpellInfo const* totemSpell = sSpellMgr->GetSpellInfo(GetSpell()))

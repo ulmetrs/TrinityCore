@@ -1554,7 +1554,8 @@ void Guild::HandleLeaveMember(WorldSession* session)
         DeleteMember(trans, player->GetGUID(), false, false);
 
         _LogEvent(GUILD_EVENT_LOG_LEAVE_GUILD, player->GetGUID().GetCounter());
-        _BroadcastEvent(GE_LEFT, player->GetGUID(), player->GetName());
+        if (GetId() != sWorld->getIntConfig(CONFIG_MUTE_DEFAULT_GUILD_BROADCASTS))
+            _BroadcastEvent(GE_LEFT, player->GetGUID(), player->GetName());
 
         SendCommandResult(session, GUILD_COMMAND_QUIT, ERR_GUILD_COMMAND_SUCCESS, m_name);
     }
@@ -1585,7 +1586,8 @@ void Guild::HandleRemoveMember(WorldSession* session, std::string_view name)
                 CharacterDatabaseTransaction trans(nullptr);
                 DeleteMember(trans, guid, false, true);
                 _LogEvent(GUILD_EVENT_LOG_UNINVITE_PLAYER, player->GetGUID().GetCounter(), guid.GetCounter());
-                _BroadcastEvent(GE_REMOVED, ObjectGuid::Empty, name, player->GetName());
+                if (GetId() != sWorld->getIntConfig(CONFIG_MUTE_DEFAULT_GUILD_BROADCASTS))
+                    _BroadcastEvent(GE_REMOVED, ObjectGuid::Empty, name, player->GetName());
             }
         }
     }
@@ -2258,7 +2260,8 @@ bool Guild::AddMember(CharacterDatabaseTransaction trans, ObjectGuid guid, uint8
 
     _UpdateAccountsNumber();
     _LogEvent(GUILD_EVENT_LOG_JOIN_GUILD, lowguid);
-    _BroadcastEvent(GE_JOINED, guid, name);
+    if (GetId() != sWorld->getIntConfig(CONFIG_MUTE_DEFAULT_GUILD_BROADCASTS))
+        _BroadcastEvent(GE_JOINED, guid, name);
 
     // Call scripts if member was succesfully added (and stored to database)
     sScriptMgr->OnGuildAddMember(this, player, rankId);

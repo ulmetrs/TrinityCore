@@ -106,6 +106,7 @@ class TC_GAME_API CreatureGroup
         void MemberEngagingTarget(Creature* member, Unit* target);
         void MemberDisengaging(Creature* member);
         bool CanLeaderStartMoving() const;
+        Position GetRespawnPosition(Creature* member, Position const& spawnPoint) const;
 };
 
 #define sFormationMgr FormationMgr::instance()
