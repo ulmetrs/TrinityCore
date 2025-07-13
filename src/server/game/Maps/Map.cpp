@@ -237,7 +237,10 @@ void Map::LoadAllCells()
     for (ObjectGuid::LowType guid : guids->creatures)
     {
         if (!ShouldBeSpawnedOnGridLoad<Creature>(guid))
+        {
+            TC_LOG_DEBUG("quadtrees", "Map {} Creature {} not spawned on grid load", GetId(), guid);
             continue;
+        }
 
         Creature* c = new Creature();
         if (!c->LoadFromDB(guid, this, false, false))
@@ -251,6 +254,7 @@ void Map::LoadAllCells()
         {
             AddToActive(c);
             ++DebugActiveObjects;
+            TC_LOG_DEBUG("quadtrees", "Map {} Adding Active Creature {} at {},{}", GetId(), c->GetSpawnId(), c->GetPositionX(), c->GetPositionY());
         }
             
         if (c->GetWaypointPath() != 0)
@@ -266,7 +270,10 @@ void Map::LoadAllCells()
     for (ObjectGuid::LowType guid : guids->gameobjects)
     {
         if (!ShouldBeSpawnedOnGridLoad<GameObject>(guid))
+        {
+            TC_LOG_DEBUG("quadtrees", "Map {} GameObject {} not spawned on grid load", GetId(), guid);
             continue;
+        }
 
         GameObjectData const* data = sObjectMgr->GetGameObjectData(guid);
         ASSERT(data);
@@ -282,6 +289,7 @@ void Map::LoadAllCells()
         {
             AddToActive(g);
             ++DebugActiveObjects;
+            TC_LOG_DEBUG("quadtrees", "Map {} Adding Active GameObject {} at {},{}", GetId(), g->GetSpawnId(), g->GetPositionX(), g->GetPositionY());
         }
 
         _quadTree->Insert(g);
