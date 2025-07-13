@@ -368,8 +368,9 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         std::set<ObjectGuid> m_delayedGuids;
         // @tswow-end
 
-        uint32 DebugCreatureRelocation1 = 0;
-        uint32 DebugCreatureRelocation2 = 0;
+        uint32 DebugActiveObjects;
+        uint32 DebugWaypointCreatures;
+        uint32 DebugCreatureRelocation;
 
         // currently unused for normal maps
         bool CanUnload(uint32 diff)
@@ -954,6 +955,8 @@ class TC_GAME_API PartitionMap : public Map
         const Map* GetParent() const override { return _parent; }
         Map* GetParent() override { return _parent; }
         void UpdateWeather(uint32 t_diff) override { /* do nothing, parent updates weather */ }
+
+        void Update(uint32) override;
 
         void SendZoneDynamicInfo(uint32 zoneId, Player* player) const override
         {

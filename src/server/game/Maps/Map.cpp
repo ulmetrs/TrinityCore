@@ -234,6 +234,9 @@ void Map::LoadAllCells()
     for (uint32 cellX = 0; cellX < TOTAL_NUMBER_OF_CELLS_PER_MAP; cellX++)
         for (uint32 cellY = 0; cellY < TOTAL_NUMBER_OF_CELLS_PER_MAP; cellY++)
             LoadGrid((cellX + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL, (cellY + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL);
+
+    TC_LOG_DEBUG("quadtrees", "Map {} Active objects: {}", GetId(), DebugActiveObjects);
+    TC_LOG_DEBUG("quadtrees", "Map {} Waypoint creatures: {}", GetId(), DebugWaypointCreatures);
 }
 
 Map::Map(uint32 id, uint32 instanceOrPartitionId):
@@ -763,8 +766,6 @@ void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 // @tswow-begin tracy
 void Map::Update(uint32 t_diff)
 {
-    ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
-
     // @tswow-begin tswow-events
     {
         ZoneScopedNC("TSMap::Tick", MAP_UPDATE_COLOR)
@@ -3709,6 +3710,12 @@ PartitionMap::~PartitionMap()
 {
 }
 
+void PartitionMap::Update(uint32 t_diff)
+{
+    ZoneScopedNC("PartitionMap::Update", MAP_UPDATE_COLOR)
+
+    Map::Update(t_diff);
+}
 // TODO anything we need to override from map or additional functions
 
 /* ******* Dungeon Instance Maps ******* */
