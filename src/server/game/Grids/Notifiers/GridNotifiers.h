@@ -36,8 +36,8 @@ namespace Trinity
     {
         WorldObject* _source;
         float _range;
-        size_t _count;
-        ObjectCounter(WorldObject* source, float range) : _source(source),  _range(range), _count(0) { }
+        size_t count;
+        ObjectCounter(WorldObject* source, float range) : _source(source),  _range(range), count(0) { }
 
         template<class T>
         void Visit(GridRefManager<T>& m)
@@ -46,14 +46,14 @@ namespace Trinity
             {
                 T* obj = itr->GetSource();
                 if (_source->IsWithinDist(obj, _range, false))
-                    ++_count;
+                    ++count;
             }
         }
         template<class T>
         void operator()(T* obj)
         {
             if (_source->IsWithinDist(obj, _range, false) )
-                ++_count;
+                ++count;
         }
     };
 
