@@ -34,10 +34,27 @@ namespace Trinity
 {
     struct TC_GAME_API ObjectCounter
     {
-        size_t count = 0;
+        WorldObject* _source;
+        float _range;
+        size_t _count;
+        ObjectCounter(WorldObject* source, float range) : _source(source),  _range(range), _count(0) { }
 
-        template<class T> void Visit(GridRefManager<T> &m) { count += std::distance(m.begin(), m.end()); }
-        template<class T> void operator()(T*) { count++; }
+        template<class T>
+        void Visit(GridRefManager<T>& m)
+        {
+            for (auto itr = m.begin(); itr != m.end(); ++itr)
+            {
+                T* obj = itr->GetSource();
+                if (_source->IsWithinDist(obj, _range, false))
+                    ++_count;
+            }
+        }
+        template<class T>
+        void operator()(T* obj)
+        {
+            if (_source->IsWithinDist(obj, _range, false) )
+                ++_count;
+        }
     };
 
     struct TC_GAME_API VisibleNotifier
@@ -1969,7 +1986,7 @@ namespace Trinity
     class AllWorldObjectsInRange
     {
         public:
-            AllWorldObjectsInRange(WorldObject const* object, float maxRange) : m_pObject(object), m_fRange(maxRange) { }
+            AllWorldObjectsInRange(  float maxRange) : m_pObject(object), m_fRange(maxRange) { }
 
             bool operator()(WorldObject* go) const
             {

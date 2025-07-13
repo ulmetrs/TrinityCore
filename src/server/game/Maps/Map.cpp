@@ -401,9 +401,8 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
 
     obj->m_isTempWorldObject = on;
 
-    // Must be after changing object type
     ASSERT(obj->GetQuadNode());
-    _quadTree->Insert(obj);
+    _quadTree->Insert(obj); // SAFE TO INSERT
 }
 
 template<>
@@ -449,7 +448,7 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
     }
 
     ASSERT(obj->GetQuadNode());
-    _quadTree->Insert(obj);
+    _quadTree->Insert(obj); // SAFE TO INSERT
 }
 
 template<class T>
@@ -539,7 +538,7 @@ bool Map::AddPlayerToMap(Player* player)
     AddToGrid(player, cell);
 
     ASSERT(player->GetQuadNode() == nullptr);
-    _quadTree->Insert(player);
+    _quadTree->Insert(player); // SAFE TO INSERT
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -579,7 +578,7 @@ bool Map::AddPlayerToPartition(Player* player)
     AddToGrid(player, cell);
 
     ASSERT(player->GetQuadNode() == nullptr);
-    _quadTree->Insert(player);
+    _quadTree->Insert(player); // SAFE TO INSERT
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -608,6 +607,8 @@ bool Map::AddToMap(T* obj)
 {
     ZoneScopedN("Map::AddToMap")
 
+    // TODO move valid coord and other checks to asserts
+
     /// @todo Needs clean up. An object should not be added to map twice.
     if (obj->IsInWorld())
     {
@@ -616,6 +617,7 @@ bool Map::AddToMap(T* obj)
         return true;
     }
 
+    // TODO when we remove this ensure all AddToMap calls are within map bounds
     CellCoord cellCoord = Trinity::ComputeCellCoord(obj->GetPositionX(), obj->GetPositionY());
     //It will create many problems (including crashes) if an object is not added to grid after creation
     //The correct way to fix it is to make AddToMap return false and delete the object if it is not added to grid
@@ -630,6 +632,8 @@ bool Map::AddToMap(T* obj)
     Cell cell(cellCoord);
     EnsureGridLoaded(cell);
     AddToGrid(obj, cell);
+
+    // TODO once all is working come back and experiment what can be delayed until QuadTreeInsert
 
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
@@ -646,16 +650,15 @@ bool Map::AddToMap(T* obj)
     obj->UpdateObjectVisibilityOnCreate();
     obj->SetIsNewObject(false);
 
-    ASSERT(obj->GetQuadNode() == nullptr);
-    // AddToMap is called during the update tree query, so we need to delay insertion for these types
+    // NOT SAFE TO INSERT
     if (obj->IsCreature())
         _relocatedCreatures.insert(obj->ToCreature());
     else if (obj->IsGameObject())
         _relocatedGameObjects.insert(obj->ToGameObject());
     else if (obj->IsDynObject())
         _relocatedDynamicObjects.insert(obj->ToDynObject());
-    else
-        _quadTree->Insert(obj);
+    else if (obj->IsCorpse())
+        _relocatedCorpses.insert(obj->ToCorpse()); // Corpses might be OK but playing it safe
 
     return true;
 }
@@ -739,9 +742,8 @@ bool Map::AddToPartition(T* obj)
     obj->UpdateObjectVisibilityOnCreate();
     obj->SetIsNewObject(false);
 
-    // AddToPartition is done outside of a query so safe to insert
     ASSERT(obj->GetQuadNode() == nullptr);
-    _quadTree->Insert(obj);
+    _quadTree->Insert(obj); // SAFE TO INSERT
 
     return true;
 }
@@ -866,19 +868,6 @@ void Map::Update(uint32 t_diff)
             if (!player || !player->IsInWorld())
                 continue;
 
-            // DebugTimer += t_diff;
-            // if (DebugTimer >= 3000)
-            // {
-            //     DebugTimer = 0;
-
-            //     Trinity::ObjectCounter quadCounter;
-            //     _quadTree->QueryAll(MAPQT_CREATURE, quadCounter);
-            //     uint32 creatureCount = quadCounter.count;
-            //     quadCounter.count = 0;
-            //     _quadTree->QueryAll(MAPQT_GAMEOBJECT, quadCounter);
-            //     uint32 gameObjectCount = quadCounter.count;
-            // }
-
             // update players at tick
             player->Update(t_diff);
 
@@ -931,10 +920,9 @@ void Map::Update(uint32 t_diff)
     {
         ZoneScopedN("Map::Update::ActiveObjects")
 
-        // non-player active objects, increasing iterator in the loop in case of object removal
-        // TODO should objects be removed during update? I thought they get put in move list
         for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
         {
+            // This object can be removed from active during the update, so iterate here
             WorldObject* obj = *m_activeNonPlayersIter;
             ++m_activeNonPlayersIter;
 
@@ -957,6 +945,7 @@ void Map::Update(uint32 t_diff)
         // TODO should objects be removed during update? I thought they get put in move list
         for (m_waypointCreaturesIter = m_waypointCreatures.begin(); m_waypointCreaturesIter != m_waypointCreatures.end();)
         {
+            // This object can be removed from wp creatures during the update, so iterate here
             Creature* creature = *m_waypointCreaturesIter;
             ++m_waypointCreaturesIter;
 
@@ -1027,7 +1016,7 @@ void Map::Update(uint32 t_diff)
                 AddToGrid(creature, new_cell);
             }
 
-            _quadTree->Insert(creature);
+            _quadTree->Insert(creature); // SAFE TO INSERT
 
             creature->UpdatePositionData();
             creature->UpdateObjectVisibility(false);
@@ -1048,7 +1037,7 @@ void Map::Update(uint32 t_diff)
                 AddToGrid(go, new_cell);
             }
 
-            _quadTree->Insert(go);
+            _quadTree->Insert(go); // SAFE TO INSERT
 
             go->UpdateModelPosition();
             go->UpdatePositionData();
@@ -1070,12 +1059,16 @@ void Map::Update(uint32 t_diff)
                 AddToGrid(dynObj, new_cell);
             }
 
-            _quadTree->Insert(dynObj);
+            _quadTree->Insert(dynObj); // SAFE TO INSERT
 
             dynObj->UpdatePositionData();
             dynObj->UpdateObjectVisibility(false);
         }
         _relocatedDynamicObjects.clear();
+
+        for (Corpse* corpse : _relocatedCorpses)
+            _quadTree->Insert(corpse); // SAFE TO INSERT
+        _relocatedCorpses.clear();
     }
 
     SendObjectUpdates();
@@ -1288,10 +1281,6 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
     if (player->IsVehicle())
         player->GetVehicleKit()->RelocatePassengers();
 
-    // Players can reinsert immediately as they are not updated from a query
-    ASSERT(player->GetQuadNode());
-    _quadTree->Insert(player);
-
     Cell old_cell = player->GetCell();
     Cell new_cell(x, y);
     if (old_cell.DiffGrid(new_cell) || old_cell.DiffCell(new_cell))
@@ -1305,6 +1294,9 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
         AddToGrid(player, new_cell);
     }
+
+    ASSERT(player->GetQuadNode());
+    _quadTree->Insert(player); // SAFE TO INSERT
 
     player->UpdatePositionData();
     player->UpdateObjectVisibility(false);

@@ -1428,11 +1428,11 @@ void Player::Update(uint32 p_time)
             viewPoint->QueryMap(MAPQT_ALL, 100, relocate);
             relocate.SendToSelf();
 
-            Trinity::ObjectCounter quadCounter;
+            Trinity::ObjectCounter quadCounter(viewPoint, 100);
             viewPoint->QueryMap(MAPQT_ALL, 100, quadCounter);
             TC_LOG_DEBUG("quadtrees", "QuadTrees Relocation Notifier objects found: {}", quadCounter.count);
 
-            Trinity::ObjectCounter gridCounter;
+            Trinity::ObjectCounter gridCounter(viewPoint, 100);
             Cell::VisitAllObjects(viewPoint, gridCounter, 100, false);
             TC_LOG_DEBUG("quadtrees", "Grid Relocation Notifier objects found: {}", gridCounter.count);
         }

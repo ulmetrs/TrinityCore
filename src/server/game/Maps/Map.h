@@ -930,6 +930,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         std::unordered_set<Creature*> _relocatedCreatures;
         std::unordered_set<GameObject*> _relocatedGameObjects;
         std::unordered_set<DynamicObject*> _relocatedDynamicObjects;
+        std::unordered_set<Corpse*> _relocatedCorpses;
         std::unordered_set<Player*> _updateMapPartitionPlayers;
         std::unordered_set<Creature*> _updateMapPartitionCreatures;
         MPSCQueue<FarSpellCallback> _farSpellCallbacks;

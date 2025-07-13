@@ -450,21 +450,38 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         template<typename Func>
         void QueryMap(uint32 mask, float radius, Func&& visitor) const
         {
+            // Some stuff adapted from CellImpl.h, dynamic objects without a radius defined need to find something
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
             GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), radius, visitor);
         }
         template<typename Func>
         void QueryMap(uint32 mask, float radius, Func&& visitor)
         {
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
             GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), radius, visitor);
         }
         template<typename Func>
         void QueryMap(uint32 mask, float centerX, float centerY, float radius, Func&& visitor) const
         {
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
             GetMap()->GetQuadTree()->QueryCircle(mask, centerX, centerY, radius, visitor);
         }
         template<typename Func>
         void QueryMap(uint32 mask, float centerX, float centerY, float radius, Func&& visitor)
         {
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
             GetMap()->GetQuadTree()->QueryCircle(mask, centerX, centerY, radius, visitor);
         }
 
