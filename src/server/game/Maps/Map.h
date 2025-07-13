@@ -1041,9 +1041,8 @@ class TC_GAME_API BattlegroundMap : public Map
         Map* _parent;
         Battleground* m_bg;
 };
-#endif
 
-struct TC_GAME_API InitialCleanup
+struct TC_GAME_API ObjectGridCleaner
 {
     template<class T>
     void operator()(T* obj)
@@ -1053,7 +1052,7 @@ struct TC_GAME_API InitialCleanup
 };
 
 // TODO this probably doesn't work, if not we need to collect every object and delete them
-struct TC_GAME_API FinalCleanup
+struct TC_GAME_API ObjectGridUnloader
 {
     template<class T>
     void operator()(T* obj)
@@ -1062,3 +1061,5 @@ struct TC_GAME_API FinalCleanup
         delete obj;
     }
 };
+
+#endif
