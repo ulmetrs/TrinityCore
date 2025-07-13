@@ -1166,13 +1166,11 @@ void Map::UnloadAll()
 {
     ZoneScopedNC("Map::UnloadAll", WORLD_UPDATE_COLOR)
 
+    // Keep same behavior as before (cleanups before and after removing objects)
     ObjectGridCleaner cleaner;
     _quadTree->QueryAll(MAPQT_ALL, cleaner);
 
     RemoveAllObjectsInRemoveList();
-
-    ObjectGridUnloader unloader;
-    _quadTree->QueryAll(MAPQT_ALL, unloader);
 
     _quadTree->Clear();
 

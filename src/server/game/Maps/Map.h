@@ -1051,15 +1051,4 @@ struct TC_GAME_API ObjectGridCleaner
     }
 };
 
-// TODO this probably doesn't work, if not we need to collect every object and delete them
-struct TC_GAME_API ObjectGridUnloader
-{
-    template<class T>
-    void operator()(T* obj)
-    {
-        obj->CleanupsBeforeDelete();
-        delete obj;
-    }
-};
-
 #endif

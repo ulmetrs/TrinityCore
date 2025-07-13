@@ -101,7 +101,12 @@ void QuadTree<T>::Clear()
     std::function<void(QuadNode<T>*)> clearNode = [&](QuadNode<T>* node)
     {
         for (T* obj : node->objects)
+        {
             obj->SetQuadNode(nullptr);
+            obj->CleanupsBeforeDelete();
+            delete obj;
+        }
+        node->objects.clear();
         if (!node->IsLeaf())
         {
             for (auto& child : node->children)
