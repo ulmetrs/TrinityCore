@@ -17,7 +17,6 @@
 
 // @tswow-begin
 #include "AreaBoundary.h"
-#include "MapObject.h"
 #include "TSProfile.h"
 // @tswow-end
 #include "ObjectMgr.h"
