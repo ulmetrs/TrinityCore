@@ -22,10 +22,8 @@
  * Scriptnames of files in this file should be prefixed with "spell_gen_"
  */
 
-#include "MapQuadTree.h"
 #include "ScriptMgr.h"
 #include "Battleground.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "DBCStores.h"
 #include "GameTime.h"
@@ -45,7 +43,6 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "Vehicle.h"
-#include "World.h"
 // @tswow-begin (Using Rochet2/Transmog)
 #include "Transmogrification.h"
 // @tswow-end

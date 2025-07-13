@@ -45,7 +45,6 @@
 #include "Log.h"
 #include "LootMgr.h"
 #include "MapManager.h"
-#include "MapQuadTree.h"
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
 #include "MovementPacketBuilder.h"

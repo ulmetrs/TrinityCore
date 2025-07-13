@@ -21,7 +21,6 @@
 #include "CharacterCache.h"
 #include "GridNotifiersImpl.h"
 #include "Language.h"
-#include "MapQuadTree.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Optional.h"
@@ -479,7 +478,6 @@ GameObject* ChatHandler::GetNearbyGameObject()
     Trinity::NearestGameObjectCheck check(*pl);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectCheck> searcher(pl, obj, check);
     pl->QueryMap(MAPQT_GAMEOBJECT, SIZE_OF_GRIDS, searcher);
-
     return obj;
 }
 

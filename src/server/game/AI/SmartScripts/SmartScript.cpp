@@ -16,7 +16,6 @@
  */
 
 // @tswow-begin
-#include "MapQuadTree.h"
 #include "TSSmartScript.h"
 #include "TSEvents.h"
 // @tswow-end
@@ -3811,7 +3810,6 @@ Unit* SmartScript::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff) const
     Trinity::MostHPMissingInRange u_check(me, range, MinHPDiff);
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
     me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
-
     return unit;
 }
 
@@ -3824,7 +3822,6 @@ Unit* SmartScript::DoSelectLowestHpPercentFriendly(float range, uint32 minHpPct,
     Trinity::MostHPPercentMissingInRange u_check(me, range, minHpPct, maxHpPct);
     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, unit, u_check);
     me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
-
     return unit;
 }
 
@@ -3857,7 +3854,6 @@ Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) co
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(me, me, range, playerOnly);
     Trinity::UnitLastSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, unit, u_check);
     me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
-
     return unit;
 }
 

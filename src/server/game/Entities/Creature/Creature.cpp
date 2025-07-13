@@ -37,7 +37,6 @@
 #include "Log.h"
 #include "LootMgr.h"
 #include "MapManager.h"
-#include "MapQuadTree.h"
 #include "MotionMaster.h"
 #include "MoveSpline.h"
 #include "ObjectAccessor.h"
@@ -2632,7 +2631,6 @@ Unit* Creature::SelectNearestTarget(float dist, bool playerOnly /* = false */) c
     Trinity::NearestHostileUnitCheck u_check(this, dist, playerOnly);
     Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck> searcher(this, target, u_check);
     QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, dist, searcher);
-
     return target;
 }
 
@@ -2649,7 +2647,6 @@ Unit* Creature::SelectNearestTargetInAttackDistance(float dist) const
     Trinity::NearestHostileUnitInAttackDistanceCheck u_check(this, dist);
     Trinity::UnitLastSearcher<Trinity::NearestHostileUnitInAttackDistanceCheck> searcher(this, target, u_check);
     QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, std::max(dist, ATTACK_DISTANCE), searcher);
-
     return target;
 }
 
@@ -3817,29 +3814,6 @@ std::string Creature::GetDebugInfo() const
     return sstr.str();
 }
 
-std::string Creature::GetQuadNodeInfo() const
-{
-    std::stringstream sstr;
-    sstr << GetSpawnId() << ", ";
-    sstr << "(" <<GetPositionX() << "," << GetPositionY() << "," << "), ";
-
-    // Try to get quad node info if available
-    void* qnode = GetQuadNode();
-    if (qnode)
-    {
-
-        auto* node = static_cast<QuadNode<Creature>*>(qnode);
-        if (node)
-        {
-            Bounds b = node->GetBounds();
-            int depth = node->GetDepth();
-            sstr << "[" << b.minX << "," << b.minY << " - " << b.maxX << "," << b.maxY << "], ";
-            sstr << depth;
-        }
-    }
-    return sstr.str();
-}
-
 void Creature::ExitVehicle(Position const* /*exitPosition*/)
 {
     bool const isInVehicle = GetVehicle();
@@ -3874,6 +3848,7 @@ Creature* Creature::FindNearestFriendlyGuard(float range) const
 
     Trinity::NearestFriendlyGuardInRangeCheck u_check(this, range);
     Trinity::CreatureLastSearcher<Trinity::NearestFriendlyGuardInRangeCheck> searcher(this, guard, u_check);
+
     QueryMap(MAPQT_GRID_CREATURE, range, searcher);
 
     return guard;

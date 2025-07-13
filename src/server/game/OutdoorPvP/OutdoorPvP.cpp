@@ -28,7 +28,6 @@
 #include "ObjectMgr.h"
 #include "OutdoorPvPMgr.h"
 #include "WorldPacket.h"
-#include "World.h"
 
 class DefenseMessageBuilder
 {

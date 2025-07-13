@@ -68,7 +68,6 @@
 #include "Mail.h"
 #include "MailPackets.h"
 #include "MapManager.h"
-#include "MapQuadTree.h"
 #include "MiscPackets.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -6730,8 +6729,7 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, dist, notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, dist, notifier);
 }
 
 void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool self, bool own_team_only, bool required3dDist /*= false*/) const
@@ -6740,8 +6738,7 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist, own_team_only, nullptr, required3dDist);
-    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, dist, notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, dist, notifier);
 }
 
 void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
@@ -6750,8 +6747,7 @@ void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcv
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, GetVisibilityRange(), notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 }
 
 void Player::SendDirectMessage(WorldPacket const* data) const

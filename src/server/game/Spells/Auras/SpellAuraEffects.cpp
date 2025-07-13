@@ -42,7 +42,6 @@
 #include "Unit.h"
 #include "Util.h"
 #include "Vehicle.h"
-#include "World.h"
 #include "WorldPacket.h"
 #include <numeric>
 // @tswow-begin

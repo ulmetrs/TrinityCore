@@ -20,7 +20,6 @@
 #include "CreatureAI.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
-#include "MapQuadTree.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "DBCStores.h"

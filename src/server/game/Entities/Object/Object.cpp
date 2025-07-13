@@ -1886,15 +1886,13 @@ void WorldObject::SendMessageToSet(WorldPacket const* data, bool self) const
 void WorldObject::SendMessageToSetInRange(WorldPacket const* data, float dist, bool /*self*/) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, dist, notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, dist, notifier);
 }
 
 void WorldObject::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    uint32_t mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, GetVisibilityRange(), notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 }
 
 void WorldObject::SendObjectDeSpawnAnim(ObjectGuid guid)
@@ -3616,8 +3614,7 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
 {
     //updates object's visibility for nearby players
     Trinity::VisibleChangesNotifier notifier(*this);
-    uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, GetVisibilityRange(), notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 }
 
 struct WorldObjectChangeAccumulator
@@ -3726,8 +3723,8 @@ void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
 {
     WorldObjectChangeAccumulator notifier(*this, data_map);
     //we must build packets for all visible players
-    uint32 mask = MAPQT_WORLD & ~MAPQT_WORLD_CORPSE;
-    QueryMap(mask, GetVisibilityRange(), notifier);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
+
     ClearUpdateMask(false);
 }
 
