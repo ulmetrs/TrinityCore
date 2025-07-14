@@ -419,28 +419,15 @@ bool CreatureGroup::CanLeaderStartMoving() const
 
 Position CreatureGroup::GetRespawnPosition(Creature* member, Position const& spawnPoint) const
 {
-    TC_LOG_DEBUG("formations", "GetRespawnPosition for {}", member->GetSpawnId());
     if (!_leader)
-    {
-        TC_LOG_DEBUG("formations", "Leader is null");
         return spawnPoint;
-    }
 
     uint32 groupAI = ASSERT_NOTNULL(sFormationMgr->GetFormationInfo(member->GetSpawnId()))->GroupAI;
     if (!groupAI)
-    {
-        TC_LOG_DEBUG("formations", "GroupAI is 0");
         return spawnPoint;
-    }
-
-    TC_LOG_DEBUG("formations", "GroupAI: {}", groupAI);
 
     if (groupAI & FLAG_IDLE_IN_FORMATION)
-    {
-        TC_LOG_DEBUG("formations", "Idle in formation, finding position near leader");
         return _leader->GetRandomNearPosition(3.0f);
-    }
 
-    TC_LOG_DEBUG("formations", "Not idle in formation, returning spawn point");
     return spawnPoint;
 }
