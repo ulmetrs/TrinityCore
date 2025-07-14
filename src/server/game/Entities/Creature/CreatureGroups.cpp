@@ -433,6 +433,8 @@ Position CreatureGroup::GetRespawnPosition(Creature* member, Position const& spa
         return spawnPoint;
     }
 
+    TC_LOG_DEBUG("formations", "GroupAI: {}", groupAI);
+
     if (groupAI & FLAG_IDLE_IN_FORMATION)
     {
         TC_LOG_DEBUG("formations", "Idle in formation, finding position near leader");
