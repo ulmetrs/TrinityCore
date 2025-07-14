@@ -77,8 +77,8 @@ class TC_GAME_API CreatureGroup
         std::unordered_map<Creature*, FormationInfo*> _members;
 
         ObjectGuid::LowType _leaderSpawnId;
-        uint32 _leaderPathId;
         MovementGeneratorType _tempLeaderDefaultMovementType;
+        uint32 _tempLeaderPathId;
         bool _engaging;
         bool _disengaging;
 
