@@ -247,7 +247,7 @@ void Map::LoadAllCells()
         }
 
         c->AddToWorld();
-        if (sWorld->GetBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+        if (sWorld->getBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
             c->setActive(true);
         if (c->isActiveObject())
             AddToActive(c);
@@ -273,7 +273,7 @@ void Map::LoadAllCells()
         }
 
         g->AddToWorld();
-        if (sWorld->GetBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+        if (sWorld->getBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
             g->setActive(true);
         if (g->isActiveObject())
             AddToActive(g);
