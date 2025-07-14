@@ -734,8 +734,6 @@ void Map::Update(uint32 t_diff)
     Trinity::ObjectUpdater updater(t_diff);
     uint32_t updaterMask = MAPQT_ALL & ~MAPQT_PLAYER & ~MAPQT_CORPSE;
 
-    DebugCreatureRelocation.clear();
-
     {
         ZoneScopedN("Map::Update::Players")
 
@@ -913,18 +911,6 @@ void Map::Update(uint32 t_diff)
         for (Corpse* corpse : _relocatedCorpses)
             _quadTree->Insert(corpse); // SAFE TO INSERT
         _relocatedCorpses.clear();
-    }
-
-    if (GetId() == 571)
-    {
-        uint32 totalRelocations = 0;
-        for (auto [guid, count] : DebugCreatureRelocation)
-        {
-            if (count > 1)
-                TC_LOG_DEBUG("quadtrees", "Frame {} Creature {} relocation count: {}", GameTime::GetGameTimeMS(), guid, count);
-            totalRelocations += count;
-        }
-        TC_LOG_DEBUG("quadtrees", "Frame {} Total creature relocation count: {}", GameTime::GetGameTimeMS(), totalRelocations);
     }
 
     SendObjectUpdates();
@@ -1139,8 +1125,6 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
-    ++DebugCreatureRelocation[creature->GetGUID().GetCounter()];
-
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
