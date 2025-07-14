@@ -240,10 +240,7 @@ void Map::LoadAllCells()
     for (ObjectGuid::LowType guid : guids->creatures)
     {
         if (!ShouldBeSpawnedOnGridLoad<Creature>(guid))
-        {
-            TC_LOG_DEBUG("quadtrees", "Map {} Creature {} not spawned on grid load", GetId(), guid);
             continue;
-        }
 
         Creature* c = new Creature();
         if (!c->LoadFromDB(guid, this, false, false))
@@ -253,19 +250,13 @@ void Map::LoadAllCells()
         }
 
         c->AddToWorld();
+        if (sWorld->GetBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+            c->SetActive(true);
         if (c->isActiveObject())
-        {
             AddToActive(c);
-            ++DebugActiveObjects;
-            TC_LOG_DEBUG("quadtrees", "Map {} Adding Active Creature {} at {},{}", GetId(), c->GetSpawnId(), c->GetPositionX(), c->GetPositionY());
-        }
             
         if (c->GetWaypointPath() != 0)
-        {
             AddToWaypointCreatures(c);
-            ++DebugWaypointCreatures;
-            TC_LOG_DEBUG("quadtrees", "Map {} Adding WP Creature {} at {},{}", GetId(), c->GetSpawnId(), c->GetPositionX(), c->GetPositionY());
-        }
 
         _quadTree->Insert(c);
     }
@@ -273,10 +264,7 @@ void Map::LoadAllCells()
     for (ObjectGuid::LowType guid : guids->gameobjects)
     {
         if (!ShouldBeSpawnedOnGridLoad<GameObject>(guid))
-        {
-            TC_LOG_DEBUG("quadtrees", "Map {} GameObject {} not spawned on grid load", GetId(), guid);
             continue;
-        }
 
         GameObjectData const* data = sObjectMgr->GetGameObjectData(guid);
         ASSERT(data);
@@ -288,12 +276,10 @@ void Map::LoadAllCells()
         }
 
         g->AddToWorld();
+        if (sWorld->GetBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+            g->SetActive(true);
         if (g->isActiveObject())
-        {
             AddToActive(g);
-            ++DebugActiveObjects;
-            TC_LOG_DEBUG("quadtrees", "Map {} Adding Active GameObject {} at {},{}", GetId(), g->GetSpawnId(), g->GetPositionX(), g->GetPositionY());
-        }
 
         _quadTree->Insert(g);
     }
@@ -304,9 +290,6 @@ void Map::LoadAllCells()
 
         _quadTree->Insert(corpse);
     }
-
-    TC_LOG_DEBUG("quadtrees", "Map {} Active objects: {}", GetId(), DebugActiveObjects);
-    TC_LOG_DEBUG("quadtrees", "Map {} Waypoint creatures: {}", GetId(),DebugWaypointCreatures);
 
     Balance();
     _cellsLoaded = true;
@@ -935,7 +918,16 @@ void Map::Update(uint32 t_diff)
         _relocatedCorpses.clear();
     }
 
-    TC_LOG_DEBUG("quadtrees", "DebugCreatureRelocation Map {} - Count {}", GetId(), DebugCreatureRelocation);
+    if (GetId() == 571)
+    {
+        uint32 totalRelocations = 0;
+        for (auto [guid, count] : DebugCreatureRelocation)
+        {
+            TC_LOG_DEBUG("quadtrees", "Frame {} Creature {} relocation count: {}", GameTime::GetGameTimeMS(), guid, count);
+            totalRelocations += count;
+        }
+        TC_LOG_DEBUG("quadtrees", "Frame {} Total creature relocation count: {}", GameTime::GetGameTimeMS(), totalRelocations);
+    }
 
     SendObjectUpdates();
 
