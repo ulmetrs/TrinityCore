@@ -4493,6 +4493,14 @@ NameReservation = 0
 AlwaysUpdateWaypointCreatures = 0
 
 #
+#    DebugSetAllObjectsActive
+#       Description: Set every creature and gameobject loaded to Active to test performance
+#       Default:    0 - (Disabled)
+#                   1 - (Enabled)
+
+DebugSetAllObjectsActive = 0
+
+#
 #    MuteDefaultGuildBroadcasts
 #       Description: Character starts in a default guild on epoch, and certain message (joined, left, etc) account for a ton of spam.
 #                    This will mute those messages for default guild.

@@ -57,19 +57,12 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
     obj->AddToGrid(m);
     obj->SetCell(Cell(cell));
     obj->AddToWorld();
+    if (sWorld->getBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+        obj->SetActive(true);
     if (obj->isActiveObject())
-    {
         map->AddToActive(obj);
-        map->DebugActiveObjects++;
-        TC_LOG_DEBUG("quadtrees", "Map {} Adding Active Creature {} at {},{}", map->GetId(), obj->GetSpawnId(), obj->GetPositionX(), obj->GetPositionY());
-    }
-        
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
-    {
         map->AddToWaypointCreatures(obj->ToCreature());
-        map->DebugWaypointCreatures++;
-        TC_LOG_DEBUG("quadtrees", "Map {} Adding Waypoint Creature {} at {},{}", map->GetId(), obj->GetSpawnId(), obj->GetPositionX(), obj->GetPositionY());
-    }
 
     ++count;
 }
@@ -82,10 +75,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> 
         // Don't spawn at all if there's a respawn timer
         ObjectGuid::LowType guid = *i_guid;
         if (!map->ShouldBeSpawnedOnGridLoad<T>(guid))
-        {
-            TC_LOG_DEBUG("quadtrees", "Map {} Creature {} not spawned on grid load", map->GetId(), guid);
             continue;
-        }
 
         T* obj;
         if constexpr (std::is_same_v<T, GameObject>)

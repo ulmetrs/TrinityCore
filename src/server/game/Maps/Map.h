@@ -46,6 +46,7 @@
 #include "TSJson.h"
 #include "TSWorldEntity.h"
 #include <sol/sol.hpp>
+#include <unordered_map>
 // @tswow-end
 
 class Battleground;
@@ -368,9 +369,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         std::set<ObjectGuid> m_delayedGuids;
         // @tswow-end
 
-        uint32 DebugActiveObjects;
-        uint32 DebugWaypointCreatures;
-        uint32 DebugCreatureRelocation;
+        std::unordered_map<uint32, Creature*> DebugCreatureRelocation;
 
         // currently unused for normal maps
         bool CanUnload(uint32 diff)

@@ -231,16 +231,9 @@ void Map::LoadMap(int gx, int gy)
 
 void Map::LoadAllCells()
 {
-    DebugActiveObjects = 0;
-    DebugWaypointCreatures = 0;
-    DebugCreatureRelocation = 0;
-
     for (uint32 cellX = 0; cellX < TOTAL_NUMBER_OF_CELLS_PER_MAP; cellX++)
         for (uint32 cellY = 0; cellY < TOTAL_NUMBER_OF_CELLS_PER_MAP; cellY++)
             LoadGrid((cellX + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL, (cellY + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL);
-
-    TC_LOG_DEBUG("quadtrees", "Map {} Active objects: {}", GetId(), DebugActiveObjects);
-    TC_LOG_DEBUG("quadtrees", "Map {} Waypoint creatures: {}", GetId(), DebugWaypointCreatures);
 }
 
 Map::Map(uint32 id, uint32 instanceOrPartitionId):
@@ -850,7 +843,7 @@ void Map::Update(uint32 t_diff)
     // for pets
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
-    DebugCreatureRelocation = 0;
+    DebugCreatureRelocation.clear();
 
     {
         ZoneScopedN("Map::Update::Players")
@@ -1079,7 +1072,11 @@ void Map::Update(uint32 t_diff)
         _relocatedDynamicObjects.clear();
     }
 
-    TC_LOG_DEBUG("quadtrees", "Map {} DebugCreatureRelocation: {}", GetId(), DebugCreatureRelocation);
+    if (GetId() == 571)
+    {
+        for (auto [guid, count] : DebugCreatureRelocation)
+            TC_LOG_DEBUG("quadtrees", "Frame {} Creature {} relocation count: {}", GameTime::GetGameTimeMS(), guid, count);
+    }
 
     SendObjectUpdates();
 
@@ -1302,7 +1299,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
-    ++DebugCreatureRelocation;
+    DebugCreatureRelocation[creature->GetGUID().GetCounter()]++;
 
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
