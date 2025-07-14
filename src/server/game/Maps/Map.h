@@ -397,7 +397,7 @@ class TC_GAME_API Map
         template<class T> bool AddToPartition(T *);
         template<class T> void RemoveFromPartition(T *);
 
-        void VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater);
+        void VisitNearbyCellsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater);
         virtual void Update(uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
@@ -494,6 +494,10 @@ class TC_GAME_API Map
         void AddObjectToRemoveList(WorldObject* obj);
         void AddObjectToSwitchList(WorldObject* obj, bool on);
         virtual void DelayedUpdate(uint32 diff);
+
+        void resetMarkedCells() { marked_cells.reset(); }
+        bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }
+        void markCell(uint32 pCellId) { marked_cells.set(pCellId); }
 
         bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
         uint32 GetPlayersCountExceptGMs() const;
@@ -786,6 +790,7 @@ class TC_GAME_API Map
         MapQuadTree* _quadTree;
         bool _cellsLoaded;
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+        std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
 
         bool i_scriptLock;
         std::set<WorldObject*> i_objectsToRemove;

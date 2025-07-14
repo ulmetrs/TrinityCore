@@ -186,32 +186,46 @@ void QuadTree<T>::QueryCircle(float centerX, float centerY, float radius, Func&&
     float minY = centerY - radius;
     float maxY = centerY + radius;
 
+    auto intersectsCircle = [&](const Bounds& b) -> bool {
+        // Coarse AABB check first (cheap)
+        if (b.maxX < minX || b.minX > maxX || b.maxY < minY || b.minY > maxY) return false;
+
+        // Exact circle-rect: Clamp center to rect, check distSq <= radiusSq
+        float closestX = std::max(b.minX, std::min(centerX, b.maxX));
+        float closestY = std::max(b.minY, std::min(centerY, b.maxY));
+        float dx = centerX - closestX;
+        float dy = centerY - closestY;
+        return (dx * dx + dy * dy) <= radiusSq;
+    };
+
     std::stack<const QuadNode<T>*> nodeStack;
     nodeStack.push(root.get());
+
     while (!nodeStack.empty())
     {
         const QuadNode<T>* node = nodeStack.top();
         nodeStack.pop();
 
-        if (node->_bounds.maxX < minX || node->_bounds.minX > maxX ||
-            node->_bounds.maxY < minY || node->_bounds.minY > maxY)
-            continue;
+        if (!intersectsCircle(node->_bounds)) continue;
 
-        for (T* obj : node->objects)
+        if (node->IsLeaf())
         {
-            float x = obj->GetPositionX();
-            float y = obj->GetPositionY();
-            float dx = x - centerX;
-            float dy = y - centerY;
-            if (dx * dx + dy * dy <= radiusSq)
-                visitor(obj);
+            for (T* obj : node->objects)
+            {
+                float x = obj->GetPositionX();
+                float y = obj->GetPositionY();
+                float dx = x - centerX;
+                float dy = y - centerY;
+                if (dx * dx + dy * dy <= radiusSq)
+                    std::forward<Func>(visitor)(obj);
+            }
         }
 
         if (!node->IsLeaf())
         {
             for (const auto& child : node->children)
             {
-                if (child)
+                if (child && intersectsCircle(child->_bounds))
                     nodeStack.push(child.get());
             }
         }
@@ -224,6 +238,7 @@ void QuadTree<T>::QueryRange(float minX, float minY, float maxX, float maxY, Fun
 {
     std::stack<const QuadNode<T>*> nodeStack;
     nodeStack.push(root.get());
+
     while (!nodeStack.empty())
     {
         const QuadNode<T>* node = nodeStack.top();
@@ -233,20 +248,27 @@ void QuadTree<T>::QueryRange(float minX, float minY, float maxX, float maxY, Fun
             node->_bounds.maxY < minY || node->_bounds.minY > maxY)
             continue;
 
-        for (T* obj : node->objects)
+        if (node->IsLeaf())
         {
-            float x = obj->GetPositionX();
-            float y = obj->GetPositionY();
-            if (x >= minX && x <= maxX && y >= minY && y <= maxY)
-                visitor(obj);
+            for (T* obj : node->objects)
+            {
+                float x = obj->GetPositionX();
+                float y = obj->GetPositionY();
+                if (x >= minX && x <= maxX && y >= minY && y <= maxY)
+                    std::forward<Func>(visitor)(obj);
+            }
         }
 
         if (!node->IsLeaf())
         {
             for (const auto& child : node->children)
             {
-                if (child)
+                if (child &&
+                    !(child->_bounds.maxX < minX || child->_bounds.minX > maxX ||
+                      child->_bounds.maxY < minY || child->_bounds.minY > maxY))
+                {
                     nodeStack.push(child.get());
+                }
             }
         }
     }

@@ -251,11 +251,11 @@ void Map::LoadAllCells()
             c->setActive(true);
         if (c->isActiveObject())
             AddToActive(c);
-            
         if (c->GetWaypointPath() != 0)
             AddToWaypointCreatures(c);
 
         _quadTree->Insert(c);
+        c->SetCell();
     }
 
     for (ObjectGuid::LowType guid : guids->gameobjects)
@@ -279,6 +279,7 @@ void Map::LoadAllCells()
             AddToActive(g);
 
         _quadTree->Insert(g);
+        g->SetCell();
     }
 
     for (Corpse* corpse : _corpses)
@@ -286,6 +287,7 @@ void Map::LoadAllCells()
         corpse->AddToWorld();
 
         _quadTree->Insert(corpse);
+        corpse->SetCell();
     }
 
     Balance();
@@ -435,6 +437,7 @@ bool Map::AddPlayerToMap(Player* player)
 
     ASSERT(player->GetQuadNode() == nullptr);
     _quadTree->Insert(player); // SAFE TO INSERT
+    player->SetCell();
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -471,6 +474,7 @@ bool Map::AddPlayerToPartition(Player* player)
 
     ASSERT(player->GetQuadNode() == nullptr);
     _quadTree->Insert(player); // SAFE TO INSERT
+    player->SetCell();
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -628,18 +632,40 @@ bool Map::AddToPartition(T* obj)
 
     ASSERT(obj->GetQuadNode() == nullptr);
     _quadTree->Insert(obj); // SAFE TO INSERT
+    obj->SetCell();
 
     return true;
 }
 
-// TODO when all is stable technically we could change this to circle search if its faster?
-void Map::VisitNearbyObjectsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater)
+void Map::VisitNearbyCellsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater)
 {
     // Check for valid position
     if (!obj->IsPositionValid())
         return;
 
-    obj->QueryMap(mask, obj->GetGridActivationRange(), updater);
+    // Update mobs/objects in ALL visible cells around object!
+    CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), obj->GetGridActivationRange());
+
+    for (uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
+    {
+        for (uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
+        {
+            // marked cells are those that have been visited
+            // don't visit the same cell twice
+            uint32 cell_id = (y * TOTAL_NUMBER_OF_CELLS_PER_MAP) + x;
+            if (isCellMarked(cell_id))
+                continue;
+
+            markCell(cell_id);
+
+            float minX = x * SIZE_OF_GRID_CELL - MAP_HALFSIZE;
+            float minY = y * SIZE_OF_GRID_CELL - MAP_HALFSIZE;
+            float maxX = minX + SIZE_OF_GRID_CELL;
+            float maxY = minY + SIZE_OF_GRID_CELL;
+
+            _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
+        }
+    }
 }
 
 void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
@@ -731,6 +757,9 @@ void Map::Update(uint32 t_diff)
     else
         _respawnCheckTimer -= t_diff;
 
+    /// update active cells around players and active objects
+    resetMarkedCells();
+
     Trinity::ObjectUpdater updater(t_diff);
     uint32_t updaterMask = MAPQT_ALL & ~MAPQT_PLAYER & ~MAPQT_CORPSE;
 
@@ -749,11 +778,11 @@ void Map::Update(uint32 t_diff)
             // update players at tick
             player->Update(t_diff);
 
-            VisitNearbyObjectsOf(player, updaterMask, updater);
+            VisitNearbyCellsOf(player, updaterMask, updater);
 
             // If player is using far sight or mind vision, visit that object too
             if (WorldObject* viewPoint = player->GetViewpoint())
-                VisitNearbyObjectsOf(viewPoint, updaterMask, updater);
+                VisitNearbyCellsOf(viewPoint, updaterMask, updater);
 
             // Handle updates for creatures in combat with player and are more than 60 yards away
             if (player->IsInCombat())
@@ -764,7 +793,7 @@ void Map::Update(uint32 t_diff)
                         if (unit->GetMapId() == player->GetMapId() && !unit->IsWithinDistInMap(player, GetVisibilityRange(), false))
                             toVisit.push_back(unit);
                 for (Unit* unit : toVisit)
-                    VisitNearbyObjectsOf(unit, updaterMask, updater);
+                    VisitNearbyCellsOf(unit, updaterMask, updater);
             }
 
             { // Update any creatures that own auras the player has applications of
@@ -776,7 +805,7 @@ void Map::Update(uint32 t_diff)
                             toVisit.insert(caster);
                 }
                 for (Unit* unit : toVisit)
-                    VisitNearbyObjectsOf(unit, updaterMask, updater);
+                    VisitNearbyCellsOf(unit, updaterMask, updater);
             }
 
             { // Update player's summons
@@ -790,7 +819,7 @@ void Map::Update(uint32 t_diff)
                                 toVisit.push_back(unit);
 
                 for (Unit* unit : toVisit)
-                    VisitNearbyObjectsOf(unit, updaterMask, updater);
+                    VisitNearbyCellsOf(unit, updaterMask, updater);
             }
         }
     }
@@ -810,7 +839,7 @@ void Map::Update(uint32 t_diff)
             {
                 ZoneScopedN("Map::Update::ActiveObjects::ActiveNonPlayer")
 
-                VisitNearbyObjectsOf(obj, updaterMask, updater);
+                VisitNearbyCellsOf(obj, updaterMask, updater);
             }
         }
     }
@@ -828,6 +857,11 @@ void Map::Update(uint32 t_diff)
             ++m_waypointCreaturesIter;
 
             if (!creature || !creature->IsInWorld() || !creature->IsPositionValid())
+                continue;
+
+            CellCoord cellCoord = creature->GetCell().GetCellCoord();
+            // The waypoint creature has already ticked its update from the above if the cell its in is marked
+            if (isCellMarked(cellCoord.GetId()))
                 continue;
 
             {
@@ -850,6 +884,10 @@ void Map::Update(uint32 t_diff)
                     // (edge condition where members are on diff grid than leader)
                     for (Creature* member : members)
                     {
+                        CellCoord memberCellCoord = member->GetCell().GetCellCoord();
+                        if (isCellMarked(memberCellCoord.GetId()))
+                            continue;
+
                         member->Update(t_diff);
                     }
                 }
@@ -883,6 +921,7 @@ void Map::Update(uint32 t_diff)
         for (Creature* creature : _relocatedCreatures)
         {
             _quadTree->Insert(creature); // SAFE TO INSERT
+            creature->SetCell();
 
             creature->UpdatePositionData();
             creature->UpdateObjectVisibility(false);
@@ -892,6 +931,7 @@ void Map::Update(uint32 t_diff)
         for (GameObject* go : _relocatedGameObjects)
         {
             _quadTree->Insert(go); // SAFE TO INSERT
+            go->SetCell();
 
             go->UpdateModelPosition();
             go->UpdatePositionData();
@@ -902,6 +942,7 @@ void Map::Update(uint32 t_diff)
         for (DynamicObject* dynObj : _relocatedDynamicObjects)
         {
             _quadTree->Insert(dynObj); // SAFE TO INSERT
+            dynObj->SetCell();
 
             dynObj->UpdatePositionData();
             dynObj->UpdateObjectVisibility(false);
@@ -909,7 +950,10 @@ void Map::Update(uint32 t_diff)
         _relocatedDynamicObjects.clear();
 
         for (Corpse* corpse : _relocatedCorpses)
+        {
             _quadTree->Insert(corpse); // SAFE TO INSERT
+            corpse->SetCell();
+        }
         _relocatedCorpses.clear();
     }
 
@@ -1115,6 +1159,7 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
     ASSERT(player->GetQuadNode());
     _quadTree->Insert(player); // SAFE TO INSERT
+    player->SetCell();
 
     player->UpdatePositionData();
     player->UpdateObjectVisibility(false);
