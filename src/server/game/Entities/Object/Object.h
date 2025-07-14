@@ -663,7 +663,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
     private:
         Map* m_currMap;                                   // current object's Map location
         void* m_quadNode;
-        Cell m_cell;
 
         uint32 m_InstanceId;                              // in map copy with instance id
         uint32 m_partitionId;                             // in map copy with partition id
