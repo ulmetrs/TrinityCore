@@ -1064,8 +1064,10 @@ void Map::RemoveFromMap(T *obj, bool remove)
 
     obj->ResetMap();
 
-    ASSERT(obj->GetQuadNode());
-    static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    if(obj->GetQuadNode())
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    else
+        TC_LOG_ERROR("quadtrees", "Map::RemoveFromMap: Object {} Removed from Map was never inserted into quad tree", obj->GetDebugInfo());
 
     if (remove)
         DeleteFromWorld(obj);
