@@ -58,7 +58,7 @@ void AddObjectHelper(CellCoord &cell, GridRefManager<T> &m, uint32 &count, Map* 
     obj->SetCell(Cell(cell));
     obj->AddToWorld();
     if (sWorld->getBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
-        obj->SetActive(true);
+        obj->setActive(true);
     if (obj->isActiveObject())
         map->AddToActive(obj);
     if (obj->IsCreature() && obj->ToCreature()->GetWaypointPath() != 0)
