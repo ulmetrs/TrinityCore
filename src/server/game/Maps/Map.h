@@ -368,9 +368,7 @@ class TC_GAME_API Map
         std::set<ObjectGuid> m_delayedGuids;
         // @tswow-end
 
-        uint32 DebugActiveObjects;
-        uint32 DebugWaypointCreatures;
-        uint32 DebugCreatureRelocation;
+        std::unordered_map<uint32, uint32> DebugCreatureRelocation;
 
         // currently unused for normal maps
         bool CanUnload(uint32 diff)
