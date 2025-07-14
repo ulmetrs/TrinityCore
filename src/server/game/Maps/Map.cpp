@@ -255,7 +255,6 @@ void Map::LoadAllCells()
             AddToWaypointCreatures(c);
 
         _quadTree->Insert(c);
-        c->SetCell();
     }
 
     for (ObjectGuid::LowType guid : guids->gameobjects)
@@ -279,7 +278,6 @@ void Map::LoadAllCells()
             AddToActive(g);
 
         _quadTree->Insert(g);
-        g->SetCell();
     }
 
     for (Corpse* corpse : _corpses)
@@ -287,7 +285,6 @@ void Map::LoadAllCells()
         corpse->AddToWorld();
 
         _quadTree->Insert(corpse);
-        corpse->SetCell();
     }
 
     Balance();
@@ -437,7 +434,6 @@ bool Map::AddPlayerToMap(Player* player)
 
     ASSERT(player->GetQuadNode() == nullptr);
     _quadTree->Insert(player); // SAFE TO INSERT
-    player->SetCell();
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -474,7 +470,6 @@ bool Map::AddPlayerToPartition(Player* player)
 
     ASSERT(player->GetQuadNode() == nullptr);
     _quadTree->Insert(player); // SAFE TO INSERT
-    player->SetCell();
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -632,7 +627,6 @@ bool Map::AddToPartition(T* obj)
 
     ASSERT(obj->GetQuadNode() == nullptr);
     _quadTree->Insert(obj); // SAFE TO INSERT
-    obj->SetCell();
 
     return true;
 }
@@ -859,11 +853,6 @@ void Map::Update(uint32 t_diff)
             if (!creature || !creature->IsInWorld() || !creature->IsPositionValid())
                 continue;
 
-            CellCoord cellCoord = creature->GetCell().GetCellCoord();
-            // The waypoint creature has already ticked its update from the above if the cell its in is marked
-            if (isCellMarked(cellCoord.GetId()))
-                continue;
-
             {
                 ZoneScopedN("Map::Update::WaypointCreatures::WaypointCreature")
 
@@ -884,10 +873,6 @@ void Map::Update(uint32 t_diff)
                     // (edge condition where members are on diff grid than leader)
                     for (Creature* member : members)
                     {
-                        CellCoord memberCellCoord = member->GetCell().GetCellCoord();
-                        if (isCellMarked(memberCellCoord.GetId()))
-                            continue;
-
                         member->Update(t_diff);
                     }
                 }
@@ -921,7 +906,6 @@ void Map::Update(uint32 t_diff)
         for (Creature* creature : _relocatedCreatures)
         {
             _quadTree->Insert(creature); // SAFE TO INSERT
-            creature->SetCell();
 
             creature->UpdatePositionData();
             creature->UpdateObjectVisibility(false);
@@ -931,7 +915,6 @@ void Map::Update(uint32 t_diff)
         for (GameObject* go : _relocatedGameObjects)
         {
             _quadTree->Insert(go); // SAFE TO INSERT
-            go->SetCell();
 
             go->UpdateModelPosition();
             go->UpdatePositionData();
@@ -942,7 +925,6 @@ void Map::Update(uint32 t_diff)
         for (DynamicObject* dynObj : _relocatedDynamicObjects)
         {
             _quadTree->Insert(dynObj); // SAFE TO INSERT
-            dynObj->SetCell();
 
             dynObj->UpdatePositionData();
             dynObj->UpdateObjectVisibility(false);
@@ -952,7 +934,6 @@ void Map::Update(uint32 t_diff)
         for (Corpse* corpse : _relocatedCorpses)
         {
             _quadTree->Insert(corpse); // SAFE TO INSERT
-            corpse->SetCell();
         }
         _relocatedCorpses.clear();
     }
@@ -1159,7 +1140,6 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
     ASSERT(player->GetQuadNode());
     _quadTree->Insert(player); // SAFE TO INSERT
-    player->SetCell();
 
     player->UpdatePositionData();
     player->UpdateObjectVisibility(false);

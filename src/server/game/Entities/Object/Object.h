@@ -18,8 +18,6 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H
 
-#include "Cell.h"
-#include "CellImpl.h"
 #include "Common.h"
 #include "Duration.h"
 #include "EventProcessor.h"
@@ -591,8 +589,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         bool IsStoredInWorldObjectGridContainer() const;
         void* GetQuadNode() const { return m_quadNode; }
         void SetQuadNode(void* node) { m_quadNode = node; }
-        Cell const& GetCell() const { return m_cell; }
-        void SetCell() { m_cell = Cell(GetPositionX(), GetPositionY()); }
 
         uint32  LastUsedScriptID;
 
