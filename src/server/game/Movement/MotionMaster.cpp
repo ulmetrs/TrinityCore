@@ -703,8 +703,7 @@ void MotionMaster::MoveEncircle(Unit* target)
         return _owner != unit && unit->GetVictim() && unit->GetVictim() == target && !unit->isMoving() && !unit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNINTERACTIBLE);
     }, (fanningRadius / radiusReduction) * (fanningRadius / radiusReduction));
     Trinity::UnitSearcher<Trinity::AnyUnitFulfillingConditionInRangeCheck> checker(_owner, collider, collisionCheck);
-    Cell::VisitAllObjects(_owner, checker, (fanningRadius / radiusReduction));
-
+    _owner->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, (fanningRadius / radiusReduction), checker);
     if (! collider) {
         return;
     }

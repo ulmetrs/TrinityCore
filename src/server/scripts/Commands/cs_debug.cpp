@@ -996,7 +996,7 @@ public:
             Creature* passenger = nullptr;
             Trinity::AllCreaturesOfEntryInRange check(handler->GetPlayer(), entry, 20.0f);
             Trinity::CreatureSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(handler->GetPlayer(), passenger, check);
-            Cell::VisitAllObjects(handler->GetPlayer(), searcher, 30.0f);
+            handler->GetPlayer()->QueryMap(MAPQT_CREATURE, 30.0f, searcher);
             if (!passenger || passenger == target)
                 return false;
             passenger->EnterVehicle(target, *seatId);
@@ -1401,25 +1401,12 @@ public:
         if (!map)
             return false;
 
-        // Load 1 single tile if specified, otherwise load the whole map
-        if (tileX && tileY)
-        {
-            handler->PSendSysMessage("Loading cell (mapId: %u tile: %u, %u). Current GameObjects " SZFMTD ", Creatures " SZFMTD,
-                map->GetId(), *tileX, *tileY, map->GetObjectsStore().Size<GameObject>(), map->GetObjectsStore().Size<Creature>());
 
-            map->LoadGrid(x, y);
+        handler->PSendSysMessage("Loading all cells (mapId: %u). Current GameObjects " SZFMTD ", Creatures " SZFMTD, map->GetId(), map->GetObjectsStore().Size<GameObject>(), map->GetObjectsStore().Size<Creature>());
 
-            handler->PSendSysMessage("Cell loaded (mapId: %u tile: %u, %u) After load - GameObject " SZFMTD ", Creatures " SZFMTD,
-                map->GetId(), *tileX, *tileY, map->GetObjectsStore().Size<GameObject>(), map->GetObjectsStore().Size<Creature>());
-        }
-        else
-        {
-            handler->PSendSysMessage("Loading all cells (mapId: %u). Current GameObjects " SZFMTD ", Creatures " SZFMTD, map->GetId(), map->GetObjectsStore().Size<GameObject>(), map->GetObjectsStore().Size<Creature>());
+        map->LoadAllCells();
 
-            map->LoadAllCells();
-
-            handler->PSendSysMessage("Cells loaded (mapId: %u) After load - GameObject " SZFMTD ", Creatures " SZFMTD, map->GetId(), map->GetObjectsStore().Size<GameObject>(), map->GetObjectsStore().Size<Creature>());
-        }
+        handler->PSendSysMessage("Cells loaded (mapId: %u) After load - GameObject " SZFMTD ", Creatures " SZFMTD, map->GetId(), map->GetObjectsStore().Size<GameObject>(), map->GetObjectsStore().Size<Creature>());
 
         return true;
     }

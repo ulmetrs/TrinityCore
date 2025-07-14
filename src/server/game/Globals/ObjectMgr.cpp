@@ -2408,15 +2408,7 @@ void ObjectMgr::LoadCreatures()
     TC_LOG_INFO("server.loading", ">> Loaded {} creatures in {} ms", _creatureDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
-CellObjectGuids const* ObjectMgr::GetCellObjectGuids(uint16 mapid, uint8 spawnMode, uint32 cell_id)
-{
-    if (CellObjectGuidsMap const* mapGuids = Trinity::Containers::MapGetValuePtr(_mapObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode)))
-        return Trinity::Containers::MapGetValuePtr(*mapGuids, cell_id);
-
-    return nullptr;
-}
-
-CellObjectGuidsMap const* ObjectMgr::GetMapObjectGuids(uint16 mapid, uint8 spawnMode)
+MapObjectGuids const* ObjectMgr::GetMapObjectGuids(uint16 mapid, uint8 spawnMode)
 {
     return Trinity::Containers::MapGetValuePtr(_mapObjectGuidsStore, MAKE_PAIR32(mapid, spawnMode));
 }
@@ -2428,9 +2420,8 @@ void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* 
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.creatures.insert(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.creatures.insert(guid);
         }
     }
 }
@@ -2442,9 +2433,8 @@ void ObjectMgr::RemoveCreatureFromGrid(ObjectGuid::LowType guid, CreatureData co
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.creatures.erase(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.creatures.erase(guid);
         }
     }
 }
@@ -2955,9 +2945,8 @@ void ObjectMgr::AddGameobjectToGrid(ObjectGuid::LowType guid, GameObjectData con
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.gameobjects.insert(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.gameobjects.insert(guid);
         }
     }
 }
@@ -2969,9 +2958,8 @@ void ObjectMgr::RemoveGameobjectFromGrid(ObjectGuid::LowType guid, GameObjectDat
     {
         if (mask & 1)
         {
-            CellCoord cellCoord = Trinity::ComputeCellCoord(data->spawnPoint.GetPositionX(), data->spawnPoint.GetPositionY());
-            CellObjectGuids& cell_guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)][cellCoord.GetId()];
-            cell_guids.gameobjects.erase(guid);
+            MapObjectGuids& guids = _mapObjectGuidsStore[MAKE_PAIR32(data->mapId, i)];
+            guids.gameobjects.erase(guid);
         }
     }
 }
@@ -11386,18 +11374,15 @@ void ObjectMgr::LoadMapPartitions()
         partition.mapId  = fields[1].GetUInt32();
         partition.partitionId   = fields[2].GetUInt32();
         partition.priority = fields[3].GetUInt32();
+        ASSERT(partition.partitionId != 0);
 
         std::string polygon = fields[4].GetString();
         std::vector<Position> points;
-        try {
-            json j = json::parse(polygon);
-            for (const auto& pt : j) {
-                float x = pt.at("x").get<float>();
-                float y = pt.at("y").get<float>();
-                points.emplace_back(x, y);
-            }
-        } catch (const std::exception& e) {
-            TC_LOG_ERROR("server.loading", "Failed to parse polygon JSON for map partition {}: {}", partition.id, e.what());
+        json j = json::parse(polygon);
+        for (const auto& pt : j) {
+            float x = pt.at("x").get<float>();
+            float y = pt.at("y").get<float>();
+            points.emplace_back(x, y);
         }
         partition.polygon = points;
 

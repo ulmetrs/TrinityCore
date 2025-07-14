@@ -895,8 +895,8 @@ class TC_GAME_API Unit : public WorldObject
     public:
         void AddToWorld() override;
         void RemoveFromWorld() override;
-        void AddToPartition() override;
-        void RemoveFromPartition() override;
+        virtual void AddToPartition();
+        virtual void RemoveFromPartition();
         virtual void UpdateMapPartition(Map* forcedMap = nullptr) { };
         virtual bool ShouldRelocateUpdateMapPartition();
 

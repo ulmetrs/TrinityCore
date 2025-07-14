@@ -284,17 +284,7 @@ void FlightPathMovementGenerator::InitEndGridInfo()
 
 void FlightPathMovementGenerator::PreloadEndGrid()
 {
-    // Used to preload the final grid where the flightmaster is
-    Map* endMap = sMapMgr->CreateMap(_endMapId, Position(_endGridX, _endGridY));
-
-    // Load the grid
-    if (endMap)
-    {
-        TC_LOG_DEBUG("movement.flightpath", "FlightPathMovementGenerator::PreloadEndGrid: preloading grid ({}, {}) for map {} at node index {}/{}", _endGridX, _endGridY, _endMapId, _preloadTargetNode, uint32(_path.size() - 1));
-        endMap->LoadGrid(_endGridX, _endGridY);
-    }
-    else
-        TC_LOG_DEBUG("movement.flightpath", "FlightPathMovementGenerator::PreloadEndGrid: unable to determine map to preload flightmaster grid");
+    // No longer needed
 }
 
 uint32 FlightPathMovementGenerator::GetPathId(size_t index) const

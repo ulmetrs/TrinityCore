@@ -16,7 +16,6 @@
  */
 
 #include "icecrown_citadel.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -550,9 +549,6 @@ struct npc_crok_scourgebane : public EscortAI
             _isEventActive = true;
             _isEventDone = true;
 
-            // Load Grid with Sister Svalna
-            me->GetMap()->LoadGrid(4356.71f, 2484.33f);
-
             if (Creature* svalna = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_SISTER_SVALNA)))
                 svalna->AI()->DoAction(ACTION_START_GAUNTLET);
 
@@ -660,7 +656,7 @@ struct npc_crok_scourgebane : public EscortAI
                 std::list<Creature*> temp;
                 FrostwingVrykulSearcher check(me, 80.0f);
                 Trinity::CreatureListSearcher<FrostwingVrykulSearcher> searcher(me, temp, check);
-                Cell::VisitGridObjects(me, searcher, 80.0f);
+                me->QueryMap(MAPQT_GRID_CREATURE, 80.0f, searcher);
 
                 _aliveTrash.clear();
                 for (auto itr = temp.begin(); itr != temp.end(); ++itr)
@@ -687,7 +683,8 @@ struct npc_crok_scourgebane : public EscortAI
             Player* player = nullptr;
             Trinity::AnyPlayerInObjectRangeCheck check(me, 60.0f);
             Trinity::PlayerSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, player, check);
-            Cell::VisitWorldObjects(me, searcher, 60.0f);
+            me->QueryMap(MAPQT_PLAYER, 60.0f, searcher);
+            
             // wipe
             if (!player)
             {
@@ -696,7 +693,7 @@ struct npc_crok_scourgebane : public EscortAI
                 {
                     FrostwingGauntletRespawner respawner;
                     Trinity::CreatureWorker<FrostwingGauntletRespawner> worker(me, respawner);
-                    Cell::VisitGridObjects(me, worker, 333.0f);
+                    me->QueryMap(MAPQT_GRID_CREATURE, 333.0f, worker);
                     Talk(SAY_CROK_DEATH);
                 }
                 return;
@@ -992,7 +989,7 @@ private:
         Creature* target = nullptr;
         Trinity::MostHPMissingInRange u_check(me, 60.0f, 0);
         Trinity::CreatureLastSearcher<Trinity::MostHPMissingInRange> searcher(me, target, u_check);
-        Cell::VisitGridObjects(me, searcher, 60.0f);
+        me->QueryMap(MAPQT_GRID_CREATURE, 60.0f, searcher);
         return target;
     }
 };

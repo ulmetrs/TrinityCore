@@ -16,7 +16,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "CreatureAIImpl.h"
 #include "GridNotifiersImpl.h"
@@ -80,7 +79,8 @@ class spell_love_is_in_the_air_romantic_picnic : public AuraScript
         std::list<Player*> playerList;
         Trinity::AnyPlayerInObjectRangeCheck checker(target, INTERACTION_DISTANCE*2);
         Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(target, playerList, checker);
-        Cell::VisitWorldObjects(target, searcher, INTERACTION_DISTANCE * 2);
+        target->QueryMap(MAPQT_PLAYER, INTERACTION_DISTANCE * 2, searcher);
+
         for (std::list<Player*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
         {
             if (Player* playerFound = (*itr))

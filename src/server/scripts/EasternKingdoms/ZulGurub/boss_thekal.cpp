@@ -16,7 +16,6 @@
  */
 
 #include "zulgurub.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
 #include "MotionMaster.h"
@@ -453,7 +452,7 @@ struct npc_zealot_lorkhan : public ScriptedAI
                     Unit* target = nullptr;
                     LorKhanSelectTargetToHeal check(me, 100.0f);
                     Trinity::UnitLastSearcher<LorKhanSelectTargetToHeal> searcher(me, target, check);
-                    Cell::VisitAllObjects(me, searcher, 100.0f);
+                    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 100.0f, searcher);
 
                     if (target)
                         DoCast(target, SPELL_GREATERHEAL);

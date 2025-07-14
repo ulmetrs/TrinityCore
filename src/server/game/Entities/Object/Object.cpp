@@ -28,6 +28,7 @@
 #include "Item.h"
 #include "Log.h"
 #include "Map.h"
+#include "MapQuadTree.h"
 #include "MiscPackets.h"
 #include "MovementInfo.h"
 #include "MovementPacketBuilder.h"
@@ -962,7 +963,7 @@ void MovementInfo::OutDebug()
 WorldObject::WorldObject(bool isWorldObject) : Object(), WorldLocation(), LastUsedScriptID(0),
 m_movementInfo(), m_name(), m_isActive(false), m_isFarVisible(false), m_isStoredInWorldObjectGridContainer(isWorldObject), m_zoneScript(nullptr),
 m_transport(nullptr), m_zoneId(0), m_areaId(0), m_staticFloorZ(VMAP_INVALID_HEIGHT), m_outdoors(false), m_liquidStatus(LIQUID_MAP_NO_WATER),
-m_currMap(nullptr), m_InstanceId(0), m_partitionId(0), m_phaseMask(PHASEMASK_NORMAL), m_notifyflags(0)
+m_currMap(nullptr), m_quadNode(nullptr), m_InstanceId(0), m_partitionId(0), m_phaseMask(PHASEMASK_NORMAL), m_notifyflags(0)
 {
     m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE | GHOST_VISIBILITY_GHOST);
     m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE);
@@ -1102,28 +1103,6 @@ void WorldObject::AddToWorld()
 }
 
 void WorldObject::RemoveFromWorld()
-{
-    if (!IsInWorld())
-        return;
-
-    DestroyForNearbyPlayers();
-
-    Object::RemoveFromWorld();
-    // @tswow-begin
-    RemoveFromAllGroups();
-    // @tswow-end
-}
-
-void WorldObject::AddToPartition()
-{
-    if (IsInWorld())
-        return;
-
-    Object::AddToWorld();
-    GetMap()->GetZoneAndAreaId(GetPhaseMask(), m_zoneId, m_areaId, GetPositionX(), GetPositionY(), GetPositionZ());
-}
-
-void WorldObject::RemoveFromPartition()
 {
     if (!IsInWorld())
         return;
@@ -1907,13 +1886,13 @@ void WorldObject::SendMessageToSet(WorldPacket const* data, bool self) const
 void WorldObject::SendMessageToSetInRange(WorldPacket const* data, float dist, bool /*self*/) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    Cell::VisitWorldObjects(this, notifier, dist);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, dist, notifier);
 }
 
 void WorldObject::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
 {
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 }
 
 void WorldObject::SendObjectDeSpawnAnim(ObjectGuid guid)
@@ -2073,7 +2052,7 @@ TempSummon* Map::SummonCreature(uint32 entry, Position const& pos, SummonPropert
 
     // call MoveInLineOfSight for nearby creatures
     Trinity::AIRelocationNotifier notifier(*summon);
-    Cell::VisitAllObjects(summon, notifier, GetVisibilityRange());
+    summon->QueryMap(MAPQT_CREATURE, GetVisibilityRange(), notifier);
 
     return summon;
 }
@@ -2230,7 +2209,7 @@ Creature* WorldObject::FindNearestCreature(uint32 entry, float range, bool alive
     Creature* creature = nullptr;
     Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck checker(*this, entry, alive, range);
     Trinity::CreatureLastSearcher<Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(this, creature, checker);
-    Cell::VisitAllObjects(this, searcher, range);
+    QueryMap(MAPQT_CREATURE, range, searcher);
     return creature;
 }
 
@@ -2239,7 +2218,7 @@ GameObject* WorldObject::FindNearestGameObject(uint32 entry, float range, bool s
     GameObject* go = nullptr;
     Trinity::NearestGameObjectEntryInObjectRangeCheck checker(*this, entry, range, spawnedOnly);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
-    Cell::VisitGridObjects(this, searcher, range);
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return go;
 }
 
@@ -2248,7 +2227,7 @@ GameObject* WorldObject::FindNearestUnspawnedGameObject(uint32 entry, float rang
     GameObject* go = nullptr;
     Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck checker(*this, entry, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestUnspawnedGameObjectEntryInObjectRangeCheck> searcher(this, go, checker);
-    Cell::VisitGridObjects(this, searcher, range);
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return go;
 }
 
@@ -2257,7 +2236,7 @@ GameObject* WorldObject::FindNearestGameObjectOfType(GameobjectTypes type, float
     GameObject* go = nullptr;
     Trinity::NearestGameObjectTypeInObjectRangeCheck checker(*this, type, range);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectTypeInObjectRangeCheck> searcher(this, go, checker);
-    Cell::VisitGridObjects(this, searcher, range);
+    QueryMap(MAPQT_GAMEOBJECT, range, searcher);
     return go;
 }
 
@@ -2267,8 +2246,7 @@ Player* WorldObject::SelectNearestPlayer(float distance) const
 
     Trinity::NearestPlayerInObjectRangeCheck checker(this, distance);
     Trinity::PlayerLastSearcher<Trinity::NearestPlayerInObjectRangeCheck> searcher(this, target, checker);
-    Cell::VisitWorldObjects(this, searcher, distance);
-
+    QueryMap(MAPQT_PLAYER, distance, searcher);
     return target;
 }
 
@@ -3299,7 +3277,7 @@ void WorldObject::GetGameObjectListWithEntryInGrid(Container& gameObjectContaine
 {
     Trinity::AllGameObjectsWithEntryInRange check(this, entry, maxSearchRange);
     Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(this, gameObjectContainer, check);
-    Cell::VisitGridObjects(this, searcher, maxSearchRange);
+    QueryMap(MAPQT_GAMEOBJECT, maxSearchRange, searcher);
 }
 
 template <typename Container>
@@ -3307,7 +3285,7 @@ void WorldObject::GetCreatureListWithEntryInGrid(Container& creatureContainer, u
 {
     Trinity::AllCreaturesOfEntryInRange check(this, entry, maxSearchRange);
     Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(this, creatureContainer, check);
-    Cell::VisitGridObjects(this, searcher, maxSearchRange);
+    QueryMap(MAPQT_GRID_CREATURE, maxSearchRange, searcher);
 }
 
 template <typename Container>
@@ -3315,7 +3293,7 @@ void WorldObject::GetPlayerListInGrid(Container& playerContainer, float maxSearc
 {
     Trinity::AnyPlayerInObjectRangeCheck checker(this, maxSearchRange, alive);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, playerContainer, checker);
-    Cell::VisitWorldObjects(this, searcher, maxSearchRange);
+    QueryMap(MAPQT_PLAYER, maxSearchRange, searcher);
 }
 
 void WorldObject::GetNearPoint2D(WorldObject const* searcher, float& x, float& y, float distance2d, float absAngle) const
@@ -3608,7 +3586,8 @@ void WorldObject::DestroyForNearbyPlayers()
     std::list<Player*> targets;
     Trinity::AnyPlayerInObjectRangeCheck check(this, GetVisibilityRange(), false);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, targets, check);
-    Cell::VisitWorldObjects(this, searcher, GetVisibilityRange());
+    QueryMap(MAPQT_PLAYER, GetVisibilityRange(), searcher);
+
     for (std::list<Player*>::const_iterator iter = targets.begin(); iter != targets.end(); ++iter)
     {
         Player* player = (*iter);
@@ -3635,7 +3614,7 @@ void WorldObject::UpdateObjectVisibility(bool /*forced*/)
 {
     //updates object's visibility for nearby players
     Trinity::VisibleChangesNotifier notifier(*this);
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 }
 
 struct WorldObjectChangeAccumulator
@@ -3644,56 +3623,6 @@ struct WorldObjectChangeAccumulator
     WorldObject& i_object;
     GuidSet plr_list;
     WorldObjectChangeAccumulator(WorldObject &obj, UpdateDataMapType &d) : i_updateDatas(d), i_object(obj) { }
-    void Visit(PlayerMapType &m)
-    {
-        Player* source = nullptr;
-        for (PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        {
-            source = iter->GetSource();
-
-            BuildPacket(source);
-
-            if (!source->GetSharedVisionList().empty())
-            {
-                SharedVisionList::const_iterator it = source->GetSharedVisionList().begin();
-                for (; it != source->GetSharedVisionList().end(); ++it)
-                    BuildPacket(*it);
-            }
-        }
-    }
-
-    void Visit(CreatureMapType &m)
-    {
-        Creature* source = nullptr;
-        for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        {
-            source = iter->GetSource();
-            if (!source->GetSharedVisionList().empty())
-            {
-                SharedVisionList::const_iterator it = source->GetSharedVisionList().begin();
-                for (; it != source->GetSharedVisionList().end(); ++it)
-                    BuildPacket(*it);
-            }
-        }
-    }
-
-    void Visit(DynamicObjectMapType &m)
-    {
-        DynamicObject* source = nullptr;
-        for (DynamicObjectMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        {
-            source = iter->GetSource();
-            ObjectGuid guid = source->GetCasterGUID();
-
-            if (guid.IsPlayer())
-            {
-                //Caster may be nullptr if DynObj is in removelist
-                if (Player* caster = ObjectAccessor::FindPlayer(guid))
-                    if (caster->GetGuidValue(PLAYER_FARSIGHT) == source->GetGUID())
-                        BuildPacket(caster);
-            }
-        }
-    }
 
     void BuildPacket(Player* player)
     {
@@ -3705,14 +3634,44 @@ struct WorldObjectChangeAccumulator
         }
     }
 
-    template<class SKIP> void Visit(GridRefManager<SKIP> &) { }
+    template<class T> void operator()(T*) { }
+    void operator()(Player* p)
+    {
+        BuildPacket(p);
+
+        if (!p->GetSharedVisionList().empty())
+        {
+            for (SharedVisionList::const_iterator it = p->GetSharedVisionList().begin(); it != p->GetSharedVisionList().end(); ++it)
+                BuildPacket(*it);
+        }
+    }
+    void operator()(Creature* c)
+    {
+        if (!c->GetSharedVisionList().empty())
+        {
+            for (SharedVisionList::const_iterator it = c->GetSharedVisionList().begin(); it != c->GetSharedVisionList().end(); ++it)
+                BuildPacket(*it);
+        }
+    }
+    void operator()(DynamicObject* d)
+    {
+        ObjectGuid guid = d->GetCasterGUID();
+
+        if (guid.IsPlayer())
+        {
+            // Caster may be nullptr if DynObj is in removelist
+            if (Player* caster = ObjectAccessor::FindPlayer(guid))
+                if (caster->GetGuidValue(PLAYER_FARSIGHT) == d->GetGUID())
+                    BuildPacket(caster);
+        }
+    }
 };
 
 void WorldObject::BuildUpdate(UpdateDataMapType& data_map)
 {
     WorldObjectChangeAccumulator notifier(*this, data_map);
     //we must build packets for all visible players
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 
     ClearUpdateMask(false);
 }

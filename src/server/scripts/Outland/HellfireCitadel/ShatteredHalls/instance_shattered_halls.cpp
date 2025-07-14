@@ -220,7 +220,6 @@ class instance_shattered_halls : public InstanceMapScript
 
                 Creature* executioner = nullptr;
 
-                instance->LoadGrid(Executioner.GetPositionX(), Executioner.GetPositionY());
                 if (Creature* kargath = instance->GetCreature(kargathGUID))
                     if (executionerGUID.IsEmpty())
                         executioner = kargath->SummonCreature(NPC_SHATTERED_EXECUTIONER, Executioner);

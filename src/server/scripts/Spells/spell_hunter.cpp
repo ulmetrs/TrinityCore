@@ -29,6 +29,7 @@
 #include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "SpellScript.h"
+#include "World.h"
 
 enum HunterSpells
 {
@@ -820,9 +821,9 @@ class spell_hun_pet_carrion_feeder : public SpellScript
         // search for nearby enemy corpse in range
         Trinity::AnyDeadUnitSpellTargetInRangeCheck check(caster, max_range, GetSpellInfo(), TARGET_CHECK_ENEMY);
         Trinity::WorldObjectSearcher<Trinity::AnyDeadUnitSpellTargetInRangeCheck> searcher(caster, result, check);
-        Cell::VisitWorldObjects(caster, searcher, max_range);
+        caster->QueryMap(MAPQT_WORLD, max_range, searcher);
         if (!result)
-            Cell::VisitGridObjects(caster, searcher, max_range);
+            caster->QueryMap(MAPQT_GRID, max_range, searcher);
         if (!result)
             return SPELL_FAILED_NO_EDIBLE_CORPSES;
         return SPELL_CAST_OK;

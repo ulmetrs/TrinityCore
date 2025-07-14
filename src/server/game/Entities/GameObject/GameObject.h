@@ -19,7 +19,6 @@
 #define TRINITYCORE_GAMEOBJECT_H
 
 #include "Object.h"
-#include "GridObject.h"
 #include "GameObjectData.h"
 #include "Loot.h"
 #include "SharedDefines.h"
@@ -88,7 +87,7 @@ enum LootState
 // 5 sec for bobber catch
 #define FISHING_BOBBER_READY_TIME 5
 
-class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
+class TC_GAME_API GameObject : public WorldObject
 {
     public:
         explicit GameObject();

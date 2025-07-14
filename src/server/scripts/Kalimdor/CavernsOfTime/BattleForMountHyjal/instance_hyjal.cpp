@@ -186,7 +186,6 @@ public:
                 case DATA_AZGALOR:
                     if (state == DONE)
                     {
-                        instance->LoadGrid(5581.49f, -3445.63f);
                         if (Creature* archimonde = GetCreature(DATA_ARCHIMONDE))
                         {
                             archimonde->SetVisible(true);

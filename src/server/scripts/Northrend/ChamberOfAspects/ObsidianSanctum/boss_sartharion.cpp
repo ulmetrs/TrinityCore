@@ -16,7 +16,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -394,7 +393,7 @@ struct boss_sartharion : public BossAI
         std::list<Creature*> fireCyclonesList;
         Trinity::AllCreaturesOfEntryInRange checker(me, NPC_FIRE_CYCLONE, 200.0f);
         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, fireCyclonesList, checker);
-        Cell::VisitAllObjects(me, searcher, 200.0f);
+        me->QueryMap(MAPQT_CREATURE, 200.0f, searcher);
 
         if (fireCyclonesList.empty())
             return;

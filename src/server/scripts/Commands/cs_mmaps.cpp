@@ -289,7 +289,7 @@ public:
         std::list<Creature*> creatureList;
         Trinity::AnyUnitInObjectRangeCheck go_check(object, radius);
         Trinity::CreatureListSearcher<Trinity::AnyUnitInObjectRangeCheck> go_search(object, creatureList, go_check);
-        Cell::VisitGridObjects(object, go_search, radius);
+        object->QueryMap(MAPQT_GRID_CREATURE, radius, go_search);
 
         if (!creatureList.empty())
         {

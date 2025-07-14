@@ -94,7 +94,6 @@ class instance_ruby_sanctum : public InstanceMapScript
             {
                 if (!GetGuidData(DATA_HALION) && GetBossState(DATA_HALION) != DONE && GetBossState(DATA_GENERAL_ZARITHRIAN) == DONE)
                 {
-                    instance->LoadGrid(HalionControllerSpawnPos.GetPositionX(), HalionControllerSpawnPos.GetPositionY());
                     if (Creature* halionController = instance->GetCreature(GetGuidData(DATA_HALION_CONTROLLER)))
                         halionController->AI()->DoAction(ACTION_INTRO_HALION_2);
                 }

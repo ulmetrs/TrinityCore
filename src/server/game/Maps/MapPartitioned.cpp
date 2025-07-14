@@ -133,36 +133,6 @@ void MapPartitioned::UnloadAll()
     sScriptMgr->OnDestroyMap(this);
 }
 
-bool MapPartitioned::IsPointInPolygon(Position const& pos, PartitionPolygon const& polygon)
-{
-    float x = pos.GetPositionX();
-    float y = pos.GetPositionY();
-    bool inside = false;
-    size_t n = polygon.size();
-    if (n < 3)
-        return false;
-    for (size_t i = 0, j = n - 1; i < n; j = i++) {
-        float xi = polygon[i].GetPositionX(), yi = polygon[i].GetPositionY();
-        float xj = polygon[j].GetPositionX(), yj = polygon[j].GetPositionY();
-        bool intersect = ((yi > y) != (yj > y)) &&
-                         (x < (xj - xi) * (y - yi) / (yj - yi + 1e-12f) + xi);
-        if (intersect)
-            inside = !inside;
-    }
-    return inside;
-}
-
-uint32 MapPartitioned::CalculatePartitionId(Position const& pos) const
-{
-    for (const auto& partition : _partitionEntries)
-    {
-        if (IsPointInPolygon(pos, partition.polygon))
-            return partition.partitionId;
-    }
-
-    return 0;
-}
-
 Map* MapPartitioned::CreatePartition(uint32 mapId, uint32 partitionId)
 {
     ASSERT(GetId() == mapId);
@@ -192,4 +162,48 @@ Map* MapPartitioned::CreatePartition(uint32 mapId, uint32 partitionId)
     map->SetWeakPtr(ptr);
 
     return map;
+}
+
+Map* MapPartitioned::FindPartition(uint32 partitionId) const
+{
+    if (GetPartitionId() == partitionId)
+        return static_cast<Map*>(const_cast<MapPartitioned*>(this));
+    auto it = _partitions.find(partitionId);
+    return (it != _partitions.end()) ? it->second.get() : nullptr;
+}
+
+Map* MapPartitioned::FindPartition(Position const& pos) const
+{
+    uint32 partitionId = CalculatePartitionId(pos);
+    return FindPartition(partitionId);
+}
+
+uint32 MapPartitioned::CalculatePartitionId(Position const& pos) const
+{
+    for (const auto& partition : _partitionEntries)
+    {
+        if (IsPointInPolygon(pos, partition.polygon))
+            return partition.partitionId;
+    }
+
+    return GetPartitionId();
+}
+
+bool MapPartitioned::IsPointInPolygon(Position const& pos, PartitionPolygon const& polygon)
+{
+    float x = pos.GetPositionX();
+    float y = pos.GetPositionY();
+    bool inside = false;
+    size_t n = polygon.size();
+    if (n < 3)
+        return false;
+    for (size_t i = 0, j = n - 1; i < n; j = i++) {
+        float xi = polygon[i].GetPositionX(), yi = polygon[i].GetPositionY();
+        float xj = polygon[j].GetPositionX(), yj = polygon[j].GetPositionY();
+        bool intersect = ((yi > y) != (yj > y)) &&
+                         (x < (xj - xi) * (y - yi) / (yj - yi + 1e-12f) + xi);
+        if (intersect)
+            inside = !inside;
+    }
+    return inside;
 }

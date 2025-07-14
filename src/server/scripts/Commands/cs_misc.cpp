@@ -1979,7 +1979,7 @@ public:
         // First handle any creatures that still have a corpse around
         Trinity::RespawnDo u_do;
         Trinity::WorldObjectWorker<Trinity::RespawnDo> worker(player, u_do);
-        Cell::VisitGridObjects(player, worker, player->GetGridActivationRange());
+        player->QueryMap(MAPQT_GRID, player->GetGridActivationRange(), worker);
 
         // Now handle any that had despawned, but had respawn time logged.
         std::vector<RespawnInfo const*> data;

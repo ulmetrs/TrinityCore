@@ -28,10 +28,10 @@ go_legion_obelisk
 EndContentData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "CreatureAIImpl.h"
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
@@ -538,7 +538,7 @@ class npc_simon_bunny : public CreatureScript
                 std::list<WorldObject*> ClusterList;
                 Trinity::AllWorldObjectsInRange objects(me, searchDistance);
                 Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
-                Cell::VisitAllObjects(me, searcher, searchDistance);
+                me->QueryMap(MAPQT_ALL, searchDistance, searcher);
 
                 for (std::list<WorldObject*>::const_iterator i = ClusterList.begin(); i != ClusterList.end(); ++i)
                 {

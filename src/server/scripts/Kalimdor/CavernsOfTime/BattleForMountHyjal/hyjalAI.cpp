@@ -23,7 +23,6 @@ SDCategory: Caverns of Time, Mount Hyjal
 EndScriptData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "hyjal_trash.h"
 #include "hyjalAI.h"
@@ -912,7 +911,7 @@ void hyjalAI::HideNearPos(float x, float y)
     std::list<Creature*> creatures;
     Trinity::AllFriendlyCreaturesInGrid creature_check(me);
     Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
-    Cell::VisitGridObjects(x, y, me->GetMap(), creature_searcher, me->GetGridActivationRange());
+    me->QueryMap(MAPQT_GRID_CREATURE, x, y, me->GetGridActivationRange(), creature_searcher);
 
     if (!creatures.empty())
     {
@@ -928,7 +927,7 @@ void hyjalAI::RespawnNearPos(float x, float y)
 {
     Trinity::RespawnDo u_do;
     Trinity::WorldObjectWorker<Trinity::RespawnDo> worker(me, u_do);
-    Cell::VisitGridObjects(x, y, me->GetMap(), worker, me->GetGridActivationRange());
+    me->QueryMap(MAPQT_GRID, me->GetGridActivationRange(), worker);
 }
 
 void hyjalAI::WaypointReached(uint32 waypointId, uint32 /*pathId*/)
@@ -956,7 +955,7 @@ void hyjalAI::WaypointReached(uint32 waypointId, uint32 /*pathId*/)
         std::list<Creature*> creatures;
         Trinity::AllFriendlyCreaturesInGrid creature_check(me);
         Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
-        Cell::VisitGridObjects(me, creature_searcher, me->GetGridActivationRange());
+        me->QueryMap(MAPQT_GRID_CREATURE, me->GetGridActivationRange(), creature_searcher);
 
         if (!creatures.empty())
         {
@@ -988,7 +987,7 @@ void hyjalAI::DoOverrun(uint32 faction, const uint32 diff)
             std::list<Creature*> creatures;
             Trinity::AllFriendlyCreaturesInGrid creature_check(me);
             Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> creature_searcher(me, creatures, creature_check);
-            Cell::VisitGridObjects(me, creature_searcher, me->GetGridActivationRange());
+            me->QueryMap(MAPQT_GRID_CREATURE, me->GetGridActivationRange(), creature_searcher);
 
             if (!creatures.empty())
             {

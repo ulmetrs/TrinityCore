@@ -228,7 +228,7 @@ void GuardMgr::SummonGuard(Player* attackedPlayer, Unit* enemy, bool ignoreCoold
 
     // call MoveInLineOfSight for nearby contested guards
     Trinity::AIRelocationNotifier notifier(*enemy);
-    Cell::VisitWorldObjects(enemy, notifier, enemy->GetVisibilityRange());
+    enemy->QueryMap(MAPQT_WORLD_CREATURE, enemy->GetVisibilityRange(), notifier);
 
     if (GameObject* guardPost = attackedPlayer->FindNearestGuardPost(50.0f))
     {

@@ -22,7 +22,6 @@
 
 #include "ScriptMgr.h"
 #include "CombatAI.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -63,7 +62,8 @@ struct npc_pet_dk_ebon_gargoyle : CasterAI
         std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(me, me, 30.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(me, targets, u_check);
-        Cell::VisitAllObjects(me, searcher, 30.0f);
+        me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 30.0f, searcher);
+
         for (Unit* target : targets)
         {
             if (target->HasAura(SPELL_DK_SUMMON_GARGOYLE_1, ownerGuid))

@@ -22,7 +22,6 @@
 #include "TSCustomPacket.h"
 #include "TSDBJson.h"
 // @tswow-end
-#include "GridObject.h"
 #include "Unit.h"
 #include "DatabaseEnvFwd.h"
 #include "DBCEnums.h"
@@ -917,7 +916,7 @@ struct ResurrectionData
 
 #define SPELL_DK_RAISE_ALLY 46619
 
-class TC_GAME_API Player : public Unit, public GridObject<Player>
+class TC_GAME_API Player : public Unit
 {
     friend class WorldSession;
     friend class CinematicMgr;
@@ -2240,7 +2239,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         DeclinedName const* GetDeclinedNames() const { return m_declinedname; }
         uint8 GetRunesState() const { return m_runes->runeState; }
         // @tswow-begin
-        bool HasRunes() const { return sObjectMgr->_classHasRunes[GetClass()-1] & (1 << (GetRace() - 1)); }
+        bool HasRunes() const;
         // @tswow-end
         RuneType GetBaseRune(uint8 index) const { return RuneType(m_runes->runes[index].BaseRune); }
         RuneType GetCurrentRune(uint8 index) const { return RuneType(m_runes->runes[index].CurrentRune); }

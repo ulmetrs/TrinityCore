@@ -185,6 +185,7 @@ bool GameObject::AIM_Initialize()
         return false;
 
     m_AI->InitializeAI();
+
     return true;
 }
 
@@ -495,6 +496,13 @@ bool GameObject::Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, u
 
 void GameObject::Update(uint32 diff)
 {
+    // max 1 tick per 1 ms
+    uint32 tick = GameTime::GetGameTimeMS();
+    if (tick == m_lastUpdate)
+        return;
+
+    m_lastUpdate = tick;
+
     // @tswow-begin
     m_tsWorldEntity.tick(TSWorldObject(this));
     m_tsCollisions.Tick(TSWorldObject(this));
@@ -720,14 +728,14 @@ void GameObject::Update(uint32 diff)
                             WorldObject* worldObjectTarget = nullptr;
                             Trinity::WorldObjectSpellNearbyTargetCheck checker(radius, this, trapSpell, m_goValue.Trap.TargetSearcherCheckType, nullptr);
                             Trinity::WorldObjectLastSearcher searcher(this, worldObjectTarget, checker, GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER);
-                            Cell::VisitAllObjects(this, searcher, radius);
+                            QueryMap(MAPQT_ALL, radius, searcher);
                             target = Object::ToUnit(worldObjectTarget);
                         }
                         else
                         {
                             Trinity::NearestAttackableNoTotemUnitInObjectRangeCheck checker(this, radius);
                             Trinity::UnitLastSearcher<Trinity::NearestAttackableNoTotemUnitInObjectRangeCheck> searcher(this, target, checker);
-                            Cell::VisitAllObjects(this, searcher, radius);
+                            QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, radius, searcher);
                         }
                     }
                     else
@@ -736,7 +744,7 @@ void GameObject::Update(uint32 diff)
                         Player* player = nullptr;
                         Trinity::AnyPlayerInObjectRangeCheck checker(this, radius);
                         Trinity::PlayerSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, player, checker);
-                        Cell::VisitWorldObjects(this, searcher, radius);
+                        QueryMap(MAPQT_PLAYER, radius, searcher);
                         target = player;
                     }
 
@@ -1492,7 +1500,7 @@ GameObject* GameObject::LookupFishingHoleAround(float range)
     GameObject* ok = nullptr;
     Trinity::NearestGameObjectFishingHole u_check(*this, range);
     Trinity::GameObjectSearcher<Trinity::NearestGameObjectFishingHole> checker(this, ok, u_check);
-    Cell::VisitGridObjects(this, checker, range);
+    QueryMap(MAPQT_GAMEOBJECT, range, checker);
     return ok;
 }
 

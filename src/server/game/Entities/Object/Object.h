@@ -21,6 +21,7 @@
 #include "Common.h"
 #include "Duration.h"
 #include "EventProcessor.h"
+#include "GridDefines.h"
 #include "MapDefines.h"
 #include "ModelIgnoreFlags.h"
 #include "MovementInfo.h"
@@ -328,8 +329,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         void _Create(ObjectGuid::LowType guidlow, HighGuid guidhigh, uint32 phaseMask);
         void AddToWorld() override;
         void RemoveFromWorld() override;
-        virtual void AddToPartition();
-        virtual void RemoveFromPartition();
 
         void GetNearPoint2D(WorldObject const* searcher, float& x, float& y, float distance, float absAngle) const;
         void GetNearPoint(WorldObject const* searcher, float& x, float& y, float& z, float distance2d, float absAngle) const;
@@ -447,6 +446,45 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         Map* FindMap() const { return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
 
+        // Convenience methods for Querying the map quad tree for nearby objects
+        template<typename Func>
+        void QueryMap(uint32 mask, float radius, Func&& visitor) const
+        {
+            // Some stuff adapted from CellImpl.h, dynamic objects without a radius defined need to find something
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
+            GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), radius, visitor);
+        }
+        template<typename Func>
+        void QueryMap(uint32 mask, float radius, Func&& visitor)
+        {
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
+            GetMap()->GetQuadTree()->QueryCircle(mask, GetPositionX(), GetPositionY(), radius, visitor);
+        }
+        template<typename Func>
+        void QueryMap(uint32 mask, float centerX, float centerY, float radius, Func&& visitor) const
+        {
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
+            GetMap()->GetQuadTree()->QueryCircle(mask, centerX, centerY, radius, visitor);
+        }
+        template<typename Func>
+        void QueryMap(uint32 mask, float centerX, float centerY, float radius, Func&& visitor)
+        {
+            if (radius <= 0.0f)
+                radius = 3.0f;
+            if (radius > SIZE_OF_GRIDS)
+                radius = SIZE_OF_GRIDS;
+            GetMap()->GetQuadTree()->QueryCircle(mask, centerX, centerY, radius, visitor);
+        }
+
         void SetZoneScript();
         void ClearZoneScript();
         ZoneScript* GetZoneScript() const { return m_zoneScript; }
@@ -549,6 +587,8 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         void SetIsStoredInWorldObjectGridContainer(bool apply);
         bool IsAlwaysStoredInWorldObjectGridContainer() const { return m_isStoredInWorldObjectGridContainer; }
         bool IsStoredInWorldObjectGridContainer() const;
+        void* GetQuadNode() const { return m_quadNode; }
+        void SetQuadNode(void* node) { m_quadNode = node; }
 
         uint32  LastUsedScriptID;
 
@@ -591,6 +631,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         GuidUnorderedSet const& GetAllowedLooters() const;
 
     protected:
+        uint32 m_lastUpdate;
         std::string m_name;
         bool m_isActive;
         bool m_isFarVisible;
@@ -621,6 +662,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         virtual bool IsAlwaysDetectableFor(WorldObject const* /*seer*/) const { return false; }
     private:
         Map* m_currMap;                                   // current object's Map location
+        void* m_quadNode;
 
         uint32 m_InstanceId;                              // in map copy with instance id
         uint32 m_partitionId;                             // in map copy with partition id

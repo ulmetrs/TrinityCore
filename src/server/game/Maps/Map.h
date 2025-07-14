@@ -23,8 +23,8 @@
 #include "Cell.h"
 #include "DynamicTree.h"
 #include "GridDefines.h"
-#include "GridRefManager.h"
 #include "MapDefines.h"
+#include "MapQuadTree.h"
 #include "MapRefManager.h"
 #include "MPSCQueue.h"
 #include "ObjectGuid.h"
@@ -351,7 +351,7 @@ private:
     const std::vector<ListType*>& lists_;
 };
 
-class TC_GAME_API Map : public GridRefManager<NGridType>
+class TC_GAME_API Map
 {
     friend class MapReference;
     public:
@@ -381,6 +381,12 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             return false;
         }
 
+        void CreateQuadTree()
+        {
+            _quadTree = new MapQuadTree(GetMapBounds());
+        }
+        MapQuadTree* GetQuadTree() const { return _quadTree; }
+
         virtual bool AddPlayerToMap(Player*);
         virtual void RemovePlayerFromMap(Player*, bool);
         bool AddPlayerToPartition(Player*);
@@ -391,7 +397,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> bool AddToPartition(T *);
         template<class T> void RemoveFromPartition(T *);
 
-        void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
+        void VisitNearbyCellsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater);
         virtual void Update(uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
@@ -407,13 +413,12 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T, class CONTAINER>
         void Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor);
 
-        bool IsGridLoaded(uint32 gridId) const { return IsGridLoaded(GridCoord(gridId % MAX_NUMBER_OF_GRIDS, gridId / MAX_NUMBER_OF_GRIDS)); }
-        bool IsGridLoaded(float x, float y) const { return IsGridLoaded(Trinity::ComputeGridCoord(x, y)); }
-        bool IsGridLoaded(Position const& pos) const { return IsGridLoaded(pos.GetPositionX(), pos.GetPositionY()); }
+        bool IsGridLoaded(uint32 gridId) const { return _cellsLoaded; }
+        bool IsGridLoaded(float x, float y) const { return _cellsLoaded; }
+        bool IsGridLoaded(Position const& pos) const { return _cellsLoaded; }
 
-        void LoadGrid(float x, float y);
         void LoadAllCells();
-        void UnloadGrid(NGridType& ngrid);
+        void LoadAllGrids();
         virtual void UnloadAll();
 
         uint32 GetId() const;
@@ -423,6 +428,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         virtual uint8 GetSpawnMode() const { return REGULAR_DIFFICULTY; }
         virtual const Map* GetParent() const { return this; }
         virtual Map* GetParent() { return this; }
+        virtual Bounds GetMapBounds() const { return { -MAP_HALFSIZE, -MAP_HALFSIZE, MAP_HALFSIZE, MAP_HALFSIZE }; }
         virtual void UpdateWeather(uint32 t_diff);
 
         static bool ExistMap(uint32 mapId, int gx, int gy);
@@ -495,7 +501,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
         uint32 GetPlayersCountExceptGMs() const;
-        bool ActiveObjectsNearGrid(NGridType const& ngrid) const;
 
         void AddWorldObject(WorldObject* obj) { i_worldObjects.insert(obj); }
         void RemoveWorldObject(WorldObject* obj) { i_worldObjects.erase(obj); }
@@ -598,14 +603,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         GameObjectBySpawnIdContainer& GetGameObjectBySpawnIdStore() { return _gameobjectBySpawnIdStore; }
         GameObjectBySpawnIdContainer const& GetGameObjectBySpawnIdStore() const { return _gameobjectBySpawnIdStore; }
 
-        std::unordered_set<Corpse*> const* GetCorpsesInCell(uint32 cellId) const
-        {
-            auto itr = _corpsesByCell.find(cellId);
-            if (itr != _corpsesByCell.end())
-                return &itr->second;
-
-            return nullptr;
-        }
+        std::unordered_set<Corpse*> const* GetCorpses() const { return &_corpses; }
 
         Corpse* GetCorpseByPlayer(ObjectGuid const& ownerGuid) const
         {
@@ -744,19 +742,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void SendInitSelf(Player* player);
 
-        bool IsGridLoaded(GridCoord const&) const;
-        void EnsureGridCreated(GridCoord const&);
-        bool EnsureGridLoaded(Cell const&);
+        void EnsureGridCreated(int gx, int gy);
 
-        void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
-
-        NGridType* getNGrid(uint32 x, uint32 y) const
-        {
-            ASSERT(x < MAX_NUMBER_OF_GRIDS && y < MAX_NUMBER_OF_GRIDS, "x = %u, y = %u", x, y);
-            return i_grids[x][y];
-        }
-
-        void setNGrid(NGridType* grid, uint32 x, uint32 y);
         void ScriptsProcess();
 
         void SendObjectUpdates();
@@ -800,7 +787,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void _ScriptProcessDoor(Object* source, Object* target, ScriptInfo const* scriptInfo) const;
         GameObject* _FindGameObject(WorldObject* pWorldObject, ObjectGuid::LowType guid) const;
 
-        NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+        MapQuadTree* _quadTree;
+        bool _cellsLoaded;
         GridMap* GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         std::bitset<TOTAL_NUMBER_OF_CELLS_PER_MAP*TOTAL_NUMBER_OF_CELLS_PER_MAP> marked_cells;
 
@@ -869,10 +857,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void AddFarSpellCallback(FarSpellCallback&& callback);
 
     private:
-        // Type specific code for add/remove to/from grid
-        template<class T>
-        void AddToGrid(T* object, Cell const& cell);
-
         template<class T>
         void DeleteFromWorld(T*);
 
@@ -919,13 +903,14 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         MapStoredObjectTypesContainer _objectsStore;
         CreatureBySpawnIdContainer _creatureBySpawnIdStore;
         GameObjectBySpawnIdContainer _gameobjectBySpawnIdStore;
-        std::unordered_map<uint32/*cellId*/, std::unordered_set<Corpse*>> _corpsesByCell;
+        std::unordered_set<Corpse*> _corpses;
         std::unordered_map<ObjectGuid, Corpse*> _corpsesByPlayer;
         std::unordered_set<Corpse*> _corpseBones;
         std::unordered_set<Object*> _updateObjects;
         std::unordered_set<Creature*> _relocatedCreatures;
         std::unordered_set<GameObject*> _relocatedGameObjects;
         std::unordered_set<DynamicObject*> _relocatedDynamicObjects;
+        std::unordered_set<Corpse*> _relocatedCorpses;
         std::unordered_set<Player*> _updateMapPartitionPlayers;
         std::unordered_set<Creature*> _updateMapPartitionCreatures;
         MPSCQueue<FarSpellCallback> _farSpellCallbacks;
@@ -950,7 +935,9 @@ class TC_GAME_API PartitionMap : public Map
         uint32 GetPartitionId() const override { return _partitionId; }
         const Map* GetParent() const override { return _parent; }
         Map* GetParent() override { return _parent; }
+        Bounds GetMapBounds() const override;
         void UpdateWeather(uint32 t_diff) override { /* do nothing, parent updates weather */ }
+        void Update(uint32) override;
 
         void SendZoneDynamicInfo(uint32 zoneId, Player* player) const override
         {
@@ -1060,19 +1047,13 @@ class TC_GAME_API BattlegroundMap : public Map
         Battleground* m_bg;
 };
 
-template<class T, class CONTAINER>
-inline void Map::Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& visitor)
+struct TC_GAME_API ObjectGridCleaner
 {
-    const uint32 x = cell.GridX();
-    const uint32 y = cell.GridY();
-    const uint32 cell_x = cell.CellX();
-    const uint32 cell_y = cell.CellY();
+    template<class T>
+    void operator()(T* obj)
+    {
+        obj->CleanupsBeforeDelete();
+    }
+};
 
-    if (!cell.NoCreate())
-        EnsureGridLoaded(cell);
-
-    NGridType* grid = getNGrid(x, y);
-    if (grid && grid->isGridObjectDataLoaded())
-        grid->VisitGrid(cell_x, cell_y, visitor);
-}
 #endif

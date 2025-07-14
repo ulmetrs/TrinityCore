@@ -24,7 +24,6 @@
 
 #include "ScriptMgr.h"
 #include "Battleground.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "DBCStores.h"
 #include "GameTime.h"
@@ -728,9 +727,9 @@ class spell_gen_cannibalize : public SpellScript
         // search for nearby enemy corpse in range
         Trinity::AnyDeadUnitSpellTargetInRangeCheck check(caster, max_range, GetSpellInfo(), TARGET_CHECK_ENEMY);
         Trinity::WorldObjectSearcher<Trinity::AnyDeadUnitSpellTargetInRangeCheck> searcher(caster, result, check);
-        Cell::VisitWorldObjects(caster, searcher, max_range);
+        caster->QueryMap(MAPQT_WORLD, max_range, searcher);
         if (!result)
-            Cell::VisitGridObjects(caster, searcher, max_range);
+            caster->QueryMap(MAPQT_GRID, max_range, searcher);
         if (!result)
             return SPELL_FAILED_NO_EDIBLE_CORPSES;
         return SPELL_CAST_OK;
@@ -4388,7 +4387,7 @@ class spell_corrupting_plague_aura : public AuraScript
         std::list<Creature*> targets;
         CorruptingPlagueSearcher creature_check(owner, 15.0f);
         Trinity::CreatureListSearcher<CorruptingPlagueSearcher> creature_searcher(owner, targets, creature_check);
-        Cell::VisitGridObjects(owner, creature_searcher, 15.0f);
+        owner->QueryMap(MAPQT_GRID_CREATURE, 15.0f, creature_searcher);
 
         if (!targets.empty())
             return;
@@ -4446,7 +4445,7 @@ class spell_stasis_field_aura : public AuraScript
         std::list<Creature*> targets;
         StasisFieldSearcher creature_check(owner, 15.0f);
         Trinity::CreatureListSearcher<StasisFieldSearcher> creature_searcher(owner, targets, creature_check);
-        Cell::VisitGridObjects(owner, creature_searcher, 15.0f);
+        owner->QueryMap(MAPQT_GRID_CREATURE, 15.0f, creature_searcher);
 
         if (!targets.empty())
             return;

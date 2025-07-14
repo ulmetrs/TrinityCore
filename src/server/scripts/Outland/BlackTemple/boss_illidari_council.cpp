@@ -17,7 +17,6 @@
 
 #include "ScriptMgr.h"
 #include "black_temple.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
@@ -324,7 +323,7 @@ struct boss_gathios_the_shatterer : public IllidariCouncilBossAI
                 std::list<Unit*> TargetList;
                 Trinity::AnyFriendlyUnitInObjectRangeCheck checker(me, me, 100.0f);
                 Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, TargetList, checker);
-                Cell::VisitAllObjects(me, searcher, 100.0f);
+                me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, 100.0f, searcher);
 
                 if (!TargetList.empty())
                 {

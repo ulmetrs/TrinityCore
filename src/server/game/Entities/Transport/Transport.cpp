@@ -579,20 +579,17 @@ void Transport::LoadStaticPassengers()
     if (!mapId)
         return;
 
-    CellObjectGuidsMap const* cells = sObjectMgr->GetMapObjectGuids(mapId, GetMap()->GetSpawnMode());
-    if (!cells)
+    MapObjectGuids const* guids = sObjectMgr->GetMapObjectGuids(mapId, GetMap()->GetSpawnMode());
+    if (!guids)
         return;
 
-    for (auto const& [cellId, guids] : *cells)
-    {
-        // GameObjects on transport
-        for (ObjectGuid::LowType spawnId : guids.gameobjects)
-            CreateGOPassenger(spawnId, sObjectMgr->GetGameObjectData(spawnId));
+    // GameObjects on transport
+    for (ObjectGuid::LowType spawnId : guids->gameobjects)
+        CreateGOPassenger(spawnId, sObjectMgr->GetGameObjectData(spawnId));
 
-        // Creatures on transport
-        for (ObjectGuid::LowType spawnId : guids.creatures)
-            CreateNPCPassenger(spawnId, sObjectMgr->GetCreatureData(spawnId));
-    }
+    // Creatures on transport
+    for (ObjectGuid::LowType spawnId : guids->creatures)
+        CreateNPCPassenger(spawnId, sObjectMgr->GetCreatureData(spawnId));
 }
 
 void Transport::UnloadStaticPassengers()
@@ -819,6 +816,13 @@ void Transport::UpdateMapPartition()
 
 void ElevatorTransport::Update(const uint32 /*diff*/)
 {
+    // max 1 tick per 1 ms
+    uint32 tick = GameTime::GetGameTimeMS();
+    if (tick == m_lastUpdate)
+        return;
+
+    m_lastUpdate = tick;
+
     if (!m_goValue.Transport.AnimationInfo)
         return;
 

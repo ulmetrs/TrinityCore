@@ -474,8 +474,7 @@ public:
             std::list<Player*> players;
             Trinity::UnitAuraCheck check(true, SPELL_RIBBON_DANCE_COSMETIC);
             Trinity::PlayerListSearcher<Trinity::UnitAuraCheck> searcher(me, players, check);
-            Cell::VisitWorldObjects(me, searcher, 10.0f);
-
+            me->QueryMap(MAPQT_PLAYER, 10.0f, searcher);
             return players.empty();
         }
 

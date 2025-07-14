@@ -196,14 +196,13 @@ InstanceMap* MapInstanced::CreateInstance(uint32 InstanceId, InstanceSave* save,
     InstanceMap* map = new InstanceMap(GetId(), InstanceId, difficulty, this, InstanceTeam);
     ASSERT(map->IsDungeon());
 
+    map->CreateQuadTree();
     map->LoadRespawnTimes();
     map->LoadCorpseData();
 
     bool load_data = save != nullptr;
     map->CreateInstanceData(load_data);
-
-    if (sWorld->getBoolConfig(CONFIG_INSTANCEMAP_LOAD_GRIDS))
-        map->LoadAllCells();
+    map->LoadAllCells();
 
     Trinity::unique_trackable_ptr<Map>& ptr = _instances[InstanceId];
     ptr.reset(map);

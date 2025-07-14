@@ -28,7 +28,6 @@ npc_thrall_warchief
 EndContentData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -456,7 +455,8 @@ public:
                 std::list<Unit*> citizenList;
                 Trinity::AnyFriendlyUnitInObjectRangeCheck checker(me, me, 25.0f);
                 Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, citizenList, checker);
-                Cell::VisitGridObjects(me, searcher, 20.0f);
+                me->QueryMap(MAPQT_GRID_CREATURE, 20.0f, searcher);
+
                 for (Unit* target : citizenList)
                 {
                     switch (target->GetEntry())

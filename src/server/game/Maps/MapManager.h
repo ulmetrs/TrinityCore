@@ -45,7 +45,6 @@ class TC_GAME_API MapManager
         ChainedRange<Map::PlayerList> GetContinentPlayers(uint32 mapId);
 
         Map* CreateMap(uint32 mapId, Position const& pos, Player* player = nullptr, uint32 loginInstanceId = 0);
-        uint32 CalculatePartitionId(uint32 mapid, Position const& pos);
         Map* FindBaseMap(uint32 mapId) const
         {
             BaseMaps::const_iterator iter = _baseMaps.find(mapId);
@@ -55,6 +54,8 @@ class TC_GAME_API MapManager
         Map* FindMap(uint32 mapId, uint32 instanceId = 0) const { return FindMap(mapId, Position(), instanceId); } // To support existing references
         Map* FindContinent(uint32 mapId) const;
         Map* FindPartition(uint32 mapId, uint32 partitionId) const;
+        Map* FindPartition(uint32 mapId, Position const& pos) const;
+        uint32 CalculatePartitionId(uint32 mapId, Position const& pos) const;
 
         uint32 GetAreaId(uint32 phaseMask, uint32 mapid, float x, float y, float z) const
         {
@@ -90,7 +91,6 @@ class TC_GAME_API MapManager
             i_timer.Reset();
         }
 
-        //void LoadGrid(int mapid, int instId, float x, float y, WorldObject const* obj, bool no_unload = false);
         void UnloadAll();
 
         static bool ExistMapAndVMap(uint32 mapid, float x, float y);
@@ -177,6 +177,8 @@ void MapManager::DoForAllMaps(Worker&& worker)
     for (auto& [_, mapPtr] : _baseMaps)
     {
         Map* baseMap = mapPtr.get();
+        worker(baseMap);
+
         if (auto* mapInstanced = baseMap->ToMapInstanced())
         {
             for (auto& [_, instancePtr] : mapInstanced->GetInstances())
@@ -184,7 +186,6 @@ void MapManager::DoForAllMaps(Worker&& worker)
         }
         else if (auto* mapPartitioned = baseMap->ToMapPartitioned())
         {
-            worker(baseMap);
             for (auto& [_, partitionPtr] : mapPartitioned->GetPartitions())
                 worker(partitionPtr.get());
         }

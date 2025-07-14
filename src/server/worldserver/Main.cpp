@@ -129,9 +129,56 @@ void ShutdownCLIThread(std::thread* cliThread);
 bool LoadRealmInfo(Trinity::Asio::IoContext& ioContext);
 variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile, fs::path& configDir, std::string& winServiceAction);
 
+#include <windows.h>
+#include <dbghelp.h>
+#include <iostream>
+
+LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
+{
+    HANDLE process = GetCurrentProcess();
+    SymInitialize(process, NULL, TRUE);
+
+    void* stack[62];
+    USHORT frames = CaptureStackBackTrace(0, 62, stack, NULL);
+
+    SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
+    symbol->MaxNameLen = 255;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+    IMAGEHLP_LINE64 line;
+    DWORD displacement = 0;
+    line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+    std::cerr << "=== Unhandled Exception! Printing stack trace: ===" << std::endl;
+    for (USHORT i = 0; i < frames; ++i)
+    {
+        DWORD64 address = (DWORD64)(stack[i]);
+        if (SymFromAddr(process, address, 0, symbol))
+        {
+            std::cerr << i << ": " << symbol->Name << " - 0x" << std::hex << symbol->Address;
+            if (SymGetLineFromAddr64(process, address, &displacement, &line))
+            {
+                std::cerr << " (" << line.FileName << ":" << line.LineNumber << ")";
+            }
+            std::cerr << std::endl;
+        }
+        else
+        {
+            std::cerr << i << ": [0x" << std::hex << address << "]" << std::endl;
+        }
+    }
+    free(symbol);
+
+    SymCleanup(process);
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 /// Launch the Trinity server
 extern int main(int argc, char** argv)
 {
+    SetUnhandledExceptionFilter(CrashHandler);
+
     // @tswow-begin
     setbuf(stdout,0);
     setbuf(stderr,0);

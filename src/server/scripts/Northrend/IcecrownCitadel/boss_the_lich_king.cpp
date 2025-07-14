@@ -16,12 +16,12 @@
  */
 
 #include "icecrown_citadel.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "CreatureTextMgr.h"
 #include "DBCStores.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
@@ -537,7 +537,7 @@ struct boss_the_lich_king : public BossAI
         // Reset The Frozen Throne gameobjects
         FrozenThroneResetWorker reset;
         Trinity::GameObjectWorker<FrozenThroneResetWorker> worker(me, reset);
-        Cell::VisitGridObjects(me, worker, 333.0f);
+        me->QueryMap(MAPQT_GAMEOBJECT, 333.0f, worker);
 
         // Reset any light override
         me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, 0, 5s);

@@ -257,8 +257,6 @@ class instance_naxxramas : public InstanceMapScript
                 if (Creature* creature = unit->ToCreature())
                     if (creature->GetEntry() == NPC_BIGGLESWORTH)
                     {
-                        // Loads Kel'Thuzad's grid. We need this as he must be active in order for his texts to work.
-                        instance->LoadGrid(3749.67f, -5114.06f);
                         if (Creature* kelthuzad = instance->GetCreature(KelthuzadGUID))
                             kelthuzad->AI()->Talk(SAY_KELTHUZAD_CAT_DIED);
                     }
@@ -462,8 +460,6 @@ class instance_naxxramas : public InstanceMapScript
                                 rivendare->AI()->Talk(SAY_DIALOGUE_GOTHIK_HORSEMAN2);
                             break;
                         case EVENT_KELTHUZAD_WING_TAUNT:
-                            // Loads Kel'Thuzad's grid. We need this as he must be active in order for his texts to work.
-                            instance->LoadGrid(3749.67f, -5114.06f);
                             if (Creature* kelthuzad = instance->GetCreature(KelthuzadGUID))
                                 kelthuzad->AI()->Talk(CurrentWingTaunt);
                             ++CurrentWingTaunt;

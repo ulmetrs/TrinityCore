@@ -477,7 +477,7 @@ GameObject* ChatHandler::GetNearbyGameObject()
     GameObject* obj = nullptr;
     Trinity::NearestGameObjectCheck check(*pl);
     Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectCheck> searcher(pl, obj, check);
-    Cell::VisitGridObjects(pl, searcher, SIZE_OF_GRIDS);
+    pl->QueryMap(MAPQT_GAMEOBJECT, SIZE_OF_GRIDS, searcher);
     return obj;
 }
 

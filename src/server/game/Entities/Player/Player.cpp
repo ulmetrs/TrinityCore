@@ -1056,13 +1056,23 @@ void Player::UpdateInvisibilityDrunkDetect()
 
 void Player::Update(uint32 p_time)
 {
+    // max 1 tick per 1 ms
+    uint32 tick = GameTime::GetGameTimeMS();
+    if (tick == m_lastUpdate)
+        return;
+
+    m_lastUpdate = tick;
+
     if (!IsInWorld())
         return;
 
     ZoneScopedN("Player::Update")
 
+    // many updates are per second
+    time_t now = GameTime::GetGameTime();
+
     // undelivered mail
-    if (m_nextMailDelivereTime && m_nextMailDelivereTime <= GameTime::GetGameTime())
+    if (m_nextMailDelivereTime && m_nextMailDelivereTime <= now)
     {
         SendNewMail();
         ++unReadMails;
@@ -1075,7 +1085,7 @@ void Player::Update(uint32 p_time)
     _cinematicMgr->m_cinematicDiff += p_time;
     if (_cinematicMgr->m_cinematicCamera && _cinematicMgr->m_activeCinematicCameraId && GetMSTimeDiffToNow(_cinematicMgr->m_lastCinematicCheck) > CINEMATIC_UPDATEDIFF)
     {
-        _cinematicMgr->m_lastCinematicCheck = GameTime::GetGameTimeMS();
+        _cinematicMgr->m_lastCinematicCheck = tick;
         _cinematicMgr->UpdateCinematicLocation(p_time);
     }
 
@@ -1084,8 +1094,6 @@ void Player::Update(uint32 p_time)
     ExecuteSortedCastRequests();
     Unit::Update(p_time);
     SetCanDelayTeleport(false);
-
-    time_t now = GameTime::GetGameTime();
 
     UpdatePvPFlag(now);
 
@@ -1216,11 +1224,10 @@ void Player::Update(uint32 p_time)
     {
         if (roll_chance_i(3) && _restTime > 0)      // freeze update
         {
-            time_t currTime = GameTime::GetGameTime();
-            time_t timeDiff = currTime - _restTime;
+            time_t timeDiff = now - _restTime;
             if (timeDiff >= 10)                             // freeze update
             {
-                _restTime = currTime;
+                _restTime = now;
 
                 float bubble = 0.125f * sWorld->getRate(RATE_REST_INGAME);
                 float extraPerSec = ((float)GetUInt32Value(PLAYER_NEXT_LEVEL_XP) / 72000.0f) * bubble;
@@ -1416,9 +1423,9 @@ void Player::Update(uint32 p_time)
         WorldObject const* viewPoint = m_seer;
         if (viewPoint->isNeedNotify(NOTIFY_VISIBILITY_CHANGED) && (this == viewPoint || viewPoint->IsPositionValid()))
         {
-            ZoneScopedN("Player::Update::RelocationNotifier")
+            ZoneScopedN("Player::Update::RelocationNotifierQuadTree")
             PlayerRelocationNotifier relocate(*this);
-            Cell::VisitAllObjects(viewPoint, relocate, 100, false);
+            viewPoint->QueryMap(MAPQT_ALL, 100, relocate);
             relocate.SendToSelf();
         }
 
@@ -6708,7 +6715,7 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist);
-    Cell::VisitWorldObjects(this, notifier, dist);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, dist, notifier);
 }
 
 void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool self, bool own_team_only, bool required3dDist /*= false*/) const
@@ -6717,7 +6724,7 @@ void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool s
         SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist, own_team_only, nullptr, required3dDist);
-    Cell::VisitWorldObjects(this, notifier, dist);
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, dist, notifier);
 }
 
 void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
@@ -6725,10 +6732,8 @@ void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcv
     if (skipped_rcvr != this)
         SendDirectMessage(data);
 
-    // we use World::GetMaxVisibleDistance() because i cannot see why not use a distance
-    // update: replaced by GetMap()->GetVisibilityDistance()
     Trinity::MessageDistDeliverer notifier(this, data, GetVisibilityRange(), false, skipped_rcvr);
-    Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
+    QueryMap(MAPQT_WORLD & ~MAPQT_WORLD_CORPSE, GetVisibilityRange(), notifier);
 }
 
 void Player::SendDirectMessage(WorldPacket const* data) const
@@ -23314,7 +23319,7 @@ void Player::UpdateVisibilityForPlayer()
 {
     // updates visibility of all objects around point of view for current player
     Trinity::VisibleNotifier notifier(*this);
-    Cell::VisitAllObjects(m_seer, notifier, GetSightRange());
+    m_seer->QueryMap(MAPQT_ALL, GetSightRange(), notifier);
     notifier.SendToSelf();   // send gathered data
 }
 
@@ -25404,6 +25409,11 @@ void Player::SetTitle(CharTitlesEntry const* title, bool lost)
     data << uint32(title->MaskID);
     data << uint32(lost ? 0 : 1);                           // 1 - earned, 0 - lost
     SendDirectMessage(&data);
+}
+
+bool Player::HasRunes() const
+{
+    return sObjectMgr->_classHasRunes[GetClass()-1] & (1 << (GetRace() - 1));
 }
 
 uint32 Player::GetRuneBaseCooldown(uint8 index)

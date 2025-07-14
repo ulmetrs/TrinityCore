@@ -23,7 +23,6 @@ SDCategory: Zul'Aman
 EndScriptData */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "MotionMaster.h"
 #include "ScriptedCreature.h"
@@ -152,7 +151,7 @@ class boss_nalorakk : public CreatureScript
 
                 Trinity::AllFriendlyCreaturesInGrid check(me);
                 Trinity::CreatureListSearcher<Trinity::AllFriendlyCreaturesInGrid> searcher(me, tempList, check);
-                Cell::VisitGridObjects(me, searcher, 25.0f);
+                me->QueryMap(MAPQT_GRID_CREATURE, 25.0f, searcher);
 
                 if (tempList.empty())
                     return;

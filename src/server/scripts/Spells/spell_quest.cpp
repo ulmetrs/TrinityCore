@@ -32,6 +32,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
 #include "Vehicle.h"
+#include "World.h"
 
 class spell_generic_quest_update_entry_SpellScript : public SpellScript
 {
@@ -767,7 +768,8 @@ class spell_q11010_q11102_q11023_choose_loc : public SpellScript
         std::list<Player*> playerList;
         Trinity::AnyPlayerInObjectRangeCheck checker(caster, 65.0f);
         Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(caster, playerList, checker);
-        Cell::VisitWorldObjects(caster, searcher, 65.0f);
+        caster->QueryMap(MAPQT_PLAYER, 65.0f, searcher);
+
         for (std::list<Player*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
             // Check if found player target is on fly mount or using flying form
             if ((*itr)->HasAuraType(SPELL_AURA_FLY) || (*itr)->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED))

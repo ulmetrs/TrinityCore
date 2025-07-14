@@ -16,7 +16,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
@@ -696,7 +695,7 @@ public:
                     Creature* sironas = nullptr;
                     Trinity::AllCreaturesOfEntryInRange check(me, NPC_SIRONAS, SIZE_OF_GRIDS);
                     Trinity::CreatureSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(me, sironas, check);
-                    Cell::VisitAllObjects(me, searcher, SIZE_OF_GRIDS);
+                    me->QueryMap(MAPQT_CREATURE, SIZE_OF_GRIDS, searcher);
 
                     if (sironas)
                     {

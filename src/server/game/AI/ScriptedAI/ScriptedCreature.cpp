@@ -275,7 +275,7 @@ void ScriptedAI::ForceCombatStopForCreatureEntry(uint32 entry, float maxSearchRa
     if (!samePhase)
         searcher.i_phaseMask = PHASEMASK_ANYWHERE;
 
-    Cell::VisitGridObjects(me, searcher, maxSearchRange);
+    me->QueryMap(MAPQT_GRID_CREATURE, maxSearchRange, searcher);
 
     for (Creature* creature : creatures)
         ForceCombatStop(creature, reset);
@@ -420,7 +420,7 @@ Unit* ScriptedAI::DoSelectLowestHpFriendly(float range, uint32 minHPDiff)
     Unit* unit = nullptr;
     Trinity::MostHPMissingInRange u_check(me, range, minHPDiff);
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
 
     return unit;
 }
@@ -430,7 +430,7 @@ Unit* ScriptedAI::DoSelectBelowHpPctFriendlyWithEntry(uint32 entry, float range,
     Unit* unit = nullptr;
     Trinity::FriendlyBelowHpPctEntryInRange u_check(me, entry, range, minHPDiff, excludeSelf);
     Trinity::UnitLastSearcher<Trinity::FriendlyBelowHpPctEntryInRange> searcher(me, unit, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
 
     return unit;
 }
@@ -440,7 +440,7 @@ std::list<Creature*> ScriptedAI::DoFindFriendlyCC(float range)
     std::list<Creature*> list;
     Trinity::FriendlyCCedInRange u_check(me, range);
     Trinity::CreatureListSearcher<Trinity::FriendlyCCedInRange> searcher(me, list, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    me->QueryMap(MAPQT_CREATURE, range, searcher);
 
     return list;
 }
@@ -450,7 +450,7 @@ std::list<Creature*> ScriptedAI::DoFindFriendlyMissingBuff(float range, uint32 u
     std::list<Creature*> list;
     Trinity::FriendlyMissingBuffInRange u_check(me, range, uiSpellid);
     Trinity::CreatureListSearcher<Trinity::FriendlyMissingBuffInRange> searcher(me, list, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    me->QueryMap(MAPQT_CREATURE, range, searcher);
 
     return list;
 }
@@ -461,7 +461,7 @@ Player* ScriptedAI::GetPlayerAtMinimumRange(float minimumRange)
 
     Trinity::PlayerAtMinimumRangeAway check(me, minimumRange);
     Trinity::PlayerSearcher<Trinity::PlayerAtMinimumRangeAway> searcher(me, player, check);
-    Cell::VisitWorldObjects(me, searcher, minimumRange);
+    me->QueryMap(MAPQT_PLAYER, minimumRange, searcher);
 
     return player;
 }

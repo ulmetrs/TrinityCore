@@ -2812,7 +2812,7 @@ void SmartScript::GetWorldObjectsInDist(ObjectVector& targets, float dist) const
 
     Trinity::AllWorldObjectsInRange u_check(obj, dist);
     Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(obj, targets, u_check);
-    Cell::VisitAllObjects(obj, searcher, dist);
+    obj->QueryMap(MAPQT_ALL, dist, searcher);
 }
 
 void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, uint32 var1, bool bvar, SpellInfo const* spell, GameObject* gob)
@@ -3809,7 +3809,7 @@ Unit* SmartScript::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff) const
     Unit* unit = nullptr;
     Trinity::MostHPMissingInRange u_check(me, range, MinHPDiff);
     Trinity::UnitLastSearcher<Trinity::MostHPMissingInRange> searcher(me, unit, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
     return unit;
 }
 
@@ -3821,7 +3821,7 @@ Unit* SmartScript::DoSelectLowestHpPercentFriendly(float range, uint32 minHpPct,
     Unit* unit = nullptr;
     Trinity::MostHPPercentMissingInRange u_check(me, range, minHpPct, maxHpPct);
     Trinity::UnitLastSearcher<Trinity::MostHPPercentMissingInRange> searcher(me, unit, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
     return unit;
 }
 
@@ -3832,7 +3832,7 @@ void SmartScript::DoFindFriendlyCC(std::vector<Creature*>& creatures, float rang
 
     Trinity::FriendlyCCedInRange u_check(me, range);
     Trinity::CreatureListSearcher<Trinity::FriendlyCCedInRange> searcher(me, creatures, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
 }
 
 void SmartScript::DoFindFriendlyMissingBuff(std::vector<Creature*>& creatures, float range, uint32 spellid) const
@@ -3842,7 +3842,7 @@ void SmartScript::DoFindFriendlyMissingBuff(std::vector<Creature*>& creatures, f
 
     Trinity::FriendlyMissingBuffInRange u_check(me, range, spellid);
     Trinity::CreatureListSearcher<Trinity::FriendlyMissingBuffInRange> searcher(me, creatures, u_check);
-    Cell::VisitGridObjects(me, searcher, range);
+    me->QueryMap(MAPQT_GRID_CREATURE, range, searcher);
 }
 
 Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) const
@@ -3853,7 +3853,7 @@ Unit* SmartScript::DoFindClosestFriendlyInRange(float range, bool playerOnly) co
     Unit* unit = nullptr;
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(me, me, range, playerOnly);
     Trinity::UnitLastSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(me, unit, u_check);
-    Cell::VisitAllObjects(me, searcher, range);
+    me->QueryMap(MAPQT_PLAYER | MAPQT_CREATURE, range, searcher);
     return unit;
 }
 

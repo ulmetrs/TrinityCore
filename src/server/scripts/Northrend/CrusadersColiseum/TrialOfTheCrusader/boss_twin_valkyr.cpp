@@ -20,7 +20,6 @@
 //    - Hardcoded bullets spawner
 
 #include "ScriptMgr.h"
-#include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
 #include "MotionMaster.h"
@@ -142,7 +141,7 @@ class OrbsDespawner : public BasicEvent
         bool Execute(uint64 /*currTime*/, uint32 /*diff*/) override
         {
             Trinity::CreatureWorker<OrbsDespawner> worker(_creature, *this);
-            Cell::VisitGridObjects(_creature, worker, SIZE_OF_GRIDS);
+            _creature->QueryMap(MAPQT_GRID_CREATURE, SIZE_OF_GRIDS, worker);
             return true;
         }
 

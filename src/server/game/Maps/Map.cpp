@@ -37,7 +37,6 @@
 #include "MMapFactory.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
-#include "ObjectGridLoader.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
 #include "PoolMgr.h"
@@ -231,9 +230,72 @@ void Map::LoadMap(int gx, int gy)
 
 void Map::LoadAllCells()
 {
-    for (uint32 cellX = 0; cellX < TOTAL_NUMBER_OF_CELLS_PER_MAP; cellX++)
-        for (uint32 cellY = 0; cellY < TOTAL_NUMBER_OF_CELLS_PER_MAP; cellY++)
-            LoadGrid((cellX + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL, (cellY + 0.5f - CENTER_GRID_CELL_ID) * SIZE_OF_GRID_CELL);
+    LoadAllGrids();
+
+    MapObjectGuids const* guids = sObjectMgr->GetMapObjectGuids(GetId(), GetSpawnMode());
+
+    for (ObjectGuid::LowType guid : guids->creatures)
+    {
+        if (!ShouldBeSpawnedOnGridLoad<Creature>(guid))
+            continue;
+
+        Creature* c = new Creature();
+        if (!c->LoadFromDB(guid, this, false, false))
+        {
+            delete c;
+            continue;
+        }
+
+        c->AddToWorld();
+        if (sWorld->getBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+            c->setActive(true);
+        if (c->isActiveObject())
+            AddToActive(c);
+        if (c->GetWaypointPath() != 0)
+            AddToWaypointCreatures(c);
+
+        _quadTree->Insert(c);
+    }
+
+    for (ObjectGuid::LowType guid : guids->gameobjects)
+    {
+        if (!ShouldBeSpawnedOnGridLoad<GameObject>(guid))
+            continue;
+
+        GameObjectData const* data = sObjectMgr->GetGameObjectData(guid);
+        ASSERT(data);
+        GameObject* g = GameObject::CreateGameObject(data->id);
+        if (!g->LoadFromDB(guid, this, false, false))
+        {
+            delete g;
+            continue;
+        }
+
+        g->AddToWorld();
+        if (sWorld->getBoolConfig(CONFIG_DEBUG_SET_ALL_OBJECTS_ACTIVE))
+            g->setActive(true);
+        if (g->isActiveObject())
+            AddToActive(g);
+
+        _quadTree->Insert(g);
+    }
+
+    for (Corpse* corpse : _corpses)
+    {
+        corpse->AddToWorld();
+
+        _quadTree->Insert(corpse);
+    }
+
+    Balance();
+    _cellsLoaded = true;
+}
+
+void Map::LoadAllGrids()
+{
+    for (int gx=0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
+        for (int gy=0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
+            EnsureGridCreated(gx, gy);
 }
 
 Map::Map(uint32 id, uint32 instanceOrPartitionId):
@@ -241,17 +303,11 @@ i_mapEntry(sMapStore.LookupEntry(id)),
 m_unloadTimer(0), m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
 m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
 m_activeNonPlayersIter(m_activeNonPlayers.end()), m_waypointCreaturesIter(m_waypointCreatures.end()), _transportsUpdateIter(_transports.end()),
-i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _respawnCheckTimer(0)
+i_scriptLock(false), _respawnTimes(std::make_unique<RespawnListContainer>()), _respawnCheckTimer(0), _cellsLoaded(false)
 {
-    for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
-    {
-        for (unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
-        {
-            //z code
-            GridMaps[idx][j] = nullptr;
-            setNGrid(nullptr, idx, j);
-        }
-    }
+    for (int gx=0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
+        for (int gy=0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
+            GridMaps[gx][gy] = nullptr;
 
     _zonePlayerCountMap.clear();
 
@@ -284,69 +340,6 @@ void Map::InitVisibilityDistance()
     m_VisibilityNotifyPeriod = World::GetVisibilityNotifyPeriodOnContinents();
 }
 
-// Template specialization of utility methods
-template<class T>
-void Map::AddToGrid(T* obj, Cell const& cell)
-{
-    NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-    if (obj->IsStoredInWorldObjectGridContainer())
-        grid->GetGridType(cell.CellX(), cell.CellY()).template AddWorldObject<T>(obj);
-    else
-        grid->GetGridType(cell.CellX(), cell.CellY()).template AddGridObject<T>(obj);
-}
-
-template<>
-void Map::AddToGrid(Creature* obj, Cell const& cell)
-{
-    NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-    if (obj->IsStoredInWorldObjectGridContainer())
-        grid->GetGridType(cell.CellX(), cell.CellY()).AddWorldObject(obj);
-    else
-        grid->GetGridType(cell.CellX(), cell.CellY()).AddGridObject(obj);
-
-    obj->SetCell(cell);
-}
-
-template<>
-void Map::AddToGrid(GameObject* obj, Cell const& cell)
-{
-    NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-    grid->GetGridType(cell.CellX(), cell.CellY()).AddGridObject(obj);
-
-    obj->SetCell(cell);
-}
-
-template<>
-void Map::AddToGrid(DynamicObject* obj, Cell const& cell)
-{
-    NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-    if (obj->IsStoredInWorldObjectGridContainer())
-        grid->GetGridType(cell.CellX(), cell.CellY()).AddWorldObject(obj);
-    else
-        grid->GetGridType(cell.CellX(), cell.CellY()).AddGridObject(obj);
-
-    obj->SetCell(cell);
-}
-
-template<>
-void Map::AddToGrid(Corpse* obj, Cell const& cell)
-{
-    NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-    // Corpses are a special object type - they can be added to grid via a call to AddToMap
-    // or loaded through ObjectGridLoader.
-    // Both corpses loaded from database and these freshly generated by Player::CreateCoprse are added to _corpsesByCell
-    // ObjectGridLoader loads all corpses from _corpsesByCell even if they were already added to grid before it was loaded
-    // so we need to explicitly check it here (Map::AddToGrid is only called from Player::BuildPlayerRepop, not from ObjectGridLoader)
-    // to avoid failing an assertion in GridObject::AddToGrid
-    if (grid->isGridObjectDataLoaded())
-    {
-        if (obj->IsStoredInWorldObjectGridContainer())
-            grid->GetGridType(cell.CellX(), cell.CellY()).AddWorldObject(obj);
-        else
-            grid->GetGridType(cell.CellX(), cell.CellY()).AddGridObject(obj);
-    }
-}
-
 template<class T>
 void Map::SwitchGridContainers(T* /*obj*/, bool /*on*/) { }
 
@@ -361,38 +354,19 @@ void Map::SwitchGridContainers(Creature* obj, bool on)
         return;
     }
 
-    Cell cell(p);
-    if (!IsGridLoaded(GridCoord(cell.data.Part.grid_x, cell.data.Part.grid_y)))
-        return;
-
-    if (sLog->ShouldLog("maps", LOG_LEVEL_DEBUG))
-    {
-        // Extract bitfield values
-        uint32 const grid_x = cell.data.Part.grid_x;
-        uint32 const grid_y = cell.data.Part.grid_y;
-
-        TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
-    }
-
-    NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
-    ASSERT(ngrid != nullptr);
-
-    GridType &grid = ngrid->GetGridType(cell.CellX(), cell.CellY());
-
-    obj->RemoveFromGrid(); //This step is not really necessary but we want to do ASSERT in remove/add
-
     if (on)
     {
-        grid.AddWorldObject(obj);
         AddWorldObject(obj);
     }
     else
     {
-        grid.AddGridObject(obj);
         RemoveWorldObject(obj);
     }
 
     obj->m_isTempWorldObject = on;
+
+    ASSERT(obj->GetQuadNode());
+    _quadTree->Insert(obj); // SAFE TO INSERT
 }
 
 template<>
@@ -406,36 +380,17 @@ void Map::SwitchGridContainers(GameObject* obj, bool on)
         return;
     }
 
-    Cell cell(p);
-    if (!IsGridLoaded(GridCoord(cell.data.Part.grid_x, cell.data.Part.grid_y)))
-        return;
-
-    if (sLog->ShouldLog("maps", LOG_LEVEL_DEBUG))
-    {
-        // Extract bitfield values
-        uint32 const grid_x = cell.data.Part.grid_x;
-        uint32 const grid_y = cell.data.Part.grid_y;
-
-        TC_LOG_DEBUG("maps", "Switch object {} from grid[{}, {}] {}", obj->GetGUID().ToString(), grid_x, grid_y, on);
-    }
-
-    NGridType *ngrid = getNGrid(cell.GridX(), cell.GridY());
-    ASSERT(ngrid != nullptr);
-
-    GridType &grid = ngrid->GetGridType(cell.CellX(), cell.CellY());
-
-    obj->RemoveFromGrid(); //This step is not really necessary but we want to do ASSERT in remove/add
-
     if (on)
     {
-        grid.AddWorldObject(obj);
         AddWorldObject(obj);
     }
     else
     {
-        grid.AddGridObject(obj);
         RemoveWorldObject(obj);
     }
+
+    ASSERT(obj->GetQuadNode());
+    _quadTree->Insert(obj); // SAFE TO INSERT
 }
 
 template<class T>
@@ -460,53 +415,10 @@ void Map::DeleteFromWorld(Transport* transport)
     delete transport;
 }
 
-//Create NGrid so the object can be added to it
-//But object data is not loaded here
-void Map::EnsureGridCreated(GridCoord const& p)
+void Map::EnsureGridCreated(int gx, int gy)
 {
     std::lock_guard<std::mutex> lock(_gridLock);
-    if (!getNGrid(p.x_coord, p.y_coord))
-    {
-        TC_LOG_DEBUG("maps", "Creating grid[{}, {}] for map {} instance/partition {}", p.x_coord, p.y_coord, GetId(), GetInstanceOrPartitionId());
-
-        setNGrid(new NGridType(p.x_coord*MAX_NUMBER_OF_GRIDS + p.y_coord, p.x_coord, p.y_coord),
-            p.x_coord, p.y_coord);
-
-        // build a linkage between this map and NGridType
-        buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
-
-        //z coord
-        int gx = (MAX_NUMBER_OF_GRIDS - 1) - p.x_coord;
-        int gy = (MAX_NUMBER_OF_GRIDS - 1) - p.y_coord;
-
-        LoadMap(gx, gy);
-    }
-}
-
-//Create NGrid and load the object data in it
-bool Map::EnsureGridLoaded(Cell const& cell)
-{
-    EnsureGridCreated(GridCoord(cell.GridX(), cell.GridY()));
-    NGridType *grid = getNGrid(cell.GridX(), cell.GridY());
-    ASSERT(grid != nullptr);
-    if (!grid->isGridObjectDataLoaded())
-    {
-        TC_LOG_DEBUG("maps", "Loading grid[{}, {}] for map {} instance/partition {}", cell.GridX(), cell.GridY(), GetId(), GetInstanceOrPartitionId());
-        grid->setGridObjectDataLoaded(true);
-
-        ObjectGridLoader loader(*grid, this, cell);
-        loader.LoadN();
-
-        Balance();
-        return true;
-    }
-
-    return false;
-}
-
-void Map::LoadGrid(float x, float y)
-{
-    EnsureGridLoaded(Cell(x, y));
+    LoadMap(gx, gy);
 }
 
 bool Map::AddPlayerToMap(Player* player)
@@ -520,9 +432,8 @@ bool Map::AddPlayerToMap(Player* player)
         return false;
     }
 
-    Cell cell(cellCoord);
-    EnsureGridLoaded(cell);
-    AddToGrid(player, cell);
+    ASSERT(player->GetQuadNode() == nullptr);
+    _quadTree->Insert(player); // SAFE TO INSERT
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -557,9 +468,8 @@ bool Map::AddPlayerToPartition(Player* player)
         return false;
     }
 
-    Cell cell(cellCoord);
-    EnsureGridLoaded(cell);
-    AddToGrid(player, cell);
+    ASSERT(player->GetQuadNode() == nullptr);
+    _quadTree->Insert(player); // SAFE TO INSERT
 
     // Check if we are adding to correct map
     ASSERT (player->GetMap() == this);
@@ -588,14 +498,17 @@ bool Map::AddToMap(T* obj)
 {
     ZoneScopedN("Map::AddToMap")
 
+    // TODO move valid coord and other checks to asserts
+
     /// @todo Needs clean up. An object should not be added to map twice.
     if (obj->IsInWorld())
     {
-        ASSERT(obj->IsInGrid());
+        ASSERT(obj->GetQuadNode());
         obj->UpdateObjectVisibility(true);
         return true;
     }
 
+    // TODO when we remove this ensure all AddToMap calls are within map bounds
     CellCoord cellCoord = Trinity::ComputeCellCoord(obj->GetPositionX(), obj->GetPositionY());
     //It will create many problems (including crashes) if an object is not added to grid after creation
     //The correct way to fix it is to make AddToMap return false and delete the object if it is not added to grid
@@ -607,9 +520,7 @@ bool Map::AddToMap(T* obj)
         return false; //Should delete object
     }
 
-    Cell cell(cellCoord);
-    EnsureGridLoaded(cell);
-    AddToGrid(obj, cell);
+    // TODO once all is working come back and experiment what can be delayed until QuadTreeInsert
 
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
@@ -625,6 +536,17 @@ bool Map::AddToMap(T* obj)
     obj->SetIsNewObject(true);
     obj->UpdateObjectVisibilityOnCreate();
     obj->SetIsNewObject(false);
+
+    // NOT SAFE TO INSERT
+    if (obj->IsCreature())
+        _relocatedCreatures.insert(obj->ToCreature());
+    else if (obj->IsGameObject())
+        _relocatedGameObjects.insert(obj->ToGameObject());
+    else if (obj->IsDynObject())
+        _relocatedDynamicObjects.insert(obj->ToDynObject());
+    else if (obj->IsCorpse())
+        _relocatedCorpses.insert(obj->ToCorpse()); // Corpses might be OK but playing it safe
+
     return true;
 }
 
@@ -672,7 +594,7 @@ bool Map::AddToPartition(T* obj)
     /// @todo Needs clean up. An object should not be added to map twice.
     if (obj->IsInWorld())
     {
-        ASSERT(obj->IsInGrid());
+        ASSERT(obj->GetQuadNode());
         obj->UpdateObjectVisibility(true);
         return true;
     }
@@ -688,10 +610,6 @@ bool Map::AddToPartition(T* obj)
         return false; //Should delete object
     }
 
-    Cell cell(cellCoord);
-    EnsureGridLoaded(cell);
-    AddToGrid(obj, cell);
-
     //Must already be set before AddToMap. Usually during obj->Create.
     //obj->SetMap(this);
     obj->AddToPartition();
@@ -706,16 +624,14 @@ bool Map::AddToPartition(T* obj)
     obj->SetIsNewObject(true);
     obj->UpdateObjectVisibilityOnCreate();
     obj->SetIsNewObject(false);
+
+    ASSERT(obj->GetQuadNode() == nullptr);
+    _quadTree->Insert(obj); // SAFE TO INSERT
+
     return true;
 }
 
-bool Map::IsGridLoaded(GridCoord const& p) const
-{
-    NGridType* grid = getNGrid(p.x_coord, p.y_coord);
-    return grid && grid->isGridObjectDataLoaded();
-}
-
-void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor)
+void Map::VisitNearbyCellsOf(WorldObject* obj, uint32 mask, Trinity::ObjectUpdater &updater)
 {
     // Check for valid position
     if (!obj->IsPositionValid())
@@ -736,11 +652,12 @@ void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::Obj
 
             markCell(cell_id);
 
-            CellCoord pair(x, y);
-            Cell cell(pair);
-            cell.SetNoCreate();
-            Visit(cell, gridVisitor);
-            Visit(cell, worldVisitor);
+            float minX = x * SIZE_OF_GRID_CELL - MAP_HALFSIZE;
+            float minY = y * SIZE_OF_GRID_CELL - MAP_HALFSIZE;
+            float maxX = minX + SIZE_OF_GRID_CELL;
+            float maxY = minY + SIZE_OF_GRID_CELL;
+
+            _quadTree->QueryRange(mask, minX, minY, maxX, maxY, updater);
         }
     }
 }
@@ -763,8 +680,6 @@ void Map::UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone)
 // @tswow-begin tracy
 void Map::Update(uint32 t_diff)
 {
-    ZoneScopedNC("Map::Update", MAP_UPDATE_COLOR)
-
     // @tswow-begin tswow-events
     {
         ZoneScopedNC("TSMap::Tick", MAP_UPDATE_COLOR)
@@ -840,10 +755,7 @@ void Map::Update(uint32 t_diff)
     resetMarkedCells();
 
     Trinity::ObjectUpdater updater(t_diff);
-    // for creature
-    TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
-    // for pets
-    TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
+    uint32_t updaterMask = MAPQT_ALL & ~MAPQT_PLAYER & ~MAPQT_CORPSE;
 
     {
         ZoneScopedN("Map::Update::Players")
@@ -860,11 +772,11 @@ void Map::Update(uint32 t_diff)
             // update players at tick
             player->Update(t_diff);
 
-            VisitNearbyCellsOf(player, grid_object_update, world_object_update);
+            VisitNearbyCellsOf(player, updaterMask, updater);
 
             // If player is using far sight or mind vision, visit that object too
             if (WorldObject* viewPoint = player->GetViewpoint())
-                VisitNearbyCellsOf(viewPoint, grid_object_update, world_object_update);
+                VisitNearbyCellsOf(viewPoint, updaterMask, updater);
 
             // Handle updates for creatures in combat with player and are more than 60 yards away
             if (player->IsInCombat())
@@ -875,7 +787,7 @@ void Map::Update(uint32 t_diff)
                         if (unit->GetMapId() == player->GetMapId() && !unit->IsWithinDistInMap(player, GetVisibilityRange(), false))
                             toVisit.push_back(unit);
                 for (Unit* unit : toVisit)
-                    VisitNearbyCellsOf(unit, grid_object_update, world_object_update);
+                    VisitNearbyCellsOf(unit, updaterMask, updater);
             }
 
             { // Update any creatures that own auras the player has applications of
@@ -887,7 +799,7 @@ void Map::Update(uint32 t_diff)
                             toVisit.insert(caster);
                 }
                 for (Unit* unit : toVisit)
-                    VisitNearbyCellsOf(unit, grid_object_update, world_object_update);
+                    VisitNearbyCellsOf(unit, updaterMask, updater);
             }
 
             { // Update player's summons
@@ -901,7 +813,7 @@ void Map::Update(uint32 t_diff)
                                 toVisit.push_back(unit);
 
                 for (Unit* unit : toVisit)
-                    VisitNearbyCellsOf(unit, grid_object_update, world_object_update);
+                    VisitNearbyCellsOf(unit, updaterMask, updater);
             }
         }
     }
@@ -909,10 +821,9 @@ void Map::Update(uint32 t_diff)
     {
         ZoneScopedN("Map::Update::ActiveObjects")
 
-        // non-player active objects, increasing iterator in the loop in case of object removal
-        // TODO should objects be removed during update? I thought they get put in move list
         for (m_activeNonPlayersIter = m_activeNonPlayers.begin(); m_activeNonPlayersIter != m_activeNonPlayers.end();)
         {
+            // This object can be removed from active during the update, so iterate here
             WorldObject* obj = *m_activeNonPlayersIter;
             ++m_activeNonPlayersIter;
 
@@ -922,12 +833,11 @@ void Map::Update(uint32 t_diff)
             {
                 ZoneScopedN("Map::Update::ActiveObjects::ActiveNonPlayer")
 
-                VisitNearbyCellsOf(obj, grid_object_update, world_object_update);
+                VisitNearbyCellsOf(obj, updaterMask, updater);
             }
         }
     }
 
-    // TODO make this permanent
     if (sWorld->getBoolConfig(CONFIG_ALWAYS_UPDATE_WAYPOINT_CREATURES))
     {
         ZoneScopedN("Map::Update::WaypointCreatures")
@@ -936,15 +846,11 @@ void Map::Update(uint32 t_diff)
         // TODO should objects be removed during update? I thought they get put in move list
         for (m_waypointCreaturesIter = m_waypointCreatures.begin(); m_waypointCreaturesIter != m_waypointCreatures.end();)
         {
+            // This object can be removed from wp creatures during the update, so iterate here
             Creature* creature = *m_waypointCreaturesIter;
             ++m_waypointCreaturesIter;
 
             if (!creature || !creature->IsInWorld() || !creature->IsPositionValid())
-                continue;
-
-            CellCoord cellCoord = creature->GetCell().GetCellCoord();
-            // The waypoint creature has already ticked its update from the above if the cell its in is marked
-            if (isCellMarked(cellCoord.GetId()))
                 continue;
 
             {
@@ -967,10 +873,6 @@ void Map::Update(uint32 t_diff)
                     // (edge condition where members are on diff grid than leader)
                     for (Creature* member : members)
                     {
-                        CellCoord memberCellCoord = member->GetCell().GetCellCoord();
-                        if (isCellMarked(memberCellCoord.GetId()))
-                            continue;
-
                         member->Update(t_diff);
                     }
                 }
@@ -998,78 +900,42 @@ void Map::Update(uint32 t_diff)
         }
     }
 
-    // We must delay grid relocation until after entities are updated to avoid updating multiple times (by moving to an unmarked cell)
     {
-        ZoneScopedN("Map::Update::GridRelocations::Creatures")
+        ZoneScopedN("Map::Update::RelocatedObjects")
 
         for (Creature* creature : _relocatedCreatures)
         {
-            Cell old_cell = creature->GetCell();
-            Cell new_cell(creature->GetPositionX(), creature->GetPositionY());
-            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-            {
-                creature->RemoveFromGrid();
+            _quadTree->Insert(creature); // SAFE TO INSERT
 
-                if (old_cell.DiffGrid(new_cell))
-                    EnsureGridLoaded(new_cell);
-
-                AddToGrid(creature, new_cell);
-            }
             creature->UpdatePositionData();
             creature->UpdateObjectVisibility(false);
-
-            if (creature->ShouldRelocateUpdateMapPartition())
-                _updateMapPartitionCreatures.insert(creature);
         }
-
         _relocatedCreatures.clear();
-    }
-
-    {
-        ZoneScopedN("Map::Update::GridRelocations::GameObjects")
 
         for (GameObject* go : _relocatedGameObjects)
         {
-            Cell old_cell = go->GetCell();
-            Cell new_cell(go->GetPositionX(), go->GetPositionY());
-            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-            {
-                go->RemoveFromGrid();
+            _quadTree->Insert(go); // SAFE TO INSERT
 
-                if (old_cell.DiffGrid(new_cell))
-                    EnsureGridLoaded(new_cell);
-
-                AddToGrid(go, new_cell);
-            }
             go->UpdateModelPosition();
             go->UpdatePositionData();
             go->UpdateObjectVisibility(false);
         }
-
         _relocatedGameObjects.clear();
-    }
-
-    {
-        ZoneScopedN("Map::Update::GridRelocations::DynamicObjects")
 
         for (DynamicObject* dynObj : _relocatedDynamicObjects)
         {
-            Cell old_cell = dynObj->GetCell();
-            Cell new_cell(dynObj->GetPositionX(), dynObj->GetPositionY());
-            if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-            {
-                dynObj->RemoveFromGrid();
+            _quadTree->Insert(dynObj); // SAFE TO INSERT
 
-                if (old_cell.DiffGrid(new_cell))
-                    EnsureGridLoaded(new_cell);
-
-                AddToGrid(dynObj, new_cell);
-            }
             dynObj->UpdatePositionData();
             dynObj->UpdateObjectVisibility(false);
         }
-
         _relocatedDynamicObjects.clear();
+
+        for (Corpse* corpse : _relocatedCorpses)
+        {
+            _quadTree->Insert(corpse); // SAFE TO INSERT
+        }
+        _relocatedCorpses.clear();
     }
 
     SendObjectUpdates();
@@ -1143,8 +1009,8 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         player->DestroyForNearbyPlayers(); // previous player->UpdateObjectVisibility(true)
 
-    if (player->IsInGrid())
-        player->RemoveFromGrid();
+    if (player->GetQuadNode())
+        static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
     else
         ASSERT(remove); //maybe deleted in logoutplayer when player is not in a map
 
@@ -1174,8 +1040,8 @@ void Map::RemovePlayerFromPartition(Player* player)
     //if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
     //    player->DestroyForNearbyPlayers(); // previous player->UpdateObjectVisibility(true)
 
-    if (player->IsInGrid())
-        player->RemoveFromGrid();
+    if(player->GetQuadNode())
+        static_cast<QuadNode<Player>*>(player->GetQuadNode())->Remove(player);
 }
 
 template<class T>
@@ -1196,9 +1062,12 @@ void Map::RemoveFromMap(T *obj, bool remove)
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
         obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
 
-    obj->RemoveFromGrid();
-
     obj->ResetMap();
+
+    if(obj->GetQuadNode())
+        static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+    else
+        TC_LOG_ERROR("quadtrees", "Map::RemoveFromMap: Object {} Removed from Map was never inserted into quad tree", obj->GetDebugInfo());
 
     if (remove)
         DeleteFromWorld(obj);
@@ -1246,6 +1115,9 @@ void Map::RemoveFromPartition(T *obj)
 {
     ZoneScopedN("Map::RemoveFromPartition")
 
+    ASSERT(obj->GetQuadNode());
+    static_cast<QuadNode<T>*>(obj->GetQuadNode())->Remove(obj);
+
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromPartition();
 
@@ -1257,9 +1129,7 @@ void Map::RemoveFromPartition(T *obj)
 
     // note: RemoveFromWorld does this for inWorld objects
     if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
-        obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
-
-    obj->RemoveFromGrid();  
+        obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true) 
 
     obj->ResetMap();
 }
@@ -1270,19 +1140,8 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
     if (player->IsVehicle())
         player->GetVehicleKit()->RelocatePassengers();
 
-    Cell old_cell = player->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffGrid(new_cell) || old_cell.DiffCell(new_cell))
-    {
-        TC_LOG_DEBUG("maps", "Player {} relocation grid[{}, {}]cell[{}, {}]->grid[{}, {}]cell[{}, {}]", player->GetName(), old_cell.GridX(), old_cell.GridY(), old_cell.CellX(), old_cell.CellY(), new_cell.GridX(), new_cell.GridY(), new_cell.CellX(), new_cell.CellY());
-
-        player->RemoveFromGrid();
-
-        if (old_cell.DiffGrid(new_cell))
-            EnsureGridLoaded(new_cell);
-
-        AddToGrid(player, new_cell);
-    }
+    ASSERT(player->GetQuadNode());
+    _quadTree->Insert(player); // SAFE TO INSERT
 
     player->UpdatePositionData();
     player->UpdateObjectVisibility(false);
@@ -1297,108 +1156,23 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
 
-    Cell old_cell = creature->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-    {
-        _relocatedCreatures.insert(creature);
-    }
-    else
-    {
-        creature->UpdatePositionData();
-        creature->UpdateObjectVisibility(false);
-
-        if (creature->ShouldRelocateUpdateMapPartition())
-            _updateMapPartitionCreatures.insert(creature);
-    }
+    _relocatedCreatures.insert(creature);
+    if (creature->ShouldRelocateUpdateMapPartition())
+        _updateMapPartitionCreatures.insert(creature);
 }
 
 void Map::GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation)
 {
     go->Relocate(x, y, z, orientation);
 
-    Cell old_cell = go->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-    {
-        _relocatedGameObjects.insert(go);
-    }
-    else
-    {
-        go->UpdateModelPosition();
-        go->UpdatePositionData();
-        go->UpdateObjectVisibility(false);
-    }
+    _relocatedGameObjects.insert(go);
 }
 
 void Map::DynamicObjectRelocation(DynamicObject* dynObj, float x, float y, float z, float orientation)
 {
     dynObj->Relocate(x, y, z, orientation);
 
-    Cell old_cell = dynObj->GetCell();
-    Cell new_cell(x, y);
-    if (old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell))
-    {
-        _relocatedDynamicObjects.insert(dynObj);
-    }
-    else
-    {
-        dynObj->UpdatePositionData();
-        dynObj->UpdateObjectVisibility(false);
-    }
-}
-
-void Map::UnloadGrid(NGridType& ngrid)
-{
-    ZoneScopedN("Map::UnloadGrid")
-
-    const uint32 x = ngrid.getX();
-    const uint32 y = ngrid.getY();
-
-    {
-        TC_LOG_DEBUG("maps", "Unloading grid[{}, {}] for map {}", x, y, GetId());
-        {
-            ZoneScopedN("Map::UnloadGrid ngrid.VisitAllGrids")
-
-            ObjectGridCleaner worker;
-            TypeContainerVisitor<ObjectGridCleaner, GridTypeMapContainer> visitor(worker);
-            ngrid.VisitAllGrids(visitor);
-        }
-
-        RemoveAllObjectsInRemoveList();
-
-        {
-            ObjectGridUnloader worker;
-            TypeContainerVisitor<ObjectGridUnloader, GridTypeMapContainer> visitor(worker);
-            ngrid.VisitAllGrids(visitor);
-        }
-
-        ASSERT(i_objectsToRemove.empty());
-
-        delete &ngrid;
-        setNGrid(nullptr, x, y);
-    }
-
-    int gx = (MAX_NUMBER_OF_GRIDS - 1) - x;
-    int gy = (MAX_NUMBER_OF_GRIDS - 1) - y;
-
-    if (GetParent() == this)
-    {
-        ZoneScopedN("Map::UnloadGrid i_InstanceId == {}")
-
-        if (GridMaps[gx][gy])
-        {
-            GridMaps[gx][gy]->unloadData();
-            delete GridMaps[gx][gy];
-        }
-
-        VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(GetId(), gx, gy);
-        MMAP::MMapFactory::createOrGetMMapManager()->unloadMap(GetId(), gx, gy);
-
-        GridMaps[gx][gy] = nullptr;
-    }
-
-    TC_LOG_DEBUG("maps", "Unloading grid[{}, {}] for map {} finished", x, y, GetId());
+    _relocatedDynamicObjects.insert(dynObj);
 }
 
 void Map::RemoveAllPlayers()
@@ -1424,12 +1198,13 @@ void Map::UnloadAll()
 {
     ZoneScopedNC("Map::UnloadAll", WORLD_UPDATE_COLOR)
 
-    for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end();)
-    {
-        NGridType &grid(*i->GetSource());
-        ++i;
-        UnloadGrid(grid);
-    }
+    // Keep same behavior as before (cleanups before and after removing objects)
+    ObjectGridCleaner cleaner;
+    _quadTree->QueryAll(MAPQT_ALL, cleaner);
+
+    RemoveAllObjectsInRemoveList();
+
+    _quadTree->Clear();
 
     for (TransportsContainer::iterator itr = _transports.begin(); itr != _transports.end();)
     {
@@ -1439,19 +1214,38 @@ void Map::UnloadAll()
         RemoveFromMap<Transport>(transport, true);
     }
 
-    for (auto& cellCorpsePair : _corpsesByCell)
+    for (auto corpse : _corpses)
     {
-        for (Corpse* corpse : cellCorpsePair.second)
-        {
-            corpse->RemoveFromWorld();
-            corpse->ResetMap();
-            delete corpse;
-        }
+        corpse->RemoveFromWorld();
+        corpse->ResetMap();
+        delete corpse;
     }
 
-    _corpsesByCell.clear();
+    _corpses.clear();
     _corpsesByPlayer.clear();
     _corpseBones.clear();
+
+    if (GetParent() == this)
+    {
+        ZoneScopedN("Map::UnloadGrid i_InstanceId == {}")
+
+        for (int gx=0; gx < MAX_NUMBER_OF_GRIDS; ++gx)
+        {
+            for (int gy=0; gy < MAX_NUMBER_OF_GRIDS; ++gy)
+            {
+                if (GridMaps[gx][gy])
+                {
+                    GridMaps[gx][gy]->unloadData();
+                    delete GridMaps[gx][gy];
+                }
+
+                VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(GetId(), gx, gy);
+                MMAP::MMapFactory::createOrGetMMapManager()->unloadMap(GetId(), gx, gy);
+
+                GridMaps[gx][gy] = nullptr;
+            }
+        }
+    }
 
     sScriptMgr->OnDestroyMap(static_cast<Map*>(this));
 }
@@ -2123,7 +1917,7 @@ inline ZLiquidStatus GridMap::GetLiquidStatus(float x, float y, float z, Optiona
 
 inline GridMap* Map::GetGrid(int gx, int gy)
 {
-    EnsureGridCreated(GridCoord((MAX_NUMBER_OF_GRIDS - 1) - gx, (MAX_NUMBER_OF_GRIDS - 1) - gy));
+    EnsureGridCreated(gx, gy);
 
     return GridMaps[gx][gy];
 }
@@ -2678,16 +2472,6 @@ void Map::SendRemoveTransports(Player* player)
     player->SendDirectMessage(&packet);
 }
 
-inline void Map::setNGrid(NGridType *grid, uint32 x, uint32 y)
-{
-    if (x >= MAX_NUMBER_OF_GRIDS || y >= MAX_NUMBER_OF_GRIDS)
-    {
-        TC_LOG_ERROR("maps", "map::setNGrid() Invalid grid coordinates found: {}, {}!", x, y);
-        ABORT();
-    }
-    i_grids[x][y] = grid;
-}
-
 void Map::SendObjectUpdates()
 {
     ZoneScopedN("Map::SendObjectUpdates")
@@ -3103,7 +2887,7 @@ void Map::ApplyDynamicModeRespawnScaling(WorldObject const* obj, ObjectGuid::Low
 
             DynamicCreatureRespawnRatesChecker check(crea);
             Trinity::PlayerWorker<DynamicCreatureRespawnRatesChecker> searcher(crea, check);
-            Cell::VisitWorldObjects(crea, searcher, checkRange);
+            crea->QueryMap(MAPQT_PLAYER, checkRange, searcher);
 
             // No dynamic respawns around an in progress escort
             if (check.HasNearbyEscort())
@@ -3632,62 +3416,19 @@ bool Map::SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession c
     return foundPlayerToSend;
 }
 
-bool Map::ActiveObjectsNearGrid(NGridType const& ngrid) const
-{
-    CellCoord cell_min(ngrid.getX() * MAX_NUMBER_OF_CELLS, ngrid.getY() * MAX_NUMBER_OF_CELLS);
-    CellCoord cell_max(cell_min.x_coord + MAX_NUMBER_OF_CELLS, cell_min.y_coord+MAX_NUMBER_OF_CELLS);
-
-    //we must find visible range in cells so we unload only non-visible cells...
-    float viewDist = GetVisibilityRange();
-    int cell_range = (int)ceilf(viewDist / SIZE_OF_GRID_CELL) + 1;
-
-    cell_min.dec_x(cell_range);
-    cell_min.dec_y(cell_range);
-    cell_max.inc_x(cell_range);
-    cell_max.inc_y(cell_range);
-
-    for (MapRefManager::const_iterator iter = m_mapRefManager.begin(); iter != m_mapRefManager.end(); ++iter)
-    {
-        Player* player = iter->GetSource();
-
-        CellCoord p = Trinity::ComputeCellCoord(player->GetPositionX(), player->GetPositionY());
-        if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
-            (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            return true;
-    }
-
-    for (ActiveNonPlayers::const_iterator iter = m_activeNonPlayers.begin(); iter != m_activeNonPlayers.end(); ++iter)
-    {
-        WorldObject* obj = *iter;
-
-        CellCoord p = Trinity::ComputeCellCoord(obj->GetPositionX(), obj->GetPositionY());
-        if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
-            (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            return true;
-    }
-
-    return false;
-}
-
 template TC_GAME_API bool Map::AddToMap(Corpse*);
 template TC_GAME_API bool Map::AddToMap(Creature*);
 template TC_GAME_API bool Map::AddToMap(GameObject*);
 template TC_GAME_API bool Map::AddToMap(DynamicObject*);
 
-template TC_GAME_API bool Map::AddToPartition(Corpse*);
 template TC_GAME_API bool Map::AddToPartition(Creature*);
-template TC_GAME_API bool Map::AddToPartition(GameObject*);
-template TC_GAME_API bool Map::AddToPartition(DynamicObject*);
 
 template TC_GAME_API void Map::RemoveFromMap(Corpse*, bool);
 template TC_GAME_API void Map::RemoveFromMap(Creature*, bool);
 template TC_GAME_API void Map::RemoveFromMap(GameObject*, bool);
 template TC_GAME_API void Map::RemoveFromMap(DynamicObject*, bool);
 
-template TC_GAME_API void Map::RemoveFromPartition(Corpse*);
 template TC_GAME_API void Map::RemoveFromPartition(Creature*);
-template TC_GAME_API void Map::RemoveFromPartition(GameObject*);
-template TC_GAME_API void Map::RemoveFromPartition(DynamicObject*);
 
 /* ******* Partition Maps ******* */
 
@@ -3697,6 +3438,49 @@ PartitionMap::PartitionMap(uint32 id, uint32 partitionId, Map* parent): Map(id, 
 
 PartitionMap::~PartitionMap()
 {
+}
+
+void PartitionMap::Update(uint32 t_diff)
+{
+    ZoneScopedNC("PartitionMap::Update", MAP_UPDATE_COLOR)
+
+    Map::Update(t_diff);
+}
+
+Bounds PartitionMap::GetMapBounds() const
+{
+    // Get parent partitioned map
+    const MapPartitioned* parent = dynamic_cast<const MapPartitioned*>(GetParent());
+    if (!parent)
+        return Map::GetMapBounds();
+
+    // Get partition entry for this map's partition id
+    const MapPartition* entry = parent->GetPartitionEntry(_partitionId);
+    if (!entry || entry->polygon.empty())
+        return Map::GetMapBounds();
+
+    float minX = MAP_HALFSIZE;
+    float minY = MAP_HALFSIZE;
+    float maxX = -MAP_HALFSIZE;
+    float maxY = -MAP_HALFSIZE;
+
+    for (const Position& pos : entry->polygon)
+    {
+        float x = pos.GetPositionX();
+        float y = pos.GetPositionY();
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+
+    // Buffer the bounds by 10.0f, clamped to ±MAP_HALFSIZE
+    minX = std::max(-MAP_HALFSIZE, minX - 10.0f);
+    minY = std::max(-MAP_HALFSIZE, minY - 10.0f);
+    maxX = std::min(MAP_HALFSIZE, maxX + 10.0f);
+    maxY = std::min(MAP_HALFSIZE, maxY + 10.0f);
+
+    return {minX, minY, maxX, maxY};
 }
 
 // TODO anything we need to override from map or additional functions
@@ -3909,6 +3693,8 @@ bool InstanceMap::AddPlayerToMap(Player* player)
 
 void InstanceMap::Update(uint32 t_diff)
 {
+    ZoneScopedNC("InstanceMap::Update", MAP_UPDATE_COLOR)
+
     Map::Update(t_diff);
 
     if (i_data)
@@ -4714,7 +4500,7 @@ void Map::AddCorpse(Corpse* corpse)
 {
     corpse->SetMap(this);
 
-    _corpsesByCell[corpse->GetCellCoord().GetId()].insert(corpse);
+    _corpses.insert(corpse);
     if (corpse->GetType() != CORPSE_BONES)
         _corpsesByPlayer[corpse->GetOwnerGUID()] = corpse;
     else
@@ -4726,7 +4512,7 @@ void Map::RemoveCorpse(Corpse* corpse)
     ASSERT(corpse);
 
     corpse->DestroyForNearbyPlayers();
-    if (corpse->IsInGrid())
+    if (corpse->GetQuadNode())
         RemoveFromMap(corpse, false);
     else
     {
@@ -4734,7 +4520,7 @@ void Map::RemoveCorpse(Corpse* corpse)
         corpse->ResetMap();
     }
 
-    _corpsesByCell[corpse->GetCellCoord().GetId()].erase(corpse);
+    _corpses.erase(corpse);
     if (corpse->GetType() != CORPSE_BONES)
         _corpsesByPlayer.erase(corpse->GetOwnerGUID());
     else
