@@ -426,7 +426,7 @@ Position CreatureGroup::GetRespawnPosition(Creature* member, Position const& spa
         return spawnPoint;
     }
 
-    uint8 groupAI = ASSERT_NOTNULL(sFormationMgr->GetFormationInfo(member->GetSpawnId()))->GroupAI;
+    uint32 groupAI = ASSERT_NOTNULL(sFormationMgr->GetFormationInfo(member->GetSpawnId()))->GroupAI;
     if (!groupAI)
     {
         TC_LOG_DEBUG("formations", "GroupAI is 0");
