@@ -1074,8 +1074,13 @@ void Map::Update(uint32 t_diff)
 
     if (GetId() == 571)
     {
+        uint32 totalRelocations = 0;
         for (auto [guid, count] : DebugCreatureRelocation)
+        {
             TC_LOG_DEBUG("quadtrees", "Frame {} Creature {} relocation count: {}", GameTime::GetGameTimeMS(), guid, count);
+            totalRelocations += count;
+        }
+        TC_LOG_DEBUG("quadtrees", "Frame {} Total creature relocation count: {}", GameTime::GetGameTimeMS(), totalRelocations);
     }
 
     SendObjectUpdates();
