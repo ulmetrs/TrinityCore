@@ -843,8 +843,6 @@ void Map::Update(uint32 t_diff)
     // for pets
     TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
-    DebugCreatureRelocation.clear();
-
     {
         ZoneScopedN("Map::Update::Players")
 
@@ -1072,17 +1070,6 @@ void Map::Update(uint32 t_diff)
         _relocatedDynamicObjects.clear();
     }
 
-    if (GetId() == 571)
-    {
-        uint32 totalRelocations = 0;
-        for (auto [guid, count] : DebugCreatureRelocation)
-        {
-            TC_LOG_DEBUG("quadtrees", "Frame {} Creature {} relocation count: {}", GameTime::GetGameTimeMS(), guid, count);
-            totalRelocations += count;
-        }
-        TC_LOG_DEBUG("quadtrees", "Frame {} Total creature relocation count: {}", GameTime::GetGameTimeMS(), totalRelocations);
-    }
-
     SendObjectUpdates();
 
     ///- Process necessary scripts
@@ -1304,8 +1291,6 @@ void Map::PlayerRelocation(Player* player, float x, float y, float z, float orie
 
 void Map::CreatureRelocation(Creature* creature, float x, float y, float z, float orientation)
 {
-    DebugCreatureRelocation[creature->GetGUID().GetCounter()]++;
-
     creature->Relocate(x, y, z, orientation);
     if (creature->IsVehicle())
         creature->GetVehicleKit()->RelocatePassengers();
