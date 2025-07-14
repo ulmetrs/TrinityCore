@@ -419,7 +419,7 @@ bool CreatureGroup::CanLeaderStartMoving() const
 
 Position CreatureGroup::GetRespawnPosition(Creature* member, Position const& spawnPoint) const
 {
-    TC_LOG_DEBUG("formations", "GetRespawnPosition for {}", member->GetDebugInfo());
+    TC_LOG_DEBUG("formations", "GetRespawnPosition for {}", member->GetSpawnId());
     if (!_leader)
     {
         TC_LOG_DEBUG("formations", "Leader is null");
