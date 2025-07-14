@@ -19,6 +19,7 @@
 #define _OBJECT_H
 
 #include "Cell.h"
+#include "CellImpl.h"
 #include "Common.h"
 #include "Duration.h"
 #include "EventProcessor.h"
